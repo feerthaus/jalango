@@ -1,0 +1,15 @@
+{
+  "name": "jalango",
+  "private": true,
+  "version": "0.1.0",
+  "description": "JalanGo – smart navigation for Malaysian road users",
+  "workspaces": ["web", "server"],
+  "scripts": {
+    "dev": "npm run dev --workspace server & npm run dev --workspace web",
+    "dev:web": "npm run dev --workspace web",
+    "dev:server": "npm run dev --workspace server",
+    "build": "npm run build --workspace server && npm run build --workspace web",
+    "typecheck": "npm run typecheck --workspace server && npm run typecheck --workspace web",
+    "test": "npm run test --workspace server && npm run test --workspace web"
+  }
+}
