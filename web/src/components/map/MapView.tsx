@@ -7,7 +7,10 @@ import { useMapContext } from '@/contexts/MapContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { DEFAULT_CENTER, DEFAULT_ZOOM, env, features } from '@/lib/config';
 import { styleFor } from '@/lib/mapStyles';
+import { useIsNavigating, useRouting } from '@/contexts/RoutingContext';
 import { DestinationMarker } from './DestinationMarker';
+import { NavigationCamera } from './NavigationCamera';
+import { RouteLayer } from './RouteLayer';
 import { UserLocationMarker } from './UserLocationMarker';
 
 if (env.mapboxToken) mapboxgl.accessToken = env.mapboxToken;
@@ -21,6 +24,9 @@ export function MapView() {
   const { map, setMap, following, setFollowing, selectedPlace, tileError, setTileError } = useMapContext();
   const { theme } = useTheme();
   const { fix } = useLocation();
+  const { destination } = useRouting();
+  const navigating = useIsNavigating();
+  const markerPlace = destination ?? selectedPlace;
   const [initError, setInitError] = useState<string | null>(null);
   const initialTheme = useRef(theme);
   const appliedTheme = useRef(theme);
@@ -46,6 +52,9 @@ export function MapView() {
       setInitError('Your browser could not start the map (WebGL may be disabled).');
       return;
     }
+
+    // Handy for debugging in the browser console during development
+    if (import.meta.env.DEV) (window as unknown as { __jalangoMap?: mapboxgl.Map }).__jalangoMap = instance;
 
     instance.addControl(new mapboxgl.AttributionControl({ compact: true }), 'bottom-right');
     instance.addControl(new mapboxgl.ScaleControl({ unit: 'metric', maxWidth: 90 }), 'bottom-left');
@@ -100,8 +109,9 @@ export function MapView() {
       }
       return;
     }
-    if (following) map.easeTo({ center, duration: 600 });
-  }, [map, fix, following, selectedPlace, setFollowing]);
+    // NavigationCamera owns the camera while driving
+    if (following && !navigating) map.easeTo({ center, duration: 600 });
+  }, [map, fix, following, selectedPlace, setFollowing, navigating]);
 
   // Tiles recover on their own once connectivity returns
   useEffect(() => {
@@ -115,7 +125,9 @@ export function MapView() {
     <div className="absolute inset-0">
       <div ref={containerRef} className="h-full w-full" role="region" aria-label="Map" />
       {map && <UserLocationMarker />}
-      {map && selectedPlace && <DestinationMarker place={selectedPlace} />}
+      {map && markerPlace && <DestinationMarker place={markerPlace} />}
+      {map && <RouteLayer />}
+      {map && <NavigationCamera />}
 
       {initError && (
         <div className="absolute inset-0 grid place-items-center bg-ink-100 p-6 text-center dark:bg-ink-900">

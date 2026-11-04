@@ -7,6 +7,7 @@ import { useLocation } from '@/contexts/LocationContext';
 import { useSavedPlaces } from '@/contexts/SavedPlacesContext';
 import { useServiceStatus } from '@/contexts/ServiceStatusContext';
 import { useTheme, type ThemePreference } from '@/contexts/ThemeContext';
+import { useProbeConsent } from '@/hooks/useProbeConsent';
 import { features } from '@/lib/config';
 import { cn } from '@/lib/cn';
 
@@ -33,6 +34,7 @@ export function ProfilePage() {
   const { server, searchMode, tilesMode, refresh } = useServiceStatus();
   const { status: gpsStatus, fix } = useLocation();
   const { favourites, recents, clearRecents } = useSavedPlaces();
+  const [probeConsent, setProbeConsent] = useProbeConsent();
 
   return (
     <PagePanel title="Profile">
@@ -81,6 +83,11 @@ export function ProfilePage() {
           ok={searchMode === 'checking' ? null : searchMode === 'live'}
           value={searchMode === 'checking' ? 'Checking…' : searchMode === 'live' ? 'Mapbox (live)' : 'Demo: offline sample places'}
         />
+        <StatusRow
+          label="Routing"
+          ok={searchMode === 'checking' ? null : searchMode === 'live'}
+          value={searchMode === 'checking' ? 'Checking…' : searchMode === 'live' ? 'Mapbox Directions (traffic-aware)' : 'Demo: straight-line preview'}
+        />
         <StatusRow label="JalanGo server" ok={server ? server.reachable : null} value={server ? (server.reachable ? 'Reachable' : 'Unreachable') : 'Checking…'} />
         <StatusRow label="Community database" ok={features.supabase} value={features.supabase ? 'Supabase configured' : 'Not configured'} />
         <StatusRow
@@ -91,6 +98,25 @@ export function ProfilePage() {
       </ul>
 
       <Heading>Privacy</Heading>
+      <div className="mb-3 flex items-start gap-3 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-ink-200 dark:bg-ink-900 dark:ring-ink-800">
+        <div className="min-w-0 flex-1">
+          <p id="probe-label" className="text-sm font-semibold">Share anonymous traffic data</p>
+          <p className="mt-0.5 text-xs text-ink-500 dark:text-ink-400">
+            While navigating, send your speed and position without any account link, to build JalanGo’s own traffic layer. Nothing near
+            your start or destination is sent. Raw data is deleted after 30 days.
+          </p>
+        </div>
+        <button
+          type="button"
+          role="switch"
+          aria-checked={probeConsent === 'granted'}
+          aria-labelledby="probe-label"
+          onClick={() => setProbeConsent(probeConsent === 'granted' ? 'denied' : 'granted')}
+          className={cn('relative h-7 w-12 shrink-0 rounded-full transition', probeConsent === 'granted' ? 'bg-jade-500' : 'bg-ink-200 dark:bg-ink-700')}
+        >
+          <span className={cn('absolute top-0.5 size-6 rounded-full bg-white shadow transition-all', probeConsent === 'granted' ? 'left-[1.375rem]' : 'left-0.5')} />
+        </button>
+      </div>
       <div className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-ink-200 dark:bg-ink-900 dark:ring-ink-800">
         <p className="text-sm text-ink-600 dark:text-ink-300">
           Favourites and recent destinations are stored only in this browser. Your GPS position is used on-device and sent to the

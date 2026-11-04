@@ -1,6 +1,6 @@
 # JalanGo
 
-Smart, Malaysia-first navigation: live map, GPS, destination search, and (in upcoming phases) routing, community traffic reports and accounts.
+Smart, Malaysia-first navigation: live map, GPS, destination search, traffic-aware routing with turn-by-turn guidance, and opt-in anonymous traffic data collection. Community reports and accounts are coming next.
 
 ```
 .
@@ -28,6 +28,7 @@ The app works with **no credentials at all**. Everything that isn't live is labe
 |---|---|---|
 | Basemap | Mapbox Navigation day/night styles, including Mapbox's live traffic layer (`VITE_MAPBOX_PUBLIC_TOKEN`) | OpenStreetMap data rendered by CARTO, with **no traffic layer** |
 | Place search | Mapbox Search Box + Geocoding via the API server (`MAPBOX_ACCESS_TOKEN`) | ~30 bundled Malaysian cities and landmarks, tagged **Sample** |
+| Routing | Mapbox Directions `driving-traffic`: alternatives, live congestion colouring, toll and highway flags, avoid tolls | A straight line labelled **Demo**, with a rough 50 km/h time estimate. No made-up road route or turns |
 | Nearby petrol / R&R / EV / parking / hospital | Mapbox category search | Not shown. JalanGo doesn't invent locations |
 | Community reports | Supabase (Phase 3) | Empty state. No fake incidents |
 
@@ -52,8 +53,10 @@ The Profile tab shows which sources are live.
 | GET | `/api/geo/search?q=&lng=&lat=&limit=` | Place name / address / 5-digit postcode / town search, scoped to Malaysia |
 | GET | `/api/geo/reverse?lng=&lat=` | Reverse geocode |
 | GET | `/api/geo/category?category=petrol\|rnr\|ev\|parking\|hospital\|food&lng=&lat=` | Nearby places |
+| GET | `/api/directions?from=lng,lat&to=lng,lat&avoidTolls=1` | Traffic-aware routes (up to 3): geometry, steps, congestion per segment, tolls/highway flags |
+| POST | `/api/probes` | Opt-in anonymous GPS samples (see below). Returns `202 { stored }` |
 
-Inputs are validated with zod. `/api/geo/*` is rate-limited to 120 requests/min per IP. Upstream failures map to clean JSON errors (`503 mapbox_not_configured`, `502 upstream_*`, `429`), and the web client falls back to demo data when the service is unavailable.
+Inputs are validated with zod. Rate limits per IP: `/api/geo/*` 120 requests/min, `/api/directions` 60/min, `/api/probes` 12/min. Upstream failures map to clean JSON errors (`503 mapbox_not_configured`, `502 upstream_*`, `429`), and the web client falls back to demo data when the service is unavailable.
 
 ## Database (Supabase)
 
@@ -67,20 +70,34 @@ The migration creates:
 - `saved_locations`, `recent_destinations`: rows are visible only to their owner. Saved locations are de-duplicated per point, and recent destinations are trimmed to the latest 20.
 - Realtime publication for `traffic_reports` and `report_confirmations`, plus `expire_stale_reports()` (schedule it with pg_cron; see the comment in the migration).
 
+## Own traffic data (opt-in)
+
+JalanGo uses Mapbox for now, and also collects its own traffic data from drivers who agree to share it. This data will later be used to build JalanGo's own traffic layer.
+
+- **Consent first.** The data is off until the user agrees, either in the one-time prompt on the route panel or with the switch in Profile. Turning the switch off stops collection immediately, even in the middle of a trip.
+- **Anonymous.** Each trip gets a random id. No user id, email or device id is sent.
+- **Filtered on the device.** Samples are sent only while navigating. Nothing within 300 m of the trip's start or destination is sent. Fixes less accurate than 50 m are dropped. Samples are thinned to about one per 5 s or 75 m and sent in batches.
+- **Validated on the server.** Points must be inside Malaysia, with plausible speeds and increasing timestamps. Probe uploads have their own rate limit.
+- **Stored server-side only.** Samples go to the `probe_samples` table (migration `20261105000000`). RLS lets no client read the table. Raw rows are deleted after 30 days by `purge_old_probe_samples()`.
+
+Storing samples requires `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` on the server. Without them, the API accepts uploads and discards them (`stored: false`).
+
+Under Malaysia's PDPA, location data is personal data. Get legal advice on the privacy notice before a public launch.
+
 ## Architecture (web)
 
 ```
 src/
 ├── components/   map/ search/ places/ reports/ layout/ ui/   (presentational + feature components)
-├── contexts/     Theme, ServiceStatus (live vs demo), Location (single GPS watcher), SavedPlaces, Map
+├── contexts/     Theme, ServiceStatus (live vs demo), Location (single GPS watcher), SavedPlaces, Map, Routing (plan → navigate → arrive)
 ├── hooks/        useGeolocation, usePlaceSearch (debounced, abortable), useShowOnMap, …
-├── services/     apiClient, geocodingService (+ demo fallback), healthService, placeStore
+├── services/     apiClient, geocodingService (+ demo fallback), routingService, probeService, healthService, placeStore
 ├── lib/          config (env), mapStyles, supabase client, reportTypes
 ├── layouts/      AppLayout: persistent map + routed overlay + nav
 ├── pages/        Map, Explore, Reports, Saved, Profile
 ├── data/         clearly-labelled offline sample places
 ├── types/        shared domain types (incl. Route and TrafficReport contracts for later phases)
-└── utils/        geo maths, formatting
+└── utils/        geo maths, route progress (snap to route, step tracking, off-route), formatting
 ```
 
 - The map is mounted **once** in the layout. Tabs render over it: full screen on mobile, a side panel on desktop. Switching tabs never reloads the map.
@@ -99,7 +116,9 @@ npm run build       # production builds
 ## Roadmap
 
 - [x] **Phase 1**: project setup, full-screen map, GPS (permission/error handling, follow mode, speed), destination search (name/address/postcode/city, autocomplete, recents, favourites), dark/light map, Explore and Profile tabs, Supabase schema
-- [ ] **Phase 2**: Mapbox Directions via the API, route polyline and alternatives, ETA, turn-by-turn panel, start/end navigation, toll information
+- [x] **Phase 2**: traffic-aware routes via the API, alternatives, ETA and arrival time, toll/highway flags, avoid tolls, turn-by-turn banner and list, start/end navigation, rerouting when off-route, arrival detection, driving camera
+- [x] **Own data, step 1**: opt-in anonymous GPS probe collection (`probe_samples`)
+- [ ] **Own data, step 2**: map-match samples to road segments, aggregate speeds, show a JalanGo traffic layer
 - [ ] **Phase 3**: report submission, map markers, confirm/resolve, Supabase Realtime
 - [ ] **Phase 4**: Supabase Auth (email), profiles, synced favourites/recents, report history
 - [ ] **Phase 5**: E2E tests, offline handling, performance passes

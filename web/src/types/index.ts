@@ -74,14 +74,18 @@ export interface SearchResponse {
 
 export type ExploreCategory = 'petrol' | 'rnr' | 'ev' | 'parking' | 'hospital' | 'food';
 
-/* ─── Phase 2: routing (contract defined up front) ─────────────────── */
+/* ─── Routing ─────────────────────────────────────────────────────── */
+
+export type Congestion = 'low' | 'moderate' | 'heavy' | 'severe' | 'unknown';
 
 export interface RouteStep {
   instruction: string;
   distanceMeters: number;
   durationSeconds: number;
-  maneuver: { type: string; modifier?: string; location: Coordinates };
+  maneuver: { type: string; modifier?: string; location: Coordinates; bearingAfter?: number };
   roadName?: string;
+  /** Road reference number, e.g. "E1" */
+  roadRef?: string;
 }
 
 export interface Route {
@@ -89,8 +93,13 @@ export interface Route {
   geometry: LineString;
   distanceMeters: number;
   durationSeconds: number;
+  typicalDurationSeconds?: number;
+  summary: string;
   steps: RouteStep[];
-  hasTolls?: boolean;
+  hasTolls: boolean;
+  hasMotorway: boolean;
+  congestion?: Congestion[];
+  /** `demo` = straight-line preview, not a road route */
   source: DataSource;
 }
 

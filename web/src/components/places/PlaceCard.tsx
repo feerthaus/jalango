@@ -1,4 +1,5 @@
-import { Check, Copy, Share2, Star, X } from 'lucide-react';
+import { Check, Copy, CornerUpRight, Share2, Star, X } from 'lucide-react';
+import { useRouting } from '@/contexts/RoutingContext';
 import { useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { DemoBadge } from '@/components/ui/DemoBadge';
@@ -12,6 +13,7 @@ import { placeIcon } from './placeIcon';
 export function PlaceCard({ place, onClose }: { place: Place; onClose: () => void }) {
   const { fix } = useLocation();
   const { isFavourite, toggleFavourite } = useSavedPlaces();
+  const { planRoute } = useRouting();
   const [copied, setCopied] = useState(false);
   const canShare = typeof navigator.share === 'function';
   const Icon = placeIcon(place);
@@ -69,8 +71,11 @@ export function PlaceCard({ place, onClose }: { place: Place; onClose: () => voi
         </button>
       </div>
 
-      <div className="mt-4 grid grid-cols-2 gap-2">
-        <Button variant={saved ? 'primary' : 'secondary'} onClick={() => toggleFavourite(place)} aria-pressed={saved}>
+      <Button className="mt-4 w-full py-3 text-base" onClick={() => planRoute(place)}>
+        <CornerUpRight className="size-5" /> Directions
+      </Button>
+      <div className="mt-2 grid grid-cols-2 gap-2">
+        <Button variant="secondary" className={saved ? 'text-amber-600 dark:text-amber-400' : undefined} onClick={() => toggleFavourite(place)} aria-pressed={saved}>
           <Star className="size-4" fill={saved ? 'currentColor' : 'none'} />
           {saved ? 'Saved' : 'Save'}
         </Button>
