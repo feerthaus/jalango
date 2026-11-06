@@ -10,6 +10,8 @@ export default defineConfig({
   },
   server: {
     port: 5173,
+    // Allow quick phone testing through a Cloudflare quick tunnel (see README)
+    allowedHosts: ['.trycloudflare.com'],
     // In development the Express API runs separately; proxy /api to it.
     proxy: { '/api': { target: 'http://localhost:8787', changeOrigin: true } },
   },

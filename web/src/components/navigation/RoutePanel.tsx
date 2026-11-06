@@ -1,7 +1,11 @@
-import { AlertTriangle, ArrowLeft, Coins, Gauge, LocateFixed, Navigation, RefreshCw, Route as RouteIcon, ShieldCheck } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, Coins, Megaphone, Gauge, LocateFixed, Navigation, RefreshCw, Route as RouteIcon, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { DemoBadge } from '@/components/ui/DemoBadge';
+import { useReports } from '@/contexts/ReportsContext';
 import { useRouting } from '@/contexts/RoutingContext';
+import { reportsOnRoute } from '@/utils/routeAlerts';
+import { buildRouteIndex } from '@/utils/routeProgress';
+import { useMemo } from 'react';
 import { useProbeConsent } from '@/hooks/useProbeConsent';
 import { cn } from '@/lib/cn';
 import type { Route } from '@/types';
@@ -14,6 +18,12 @@ export function RoutePanel() {
   const { status, destination, routes, selectedIndex, selectRoute, mode, notice, error, avoidTolls, setAvoidTolls, startNavigation, clearRoute, retry } = useRouting();
   if (!destination) return null;
 
+  const { reports } = useReports();
+  // community reports lying on each route option
+  const reportCounts = useMemo(
+    () => routes.map((r) => (reports.length && r.source !== 'demo' ? reportsOnRoute(buildRouteIndex(r), reports).length : 0)),
+    [routes, reports],
+  );
   const fastest = routes.reduce((min, r, i) => (r.durationSeconds < routes[min].durationSeconds ? i : min), 0);
 
   return (
@@ -72,7 +82,7 @@ export function RoutePanel() {
             )}
             <ul role="radiogroup" aria-label="Routes" className="space-y-2 pb-2">
               {routes.map((r, i) => (
-                <RouteOption key={r.id} route={r} selected={i === selectedIndex} fastest={routes.length > 1 && i === fastest} onSelect={() => selectRoute(i)} />
+                <RouteOption key={r.id} route={r} reportCount={reportCounts[i] ?? 0} selected={i === selectedIndex} fastest={routes.length > 1 && i === fastest} onSelect={() => selectRoute(i)} />
               ))}
             </ul>
           </>
@@ -91,7 +101,7 @@ export function RoutePanel() {
   );
 }
 
-function RouteOption({ route, selected, fastest, onSelect }: { route: Route; selected: boolean; fastest: boolean; onSelect: () => void }) {
+function RouteOption({ route, reportCount, selected, fastest, onSelect }: { route: Route; reportCount: number; selected: boolean; fastest: boolean; onSelect: () => void }) {
   const delay = route.typicalDurationSeconds ? route.durationSeconds - route.typicalDurationSeconds : 0;
   const heavy = delay > 300;
   const demo = route.source === 'demo';
@@ -127,6 +137,11 @@ function RouteOption({ route, selected, fastest, onSelect }: { route: Route; sel
           {route.hasMotorway && (
             <Chip className="bg-sky-500/15 text-sky-700 dark:text-sky-300">
               <RouteIcon className="size-3" /> Highway
+            </Chip>
+          )}
+          {reportCount > 0 && (
+            <Chip className="bg-red-500/15 text-red-600 dark:text-red-300">
+              <Megaphone className="size-3" /> {reportCount} report{reportCount === 1 ? '' : 's'} on route
             </Chip>
           )}
           {delay > 120 && (

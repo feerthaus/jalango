@@ -58,6 +58,21 @@ The Profile tab shows which sources are live.
 
 Inputs are validated with zod. Rate limits per IP: `/api/geo/*` 120 requests/min, `/api/directions` 60/min, `/api/probes` 12/min. Upstream failures map to clean JSON errors (`503 mapbox_not_configured`, `502 upstream_*`, `429`), and the web client falls back to demo data when the service is unavailable.
 
+## Try it on your phone (quick tunnel)
+
+Browsers only give GPS to `https://` pages or `localhost`. For quick tests on a real phone, expose the dev server through a free Cloudflare quick tunnel. Vite already proxies `/api` to the server, so one tunnel is enough.
+
+```bash
+# one-time install (Debian/Ubuntu/Pop!_OS)
+curl -L https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb -o cloudflared.deb
+sudo dpkg -i cloudflared.deb
+
+# with `npm run dev` running in another terminal:
+cloudflared tunnel --url http://localhost:5173
+```
+
+Open the printed `https://….trycloudflare.com` address on your phone. The address changes every time the tunnel starts, and it only works while your laptop is running. For a permanent link, deploy the app.
+
 ## Supabase setup (reports, accounts, traffic data)
 
 1. Create a **new** project at https://supabase.com. Use a separate project from any other app.
@@ -131,5 +146,6 @@ npm run build       # production builds
 - [x] **Own data, step 1**: opt-in anonymous GPS probe collection (`probe_samples`)
 - [ ] **Own data, step 2**: map-match samples to road segments, aggregate speeds, show a JalanGo traffic layer
 - [x] **Phase 3**: report submission at the GPS position (7 types, optional note), map markers, a nearby list with filters, "still there" / "not there" votes, owners can clear or delete their reports, Supabase Realtime updates, anti-spam in the database plus a client cooldown, email sign-in and registration
+- [x] **Hazard alerts while navigating**: the nearest report on the route ahead, with vibration and voice at about 800 m (mutable), a "still there?" prompt after passing, and a report count on each route option
 - [ ] **Phase 4**: profile editing, favourites and recents synced to Supabase, report history, password reset
 - [ ] **Phase 5**: E2E tests, offline handling, performance passes

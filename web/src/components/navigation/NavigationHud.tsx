@@ -1,4 +1,7 @@
-import { ChevronDown, ChevronUp, Flag, ListOrdered, LocateFixed, Loader2, X } from 'lucide-react';
+import { ChevronDown, ChevronUp, Flag, ListOrdered, LocateFixed, Loader2, Volume2, VolumeX, X } from 'lucide-react';
+import { useRouteAlerts } from '@/hooks/useRouteAlerts';
+import { useVoiceAlerts } from '@/hooks/useVoiceAlerts';
+import { RouteAlerts } from './RouteAlerts';
 import { useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { DemoBadge } from '@/components/ui/DemoBadge';
@@ -16,6 +19,8 @@ export function NavigationHud() {
   const { status, selectedRoute: route, progress, destination, endNavigation, rerouting } = useRouting();
   const { following, setFollowing } = useMapContext();
   const [showSteps, setShowSteps] = useState(false);
+  const alerts = useRouteAlerts();
+  const [voiceOn, setVoiceOn] = useVoiceAlerts();
   if (!route || !destination) return null;
 
   if (status === 'arrived') {
@@ -46,7 +51,7 @@ export function NavigationHud() {
   return (
     <>
       {/* Maneuver banner */}
-      <div className="absolute inset-x-0 top-0 z-30 p-3 pt-[calc(env(safe-area-inset-top)+0.75rem)] md:w-[420px] md:p-4">
+      <div className="absolute inset-x-0 top-0 z-30 space-y-2 p-3 pt-[calc(env(safe-area-inset-top)+0.75rem)] md:w-[420px] md:p-4">
         <div className="pointer-events-auto overflow-hidden rounded-3xl bg-ink-950 text-white shadow-float">
           <button type="button" onClick={() => setShowSteps((s) => !s)} className="flex w-full items-center gap-3 p-4 text-left" aria-expanded={showSteps} aria-controls="nav-steps">
             <span className="grid size-14 shrink-0 place-items-center rounded-2xl bg-jade-500 text-ink-950">
@@ -90,6 +95,7 @@ export function NavigationHud() {
             </ol>
           )}
         </div>
+        {!showSteps && <RouteAlerts alerts={alerts} />}
       </div>
 
       {/* Trip bar */}
@@ -109,6 +115,9 @@ export function NavigationHud() {
               {formatDistance(remainingMeters)} · {arrivalClock(remainingSeconds)}
             </p>
           </div>
+          <IconButton label={voiceOn ? 'Mute voice alerts' : 'Unmute voice alerts'} onClick={() => setVoiceOn(!voiceOn)}>
+            {voiceOn ? <Volume2 className="size-5" /> : <VolumeX className="size-5 text-ink-400" />}
+          </IconButton>
           <IconButton label={showSteps ? 'Hide directions list' : 'Show directions list'} active={showSteps} onClick={() => setShowSteps((s) => !s)}>
             <ListOrdered className="size-5" />
           </IconButton>
