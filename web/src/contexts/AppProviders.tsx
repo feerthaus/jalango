@@ -11,6 +11,7 @@ import { TripsProvider } from './TripsContext';
 import { ShortcutsProvider } from './ShortcutsContext';
 import { CommunityPlacesProvider } from './CommunityPlacesContext';
 import { LiveShareProvider } from './LiveShareContext';
+import { ConvoyProvider } from './ConvoyContext';
 
 export function AppProviders({ children }: { children: ReactNode }) {
   return (
@@ -25,7 +26,9 @@ export function AppProviders({ children }: { children: ReactNode }) {
                     <CommunityPlacesProvider>
                       <RoutingProvider>
                         <ReportsProvider>
-                          <LiveShareProvider>{children}</LiveShareProvider>
+                          <LiveShareProvider>
+                            <ConvoyProvider>{children}</ConvoyProvider>
+                          </LiveShareProvider>
                         </ReportsProvider>
                       </RoutingProvider>
                     </CommunityPlacesProvider>

@@ -3,6 +3,7 @@ import { useEffect, useRef } from 'react';
 import { useMapContext } from '@/contexts/MapContext';
 import { useVehiclePose } from '@/hooks/useVehiclePose';
 import { lerp, lerpAngle } from '@/utils/motion';
+import { shade } from '@/utils/convoy';
 
 /** Top-down car (pointing up), drawn in SVG so it stays crisp at any size. */
 export const CAR_SVG = `
@@ -34,6 +35,20 @@ export const CAR_SVG = `
   <rect x="10" y="64" width="7" height="3" rx="1.5" fill="#ff3b30"/>
   <rect x="31" y="64" width="7" height="3" rx="1.5" fill="#ff3b30"/>
 </svg>`;
+
+/**
+ * The same car in any colour (used for convoy members). `uid` keeps the SVG
+ * gradient ids unique when several cars are on screen.
+ */
+export function carSvg(color: string, uid: string, width = 30): string {
+  const height = Math.round(width * 1.5);
+  return CAR_SVG.replaceAll('jg-car-', `jg-car-${uid}-`)
+    .replace('width="34" height="51"', `width="${width}" height="${height}"`)
+    .replaceAll('#0aa07a', shade(color, -0.25))
+    .replace('#34d9ad', shade(color, 0.25))
+    .replace('#0b7f63', shade(color, -0.45))
+    .replace('#2fd1a6', shade(color, 0.1));
+}
 
 /**
  * The driver's car. Positions are interpolated between GPS fixes every

@@ -1,4 +1,4 @@
-import { createBrowserRouter, RouterProvider } from 'react-router';
+import { createBrowserRouter, Navigate, RouterProvider, useParams } from 'react-router';
 import { AppProviders } from '@/contexts/AppProviders';
 import { AppLayout } from '@/layouts/AppLayout';
 import { ExplorePage } from '@/pages/ExplorePage';
@@ -18,6 +18,7 @@ const router = createBrowserRouter([
   { path: '/terms', element: <TermsPage />, errorElement: <ErrorBoundary /> },
   { path: '/admin', element: <AdminPage />, errorElement: <ErrorBoundary /> },
   { path: '/live/:token', element: <LiveViewPage />, errorElement: <ErrorBoundary /> },
+  { path: '/convoy/:code', element: <ConvoyInvite /> },
   {
     element: <AppLayout />,
     errorElement: <ErrorBoundary />,
@@ -31,6 +32,12 @@ const router = createBrowserRouter([
     ],
   },
 ]);
+
+/** Invite links open the map with the join sheet pre-filled. */
+function ConvoyInvite() {
+  const { code = '' } = useParams();
+  return <Navigate to={`/?convoy=${encodeURIComponent(code)}`} replace />;
+}
 
 export function App() {
   return (

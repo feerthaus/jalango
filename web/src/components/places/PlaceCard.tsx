@@ -1,4 +1,4 @@
-import { Check, Copy, CornerUpRight, Heart, Share2, Star, ThumbsUp, X } from 'lucide-react';
+import { Check, Copy, CornerUpRight, Heart, Share2, Star, ThumbsUp, Users, X } from 'lucide-react';
 import { RecommendPlaceSheet } from '@/components/community/RecommendPlaceSheet';
 import { FlagButton } from '@/components/moderation/FlagButton';
 import { useCommunityPlaces } from '@/contexts/CommunityPlacesContext';
@@ -6,6 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { categoryMeta } from '@/lib/communityCategories';
 import type { CommunityCategory } from '@/types';
 import { useRouting } from '@/contexts/RoutingContext';
+import { useConvoy } from '@/contexts/ConvoyContext';
 import { useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { DemoBadge } from '@/components/ui/DemoBadge';
@@ -23,6 +24,14 @@ export function PlaceCard({ place, onClose }: { place: Place; onClose: () => voi
   const [copied, setCopied] = useState(false);
   const [recommending, setRecommending] = useState(false);
   const { user } = useAuth();
+  const convoy = useConvoy();
+  const [convoyMsg, setConvoyMsg] = useState<string | null>(null);
+  const setForConvoy = (which: 'meet' | 'destination') => {
+    const p = { name: place.name, coordinates: place.coordinates };
+    (which === 'meet' ? convoy.setMeetPoint(p) : convoy.setDestination(p))
+      .then(() => setConvoyMsg(which === 'meet' ? 'Titik berkumpul ditetapkan untuk konvoi.' : 'Destinasi konvoi dikemas kini.'))
+      .catch((e: unknown) => setConvoyMsg(e instanceof Error ? e.message : 'Gagal.'));
+  };
   const community = useCommunityPlaces();
   const pick = place.source === 'community' ? community.findById(place.id.replace(/^community:/, '')) : undefined;
   const picked = pick ? community.recommended.has(pick.id) : false;
@@ -121,6 +130,17 @@ export function PlaceCard({ place, onClose }: { place: Place; onClose: () => voi
           </Button>
         )}
       </div>
+      {convoy.isLeader && (
+        <div className="mt-2 grid grid-cols-2 gap-2">
+          <Button variant="secondary" className="text-xs text-violet-700 dark:text-violet-300" onClick={() => setForConvoy('meet')}>
+            <Users className="size-4" /> Titik berkumpul
+          </Button>
+          <Button variant="secondary" className="text-xs text-violet-700 dark:text-violet-300" onClick={() => setForConvoy('destination')}>
+            <Users className="size-4" /> Destinasi konvoi
+          </Button>
+          {convoyMsg && <p role="status" className="col-span-2 text-xs text-ink-500">{convoyMsg}</p>}
+        </div>
+      )}
       {recommending && (
         <RecommendPlaceSheet
           initial={{ name: place.name, address: place.address, coordinates: place.coordinates, category: guessCategory(place.category) }}

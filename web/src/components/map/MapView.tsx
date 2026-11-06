@@ -14,6 +14,7 @@ import { RouteLayer } from './RouteLayer';
 import { ReportMarkers } from '@/components/reports/ReportMarkers';
 import { ShortcutLayer } from '@/components/shortcuts/ShortcutLayer';
 import { UserLocationMarker } from './UserLocationMarker';
+import { ConvoyMarkers } from '@/components/convoy/ConvoyMarkers';
 
 if (env.mapboxToken) mapboxgl.accessToken = env.mapboxToken;
 
@@ -126,6 +127,7 @@ export function MapView() {
   return (
     <div className="absolute inset-0">
       <div ref={containerRef} className="h-full w-full" role="region" aria-label="Map" />
+      {map && <ConvoyMarkers />}
       {map && <UserLocationMarker />}
       {map && markerPlace && <DestinationMarker place={markerPlace} />}
       {map && <RouteLayer />}

@@ -1,4 +1,7 @@
-import { Megaphone, Radio, WifiOff } from 'lucide-react';
+import { Megaphone, Radio, Users, WifiOff } from 'lucide-react';
+import { ConvoyBanner } from '@/components/convoy/ConvoyBanner';
+import { ConvoySheet } from '@/components/convoy/ConvoySheet';
+import { normalizeConvoyCode } from '@/utils/convoy';
 import { LiveShareBanner } from '@/components/live/LiveShareBanner';
 import { ShareLiveSheet } from '@/components/live/ShareLiveSheet';
 import { useCallback, useEffect, useState } from 'react';
@@ -31,11 +34,18 @@ export function MapPage() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
+  const [convoyOpen, setConvoyOpen] = useState<{ code: string | null } | null>(null);
   const [params, setParams] = useSearchParams();
   // Home-screen shortcut "Report" opens /?report=1
   useEffect(() => {
     if (params.get('report') === '1') {
       setReportOpen(true);
+      setParams({}, { replace: true });
+    }
+    // Convoy invite links (/convoy/CODE) land here as /?convoy=CODE
+    const code = params.get('convoy');
+    if (code !== null) {
+      setConvoyOpen({ code: normalizeConvoyCode(code) });
       setParams({}, { replace: true });
     }
   }, [params, setParams]);
@@ -74,6 +84,7 @@ export function MapPage() {
         {!searchOpen && !planning && (
           <div className="space-y-2 max-md:mr-14">
             <LiveShareBanner />
+            <ConvoyBanner />
             <DemoModeBanner />
             {tileError && (
               <div role="status" className="pointer-events-auto inline-flex max-w-full items-center gap-2 rounded-full bg-ink-900/90 px-3 py-1.5 text-xs text-white shadow-float">
@@ -97,6 +108,9 @@ export function MapPage() {
           <div className="flex items-end justify-between gap-3">
             <SpeedIndicator />
             <div className="ml-auto flex flex-col items-end gap-3">
+              <IconButton label="Konvoi (group travel)" onClick={() => setConvoyOpen({ code: null })}>
+                <Users className="size-5 text-violet-600 dark:text-violet-400" />
+              </IconButton>
               <IconButton label="Share live location" onClick={() => setShareOpen(true)}>
                 <Radio className="size-5 text-jade-600 dark:text-jade-400" />
               </IconButton>
@@ -129,6 +143,7 @@ export function MapPage() {
 
       {reportOpen && <ReportSheet onClose={() => setReportOpen(false)} />}
       {shareOpen && <ShareLiveSheet onClose={() => setShareOpen(false)} />}
+      {convoyOpen && <ConvoySheet joinCode={convoyOpen.code} onClose={() => setConvoyOpen(null)} />}
     </>
   );
 }
