@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { useProbeConsent } from '@/hooks/useProbeConsent';
 import { ProbeCollector } from '@/services/probeService';
 import { fetchRoutes } from '@/services/routingService';
+import { clearTrip, loadTrip, saveTrip } from '@/services/tripStore';
 import type { Coordinates, Place, Route } from '@/types';
 import { buildRouteIndex, computeProgress, type RouteIndex, type RouteProgress } from '@/utils/routeProgress';
 import { useLocation } from './LocationContext';
@@ -21,6 +22,9 @@ interface RoutingValue {
   avoidTolls: boolean;
   progress: RouteProgress | null;
   rerouting: boolean;
+  /** Destination name when a trip was restored after the app reopened */
+  resumedTo: string | null;
+  dismissResumed: () => void;
   planRoute: (destination: Place) => void;
   retry: () => void;
   selectRoute: (index: number) => void;
@@ -62,6 +66,9 @@ export function RoutingProvider({ children }: { children: ReactNode }) {
   const offRouteCount = useRef(0);
   const lastReroute = useRef(0);
   const collector = useRef<ProbeCollector | null>(null);
+  /** What to do once a restored trip's routes are loaded */
+  const resumeRef = useRef<'navigate' | 'preview' | null>(null);
+  const [resumedTo, setResumedTo] = useState<string | null>(null);
 
   const selectedRoute = routes[selectedIndex] ?? null;
 
@@ -182,6 +189,47 @@ export function RoutingProvider({ children }: { children: ReactNode }) {
     }
   }, [selectedRoute, destination, consent]);
 
+  // Restore the last trip when the app reopens (route is recalculated from here)
+  useEffect(() => {
+    const trip = loadTrip();
+    if (!trip) return;
+    resumeRef.current = trip.navigating ? 'navigate' : 'preview';
+    setDestination(trip.destination);
+    setAvoidTollsState(trip.avoidTolls);
+    setResumedTo(trip.destination.name);
+    queueMicrotask(request);
+    // run once on mount
+  }, []);
+
+  // Resume turn-by-turn automatically once the fresh route is ready
+  useEffect(() => {
+    if (status !== 'ready' || !resumeRef.current) return;
+    const mode = resumeRef.current;
+    resumeRef.current = null;
+    if (mode === 'navigate') startNavigation();
+  }, [status, startNavigation]);
+
+  // Keep the saved trip in sync (skip the initial render, before a restore happens)
+  const persistReady = useRef(false);
+  useEffect(() => {
+    if (!persistReady.current) {
+      persistReady.current = true;
+      return;
+    }
+    if (status === 'idle' && resumeRef.current) return; // a restore is about to start
+    if (!destination || status === 'idle' || status === 'arrived') {
+      clearTrip();
+      return;
+    }
+    saveTrip({ destination, avoidTolls, navigating: status === 'navigating' || resumeRef.current === 'navigate' });
+  }, [destination, status, avoidTolls]);
+
+  useEffect(() => {
+    if (!resumedTo) return;
+    const id = setTimeout(() => setResumedTo(null), 8000);
+    return () => clearTimeout(id);
+  }, [resumedTo]);
+
   // Respect consent being withdrawn mid-trip
   useEffect(() => {
     if (consent !== 'granted') stopCollector();
@@ -197,6 +245,8 @@ export function RoutingProvider({ children }: { children: ReactNode }) {
     setNotice(null);
     setMode(null);
     setRerouting(false);
+    resumeRef.current = null;
+    setResumedTo(null);
   }, []);
 
   const endNavigation = useCallback(() => {
@@ -224,6 +274,8 @@ export function RoutingProvider({ children }: { children: ReactNode }) {
       avoidTolls,
       progress,
       rerouting,
+      resumedTo,
+      dismissResumed: () => setResumedTo(null),
       planRoute,
       retry: request,
       selectRoute: setSelectedIndex,
@@ -232,7 +284,7 @@ export function RoutingProvider({ children }: { children: ReactNode }) {
       endNavigation,
       clearRoute,
     }),
-    [status, destination, routes, selectedIndex, selectedRoute, mode, notice, error, avoidTolls, progress, rerouting, planRoute, request, setAvoidTolls, startNavigation, endNavigation, clearRoute],
+    [status, destination, routes, selectedIndex, selectedRoute, mode, notice, error, avoidTolls, progress, rerouting, resumedTo, planRoute, request, setAvoidTolls, startNavigation, endNavigation, clearRoute],
   );
 
   return <RoutingContext.Provider value={value}>{children}</RoutingContext.Provider>;

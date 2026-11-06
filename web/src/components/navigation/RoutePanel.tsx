@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/Button';
 import { DemoBadge } from '@/components/ui/DemoBadge';
 import { useReports } from '@/contexts/ReportsContext';
 import { useRouting } from '@/contexts/RoutingContext';
+import { ResumeToast } from './ResumeToast';
 import { reportsOnRoute } from '@/utils/routeAlerts';
 import { buildRouteIndex } from '@/utils/routeProgress';
 import { useMemo } from 'react';
@@ -52,6 +53,7 @@ export function RoutePanel() {
       </header>
 
       <div className="min-h-0 flex-1 overflow-y-auto px-3">
+        <ResumeToast className="mb-2" />
         {status === 'needs-location' && (
           <Message icon={LocateFixed} title="Waiting for your location">
             Directions start from where you are. Allow location access, or move to an open area for a GPS fix.

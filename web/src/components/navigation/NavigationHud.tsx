@@ -1,6 +1,8 @@
 import { ChevronDown, ChevronUp, Flag, ListOrdered, LocateFixed, Loader2, Volume2, VolumeX, X } from 'lucide-react';
 import { useRouteAlerts } from '@/hooks/useRouteAlerts';
 import { useVoiceAlerts } from '@/hooks/useVoiceAlerts';
+import { useWakeLock } from '@/hooks/useWakeLock';
+import { ResumeToast } from './ResumeToast';
 import { RouteAlerts } from './RouteAlerts';
 import { useState } from 'react';
 import { Button } from '@/components/ui/Button';
@@ -20,6 +22,7 @@ export function NavigationHud() {
   const { following, setFollowing } = useMapContext();
   const [showSteps, setShowSteps] = useState(false);
   const alerts = useRouteAlerts();
+  useWakeLock(status === 'navigating');
   const [voiceOn, setVoiceOn] = useVoiceAlerts();
   if (!route || !destination) return null;
 
@@ -95,6 +98,7 @@ export function NavigationHud() {
             </ol>
           )}
         </div>
+        {!showSteps && <ResumeToast />}
         {!showSteps && <RouteAlerts alerts={alerts} />}
       </div>
 

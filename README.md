@@ -181,5 +181,6 @@ npm run build       # production builds
 - [ ] **Own data, step 2**: map-match samples to road segments, aggregate speeds, show a JalanGo traffic layer
 - [x] **Phase 3**: report submission at the GPS position (7 types, optional note), map markers, a nearby list with filters, "still there" / "not there" votes, owners can clear or delete their reports, Supabase Realtime updates, anti-spam in the database plus a client cooldown, email sign-in and registration
 - [x] **Hazard alerts while navigating**: the nearest report on the route ahead, with vibration and voice at about 800 m (mutable), a "still there?" prompt after passing, and a report count on each route option
+- [x] **Driving comfort**: GPS starts automatically on open (unless blocked), the active trip resumes after the app is closed (recalculated from the current position, kept for 8 h), and the screen stays on while navigating (Wake Lock)
 - [ ] **Phase 4**: profile editing, favourites and recents synced to Supabase, report history, password reset
 - [ ] **Phase 5**: E2E tests, offline handling, performance passes

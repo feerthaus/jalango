@@ -65,7 +65,7 @@ export function useGeolocation(): GeolocationState {
     );
   }, [stop]);
 
-  // Auto-start when permission was granted earlier; otherwise wait for a user gesture.
+  // Auto-start on open. Only an explicit browser "deny" stops it; then the banner explains how to re-enable.
   useEffect(() => {
     if (initialStatus() !== 'idle') return;
     let cancelled = false;
@@ -85,13 +85,14 @@ export function useGeolocation(): GeolocationState {
         .then((p) => {
           if (cancelled) return;
           permission = p;
-          if (p.state === 'granted') request();
-          else setStatus(p.state === 'denied' ? 'denied' : 'prompt');
+          // Start GPS straight away (the browser asks once if it hasn't been allowed yet)
+          if (p.state === 'denied') setStatus('denied');
+          else request();
           p.addEventListener('change', onChange);
         })
-        .catch(() => !cancelled && setStatus('prompt'));
+        .catch(() => !cancelled && request());
     } else {
-      setStatus('prompt');
+      request();
     }
 
     return () => {
