@@ -33,7 +33,7 @@ export interface RouteStep {
   instruction: string;
   distanceMeters: number;
   durationSeconds: number;
-  maneuver: { type: string; modifier?: string; location: Coordinates; bearingAfter?: number };
+  maneuver: { type: string; modifier?: string; location: Coordinates; bearingAfter?: number; exit?: number };
   roadName?: string;
   /** Road reference number, e.g. "E1" or "FT2" */
   roadRef?: string;

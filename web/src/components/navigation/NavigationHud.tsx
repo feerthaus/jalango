@@ -2,6 +2,7 @@ import { ChevronDown, ChevronUp, Flag, ListOrdered, LocateFixed, Loader2, Volume
 import { useRouteAlerts } from '@/hooks/useRouteAlerts';
 import { useVoiceAlerts } from '@/hooks/useVoiceAlerts';
 import { useWakeLock } from '@/hooks/useWakeLock';
+import { useVoiceGuidance } from '@/hooks/useVoiceGuidance';
 import { ResumeToast } from './ResumeToast';
 import { RouteAlerts } from './RouteAlerts';
 import { RateTrip } from '@/components/trips/RateTrip';
@@ -27,6 +28,7 @@ export function NavigationHud() {
   const [showSteps, setShowSteps] = useState(false);
   const alerts = useRouteAlerts();
   useWakeLock(status === 'navigating');
+  useVoiceGuidance();
   const [voiceOn, setVoiceOn] = useVoiceAlerts();
   if (!route || !destination) return null;
 
@@ -129,7 +131,7 @@ export function NavigationHud() {
               {formatDistance(remainingMeters)} · {arrivalClock(remainingSeconds)}
             </p>
           </div>
-          <IconButton label={voiceOn ? 'Mute voice alerts' : 'Unmute voice alerts'} onClick={() => setVoiceOn(!voiceOn)}>
+          <IconButton label={voiceOn ? 'Mute voice guidance' : 'Unmute voice guidance'} onClick={() => setVoiceOn(!voiceOn)}>
             {voiceOn ? <Volume2 className="size-5" /> : <VolumeX className="size-5 text-ink-400" />}
           </IconButton>
           <IconButton label={showSteps ? 'Hide directions list' : 'Show directions list'} active={showSteps} onClick={() => setShowSteps((s) => !s)}>

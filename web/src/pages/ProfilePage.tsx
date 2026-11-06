@@ -14,6 +14,8 @@ import { useSavedPlaces } from '@/contexts/SavedPlacesContext';
 import { useServiceStatus } from '@/contexts/ServiceStatusContext';
 import { useTheme, type ThemePreference } from '@/contexts/ThemeContext';
 import { useProbeConsent } from '@/hooks/useProbeConsent';
+import { hasVoiceFor, primeSpeech, speak, useVoiceAlerts, useVoiceLang } from '@/hooks/useVoiceAlerts';
+import { Volume2 } from 'lucide-react';
 import { features } from '@/lib/config';
 import { cn } from '@/lib/cn';
 
@@ -47,6 +49,8 @@ export function ProfilePage() {
       <AccountCard favourites={favourites.length} recents={recents.length} />
 
       <InstallCard />
+
+      <VoiceSettings />
 
       <Heading>Map appearance</Heading>
       <div role="radiogroup" aria-label="Theme" className="grid grid-cols-3 gap-1 rounded-2xl bg-ink-100 p-1 dark:bg-ink-900">
@@ -208,5 +212,60 @@ function InstallCard() {
       </div>
       {mode === 'ios' && <IosSteps />}
     </div>
+  );
+}
+
+function VoiceSettings() {
+  const [on, setOn] = useVoiceAlerts();
+  const [lang, setLang] = useVoiceLang();
+  const test = () => {
+    primeSpeech();
+    speak(lang === 'ms' ? 'Dalam 300 meter, belok kanan ke Jalan Tun Razak' : 'In 300 metres, turn right onto Jalan Tun Razak', lang);
+  };
+  return (
+    <>
+      <Heading>Voice guidance</Heading>
+      <div className="space-y-3 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-ink-200 dark:bg-ink-900 dark:ring-ink-800">
+        <div className="flex items-center gap-3">
+          <div className="min-w-0 flex-1">
+            <p id="voice-label" className="text-sm font-semibold">Spoken directions &amp; alerts</p>
+            <p className="text-xs text-ink-500 dark:text-ink-400">“Dalam 300 meter, belok kanan…” and hazard warnings while navigating.</p>
+          </div>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={on}
+            aria-labelledby="voice-label"
+            onClick={() => setOn(!on)}
+            className={cn('relative h-7 w-12 shrink-0 rounded-full transition', on ? 'bg-jade-500' : 'bg-ink-200 dark:bg-ink-700')}
+          >
+            <span className={cn('absolute top-0.5 size-6 rounded-full bg-white shadow transition-all', on ? 'left-[1.375rem]' : 'left-0.5')} />
+          </button>
+        </div>
+        <div role="radiogroup" aria-label="Voice language" className="grid grid-cols-2 gap-1 rounded-xl bg-ink-100 p-1 dark:bg-ink-800">
+          {(['ms', 'en'] as const).map((l) => (
+            <button
+              key={l}
+              type="button"
+              role="radio"
+              aria-checked={lang === l}
+              onClick={() => setLang(l)}
+              className={cn('rounded-lg py-2 text-sm font-semibold', lang === l ? 'bg-white shadow-sm dark:bg-ink-600' : 'text-ink-500')}
+            >
+              {l === 'ms' ? 'Bahasa Melayu' : 'English'}
+            </button>
+          ))}
+        </div>
+        <Button variant="secondary" className="w-full" onClick={test} disabled={!on}>
+          <Volume2 className="size-4" /> Test voice
+        </Button>
+        {lang === 'ms' && !hasVoiceFor('ms') && (
+          <p className="text-xs text-amber-700 dark:text-amber-300">
+            No Malay voice found on this device yet. Add one in your phone’s settings (iPhone: Accessibility → Spoken Content → Voices → Malay; Android: Text-to-speech → Google →
+            install Malay). Until then your default voice is used.
+          </p>
+        )}
+      </div>
+    </>
   );
 }

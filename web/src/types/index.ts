@@ -82,7 +82,7 @@ export interface RouteStep {
   instruction: string;
   distanceMeters: number;
   durationSeconds: number;
-  maneuver: { type: string; modifier?: string; location: Coordinates; bearingAfter?: number };
+  maneuver: { type: string; modifier?: string; location: Coordinates; bearingAfter?: number; /** roundabout exit number */ exit?: number };
   roadName?: string;
   /** Road reference number, e.g. "E1" */
   roadRef?: string;

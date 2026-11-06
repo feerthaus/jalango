@@ -9,6 +9,7 @@ import { reportsOnRoute } from '@/utils/routeAlerts';
 import { buildRouteIndex } from '@/utils/routeProgress';
 import { useMemo } from 'react';
 import { useProbeConsent } from '@/hooks/useProbeConsent';
+import { primeSpeech } from '@/hooks/useVoiceAlerts';
 import { cn } from '@/lib/cn';
 import type { Route } from '@/types';
 import { formatDuration } from '@/utils/format';
@@ -96,7 +97,13 @@ export function RoutePanel() {
       {status === 'ready' && (
         <footer className="space-y-2 p-3 pt-1">
           <ProbeConsentPrompt />
-          <Button className="w-full py-3 text-base" onClick={startNavigation}>
+          <Button
+            className="w-full py-3 text-base"
+            onClick={() => {
+              primeSpeech();
+              startNavigation();
+            }}
+          >
             <Navigation className="size-5" fill="currentColor" /> Start
           </Button>
         </footer>

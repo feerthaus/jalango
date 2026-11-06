@@ -16,7 +16,7 @@ interface MbStep {
   duration: number;
   name?: string;
   ref?: string;
-  maneuver: { type: string; modifier?: string; instruction?: string; location: [number, number]; bearing_after?: number };
+  maneuver: { type: string; modifier?: string; instruction?: string; location: [number, number]; bearing_after?: number; exit?: number };
   intersections?: MbIntersection[];
 }
 interface MbLeg {
@@ -60,6 +60,7 @@ export function normalizeRoute(r: MbRoute, index: number): Route {
           modifier: s.maneuver.modifier,
           location: { lng: s.maneuver.location[0], lat: s.maneuver.location[1] },
           bearingAfter: s.maneuver.bearing_after,
+          exit: s.maneuver.exit,
         },
         roadName: s.name || undefined,
         roadRef: s.ref || undefined,

@@ -4,10 +4,10 @@ import { useReports } from '@/contexts/ReportsContext';
 import { useRouting } from '@/contexts/RoutingContext';
 import { reportMeta } from '@/lib/reportTypes';
 import type { TrafficReport } from '@/types';
-import { formatDistance } from '@/utils/geo';
 import { justPassed, reportsOnRoute, upcomingAlerts, type UpcomingAlert } from '@/utils/routeAlerts';
 import { buildRouteIndex } from '@/utils/routeProgress';
-import { speak, useVoiceAlerts, vibrate } from './useVoiceAlerts';
+import { speak, useVoiceAlerts, useVoiceLang, vibrate } from './useVoiceAlerts';
+import { spokenDistance } from '@/utils/voiceInstructions';
 
 const HORIZON_M = 2000;
 const ANNOUNCE_AT_M = 800;
@@ -34,6 +34,7 @@ export function useRouteAlerts(): RouteAlertsState {
   const { reports, myVotes } = useReports();
   const { user } = useAuth();
   const [voiceOn] = useVoiceAlerts();
+  const [lang] = useVoiceLang();
   const announced = useRef(new Set<string>());
   const asked = useRef(new Set<string>());
   const [ask, setAsk] = useState<TrafficReport | null>(null);
@@ -56,9 +57,10 @@ export function useRouteAlerts(): RouteAlertsState {
     vibrate([180, 80, 180]);
     if (voiceOn) {
       const meta = reportMeta(next.report.report_type);
-      speak(`${meta.label} reported ahead, in ${formatDistance(next.distance).replace(' m', ' metres').replace(' km', ' kilometres')}`);
+      const d = spokenDistance(next.distance, lang);
+      speak(lang === 'ms' ? `Awas, ${meta.labelMs.toLowerCase()} dilaporkan dalam ${d} di hadapan` : `${meta.label} reported ahead, in ${d}`, lang);
     }
-  }, [next, voiceOn]);
+  }, [next, voiceOn, lang]);
 
   // Ask about a report right after passing it
   useEffect(() => {
