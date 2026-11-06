@@ -58,6 +58,28 @@ The Profile tab shows which sources are live.
 
 Inputs are validated with zod. Rate limits per IP: `/api/geo/*` 120 requests/min, `/api/directions` 60/min, `/api/probes` 12/min. Upstream failures map to clean JSON errors (`503 mapbox_not_configured`, `502 upstream_*`, `429`), and the web client falls back to demo data when the service is unavailable.
 
+## Deploy (Netlify: web + API on one domain)
+
+`netlify.toml` builds the web app into `web/dist` and deploys the Express API as a Netlify Function (`netlify/functions/api.ts`). Requests to `/api/*` are routed to the function, so the app works on one domain without CORS setup.
+
+1. On Netlify: **Add new site → Import an existing project → GitHub →** `feerthaus/jalango`. Keep the detected settings.
+2. Under **Site configuration → Environment variables**, add:
+
+   | Variable | Value | Used by |
+   |---|---|---|
+   | `VITE_MAPBOX_PUBLIC_TOKEN` | Mapbox `pk.…` (URL-restricted) | web (build time) |
+   | `VITE_SUPABASE_URL` | Supabase project URL | web (build time) |
+   | `VITE_SUPABASE_ANON_KEY` | Supabase anon/publishable key | web (build time) |
+   | `MAPBOX_ACCESS_TOKEN` | Mapbox token **without** URL restriction | API function |
+   | `SUPABASE_URL` | Supabase project URL | API function |
+   | `SUPABASE_SERVICE_ROLE_KEY` | Supabase service_role/secret key (mark as secret) | API function |
+
+3. Deploy (or **Trigger deploy** after adding variables, because `VITE_*` values are baked in at build time).
+4. Supabase → **Authentication → URL Configuration**: set **Site URL** to your Netlify URL and add it under **Redirect URLs**.
+5. Mapbox: add the Netlify domain to the web token's allowed URLs (if restricted).
+
+Every push to `main` redeploys automatically.
+
 ## Try it on your phone (quick tunnel)
 
 Browsers only give GPS to `https://` pages or `localhost`. For quick tests on a real phone, expose the dev server through a free Cloudflare quick tunnel. Vite already proxies `/api` to the server, so one tunnel is enough.
