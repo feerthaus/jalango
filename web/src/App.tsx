@@ -11,11 +11,13 @@ import { ErrorBoundary } from '@/components/layout/ErrorBoundary';
 import { PrivacyPage } from '@/pages/legal/PrivacyPage';
 import { TermsPage } from '@/pages/legal/TermsPage';
 import { AdminPage } from '@/pages/AdminPage';
+import { LiveViewPage } from '@/pages/LiveViewPage';
 
 const router = createBrowserRouter([
   { path: '/privacy', element: <PrivacyPage />, errorElement: <ErrorBoundary /> },
   { path: '/terms', element: <TermsPage />, errorElement: <ErrorBoundary /> },
   { path: '/admin', element: <AdminPage />, errorElement: <ErrorBoundary /> },
+  { path: '/live/:token', element: <LiveViewPage />, errorElement: <ErrorBoundary /> },
   {
     element: <AppLayout />,
     errorElement: <ErrorBoundary />,

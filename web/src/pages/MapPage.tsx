@@ -1,4 +1,6 @@
-import { Megaphone, WifiOff } from 'lucide-react';
+import { Megaphone, Radio, WifiOff } from 'lucide-react';
+import { LiveShareBanner } from '@/components/live/LiveShareBanner';
+import { ShareLiveSheet } from '@/components/live/ShareLiveSheet';
 import { useCallback, useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router';
 import { InstallBanner } from '@/components/pwa/InstallBanner';
@@ -28,6 +30,7 @@ export function MapPage() {
   const planning = !navigating && status !== 'idle';
   const [searchOpen, setSearchOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
   const [params, setParams] = useSearchParams();
   // Home-screen shortcut "Report" opens /?report=1
   useEffect(() => {
@@ -70,6 +73,7 @@ export function MapPage() {
         {planning && <RoutePanel />}
         {!searchOpen && !planning && (
           <div className="space-y-2 max-md:mr-14">
+            <LiveShareBanner />
             <DemoModeBanner />
             {tileError && (
               <div role="status" className="pointer-events-auto inline-flex max-w-full items-center gap-2 rounded-full bg-ink-900/90 px-3 py-1.5 text-xs text-white shadow-float">
@@ -93,6 +97,9 @@ export function MapPage() {
           <div className="flex items-end justify-between gap-3">
             <SpeedIndicator />
             <div className="ml-auto flex flex-col items-end gap-3">
+              <IconButton label="Share live location" onClick={() => setShareOpen(true)}>
+                <Radio className="size-5 text-jade-600 dark:text-jade-400" />
+              </IconButton>
               {reportButton}
               <LocateButton />
             </div>
@@ -121,6 +128,7 @@ export function MapPage() {
       </div>
 
       {reportOpen && <ReportSheet onClose={() => setReportOpen(false)} />}
+      {shareOpen && <ShareLiveSheet onClose={() => setShareOpen(false)} />}
     </>
   );
 }

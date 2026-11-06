@@ -47,9 +47,13 @@ export function normalizeRoute(r: MbRoute, index: number): Route {
       congestion.push((CONGESTION as string[]).includes(c) ? (c as Congestion) : 'unknown');
     }
     for (const s of leg.steps ?? []) {
+      let stepMotorway = false;
       for (const i of s.intersections ?? []) {
         if (i.classes?.includes('toll')) hasTolls = true;
-        if (i.classes?.includes('motorway')) hasMotorway = true;
+        if (i.classes?.includes('motorway')) {
+          hasMotorway = true;
+          stepMotorway = true;
+        }
       }
       steps.push({
         instruction: s.maneuver.instruction ?? '',
@@ -64,6 +68,7 @@ export function normalizeRoute(r: MbRoute, index: number): Route {
         },
         roadName: s.name || undefined,
         roadRef: s.ref || undefined,
+        motorway: stepMotorway || undefined,
       });
     }
   }

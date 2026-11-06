@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { Link } from 'react-router';
 import { AuthForm } from '@/components/auth/AuthForm';
 import { FeedbackSheet } from '@/components/feedback/FeedbackSheet';
+import { OncomingSettings } from '@/components/navigation/OncomingSettings';
 import { DeleteAccount } from '@/components/moderation/DeleteAccount';
 import { isAdmin } from '@/services/moderationService';
 import { useEffect, useState } from 'react';
@@ -57,6 +58,7 @@ export function ProfilePage() {
       <FeedbackCard />
 
       <VoiceSettings />
+      <OncomingSettings />
 
       <Heading>Map appearance</Heading>
       <div role="radiogroup" aria-label="Theme" className="grid grid-cols-3 gap-1 rounded-2xl bg-ink-100 p-1 dark:bg-ink-900">

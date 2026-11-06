@@ -5,6 +5,11 @@ import { useWakeLock } from '@/hooks/useWakeLock';
 import { useVoiceGuidance } from '@/hooks/useVoiceGuidance';
 import { ResumeToast } from './ResumeToast';
 import { RouteAlerts } from './RouteAlerts';
+import { OncomingBanner } from './OncomingBanner';
+import { useOncomingAlerts } from '@/hooks/useOncomingAlerts';
+import { LiveShareBanner } from '@/components/live/LiveShareBanner';
+import { ShareLiveSheet } from '@/components/live/ShareLiveSheet';
+import { Radio } from 'lucide-react';
 import { RateTrip } from '@/components/trips/RateTrip';
 import { useTrips } from '@/contexts/TripsContext';
 import { useState } from 'react';
@@ -26,9 +31,11 @@ export function NavigationHud() {
   const finishedTrip = finishedTripId ? getTrip(finishedTripId) : undefined;
   const { following, setFollowing } = useMapContext();
   const [showSteps, setShowSteps] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
   const alerts = useRouteAlerts();
   useWakeLock(status === 'navigating');
   useVoiceGuidance();
+  const oncoming = useOncomingAlerts();
   const [voiceOn, setVoiceOn] = useVoiceAlerts();
   if (!route || !destination) return null;
 
@@ -110,6 +117,8 @@ export function NavigationHud() {
             </ol>
           )}
         </div>
+        {oncoming && <OncomingBanner threat={oncoming} />}
+        {!showSteps && <LiveShareBanner />}
         {!showSteps && <ResumeToast />}
         {!showSteps && <RouteAlerts alerts={alerts} />}
       </div>
@@ -131,6 +140,9 @@ export function NavigationHud() {
               {formatDistance(remainingMeters)} · {arrivalClock(remainingSeconds)}
             </p>
           </div>
+          <IconButton label="Share live location" onClick={() => setShareOpen(true)}>
+            <Radio className="size-5 text-jade-600 dark:text-jade-400" />
+          </IconButton>
           <IconButton label={voiceOn ? 'Mute voice guidance' : 'Unmute voice guidance'} onClick={() => setVoiceOn(!voiceOn)}>
             {voiceOn ? <Volume2 className="size-5" /> : <VolumeX className="size-5 text-ink-400" />}
           </IconButton>
@@ -142,6 +154,7 @@ export function NavigationHud() {
           </Button>
         </div>
       </div>
+      {shareOpen && <ShareLiveSheet onClose={() => setShareOpen(false)} />}
     </>
   );
 }

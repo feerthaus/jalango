@@ -37,6 +37,8 @@ export interface RouteStep {
   roadName?: string;
   /** Road reference number, e.g. "E1" or "FT2" */
   roadRef?: string;
+  /** step is on a motorway / divided highway */
+  motorway?: boolean;
 }
 
 export interface Route {

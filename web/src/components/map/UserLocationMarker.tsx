@@ -5,7 +5,7 @@ import { useVehiclePose } from '@/hooks/useVehiclePose';
 import { lerp, lerpAngle } from '@/utils/motion';
 
 /** Top-down car (pointing up), drawn in SVG so it stays crisp at any size. */
-const CAR_SVG = `
+export const CAR_SVG = `
 <svg viewBox="0 0 48 72" width="34" height="51" aria-hidden="true" style="display:block;filter:drop-shadow(0 3px 4px rgb(0 0 0 / .45))">
   <defs>
     <linearGradient id="jg-car-body" x1="0" y1="0" x2="1" y2="0">

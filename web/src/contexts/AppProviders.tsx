@@ -10,6 +10,7 @@ import { ThemeProvider } from './ThemeContext';
 import { TripsProvider } from './TripsContext';
 import { ShortcutsProvider } from './ShortcutsContext';
 import { CommunityPlacesProvider } from './CommunityPlacesContext';
+import { LiveShareProvider } from './LiveShareContext';
 
 export function AppProviders({ children }: { children: ReactNode }) {
   return (
@@ -23,7 +24,9 @@ export function AppProviders({ children }: { children: ReactNode }) {
                   <ShortcutsProvider>
                     <CommunityPlacesProvider>
                       <RoutingProvider>
-                        <ReportsProvider>{children}</ReportsProvider>
+                        <ReportsProvider>
+                          <LiveShareProvider>{children}</LiveShareProvider>
+                        </ReportsProvider>
                       </RoutingProvider>
                     </CommunityPlacesProvider>
                   </ShortcutsProvider>
