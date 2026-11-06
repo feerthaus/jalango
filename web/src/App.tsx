@@ -8,8 +8,12 @@ import { ProfilePage } from '@/pages/ProfilePage';
 import { ReportsPage } from '@/pages/ReportsPage';
 import { SavedPage } from '@/pages/SavedPage';
 import { ErrorBoundary } from '@/components/layout/ErrorBoundary';
+import { PrivacyPage } from '@/pages/legal/PrivacyPage';
+import { TermsPage } from '@/pages/legal/TermsPage';
 
 const router = createBrowserRouter([
+  { path: '/privacy', element: <PrivacyPage />, errorElement: <ErrorBoundary /> },
+  { path: '/terms', element: <TermsPage />, errorElement: <ErrorBoundary /> },
   {
     element: <AppLayout />,
     errorElement: <ErrorBoundary />,

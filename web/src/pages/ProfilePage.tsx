@@ -1,5 +1,6 @@
 import { CheckCircle2, CircleDashed, Laptop, LogOut, Moon, RefreshCw, Sun, Trash2, UserRound, XCircle } from 'lucide-react';
 import type { ReactNode } from 'react';
+import { Link } from 'react-router';
 import { AuthForm } from '@/components/auth/AuthForm';
 import { LogoMark } from '@/components/brand/LogoMark';
 import { IosSteps } from '@/components/pwa/InstallBanner';
@@ -126,6 +127,14 @@ export function ProfilePage() {
       <div className="mt-8 flex flex-col items-center gap-1 text-center text-xs text-ink-400">
         <Logo withText />
         <p>v0.1 · Made for Malaysian roads</p>
+        <p className="mt-1 flex gap-3">
+          <Link to="/privacy" className="font-semibold text-jade-700 hover:underline dark:text-jade-400">
+            Privacy
+          </Link>
+          <Link to="/terms" className="font-semibold text-jade-700 hover:underline dark:text-jade-400">
+            Terms
+          </Link>
+        </p>
       </div>
     </PagePanel>
   );

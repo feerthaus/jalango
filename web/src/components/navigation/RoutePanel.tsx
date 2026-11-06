@@ -185,7 +185,7 @@ function ProbeConsentPrompt() {
         <ShieldCheck className="mt-0.5 size-4 shrink-0 text-jade-500" />
         <span>
           <strong className="font-semibold">Help build JalanGo traffic?</strong> While you navigate, share your speed and position anonymously.
-          No account is linked, and nothing near your start or destination is sent. You can change this in Profile.
+          No account is linked, and nothing near your start or destination is sent. You can change this in Profile. <a href="/privacy#s2" className="underline">Details</a>
         </span>
       </p>
       <div className="mt-2 flex justify-end gap-2">

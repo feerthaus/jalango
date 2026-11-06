@@ -1,5 +1,6 @@
 import { Loader2, MailCheck } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
+import { Link } from 'react-router';
 import { Button } from '@/components/ui/Button';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/cn';
@@ -138,6 +139,17 @@ export function AuthForm({ compact = false, onDone }: { compact?: boolean; onDon
         {busy && <Loader2 className="size-4 animate-spin" />}
         {mode === 'signin' ? 'Sign in' : 'Create account'}
       </Button>
+      <p className="text-center text-[11px] text-ink-400">
+        By continuing you agree to the{' '}
+        <Link to="/terms" className="underline">
+          Terms
+        </Link>{' '}
+        and{' '}
+        <Link to="/privacy" className="underline">
+          Privacy Policy
+        </Link>
+        .
+      </p>
       {compact && (
         <p className="text-center text-xs text-ink-500">
           {mode === 'signin' ? 'New to JalanGo?' : 'Have an account?'}{' '}
