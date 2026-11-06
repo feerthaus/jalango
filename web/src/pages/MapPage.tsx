@@ -46,7 +46,7 @@ export function MapPage() {
       <>
         <NavigationHud />
         {status === 'navigating' && (
-          <div className="absolute inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+6.5rem)] z-20 space-y-3 p-3 md:bottom-28 md:w-[420px] md:p-4">
+          <div className="absolute inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+6.5rem+var(--host-badge-h))] z-20 space-y-3 p-3 md:bottom-28 md:w-[420px] md:p-4">
             <div className="flex items-end justify-between">
               <SpeedIndicator />
               <div className="ml-auto">{reportButton}</div>

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Route } from '@/types';
-import { bearingDeg, buildRouteIndex, computeProgress } from './routeProgress';
+import { bearingDeg, buildRouteIndex, computeProgress, sliceRoute } from './routeProgress';
 
 // An L-shaped route: ~1.1 km north, then ~1.1 km east
 const route: Route = {
@@ -55,5 +55,16 @@ describe('route progress', () => {
   it('computes bearings', () => {
     expect(Math.round(bearingDeg([0, 0], [0, 1]))).toBe(0);
     expect(Math.round(bearingDeg([0, 0], [1, 0]))).toBe(90);
+  });
+});
+
+describe('sliceRoute', () => {
+  const index = buildRouteIndex(route);
+  it('returns the driven part, interpolating the last point', () => {
+    const part = sliceRoute(index, index.cum[1] / 2);
+    expect(part).toHaveLength(2);
+    expect(part[1][1]).toBeCloseTo(3.105, 3);
+    expect(sliceRoute(index, 0)).toEqual([]);
+    expect(sliceRoute(index, index.total + 10)).toHaveLength(3);
   });
 });

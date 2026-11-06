@@ -41,6 +41,12 @@
 }
 
 @layer base {
+  :root {
+    --host-badge-h: 0px;
+  }
+  :root.has-host-badge {
+    --host-badge-h: 3.5rem;
+  }
   html, body, #root {
     height: 100%;
   }

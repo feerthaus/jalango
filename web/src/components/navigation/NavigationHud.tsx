@@ -25,7 +25,7 @@ export function NavigationHud() {
 
   if (status === 'arrived') {
     return (
-      <div className="absolute inset-x-0 bottom-0 z-30 p-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] md:w-[420px] md:p-4">
+      <div className="absolute inset-x-0 bottom-0 z-30 p-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem+var(--host-badge-h))] md:w-[420px] md:p-4">
         <div className="glass pointer-events-auto animate-slide-up rounded-3xl p-5 text-center shadow-float ring-1 ring-ink-900/5 dark:ring-white/10">
           <span className="mx-auto mb-2 grid size-14 place-items-center rounded-full bg-jade-500 text-ink-950">
             <Flag className="size-7" />
@@ -99,7 +99,7 @@ export function NavigationHud() {
       </div>
 
       {/* Trip bar */}
-      <div className="absolute inset-x-0 bottom-0 z-30 space-y-3 p-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] md:w-[420px] md:p-4">
+      <div className="absolute inset-x-0 bottom-0 z-30 space-y-3 p-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem+var(--host-badge-h))] md:w-[420px] md:p-4">
         {!following && (
           <IconButton label="Re-centre" onClick={() => setFollowing(true)} className="!w-auto gap-2 px-4 text-sm font-semibold">
             <LocateFixed className="size-5" /> Re-centre

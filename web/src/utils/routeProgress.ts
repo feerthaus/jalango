@@ -145,3 +145,21 @@ export function straightLineRoute(from: Coordinates, to: Coordinates, destinatio
     source: 'demo',
   };
 }
+
+/** Coordinates of the route from its start up to `along` metres (for the "already driven" overlay). */
+export function sliceRoute(index: RouteIndex, along: number): [number, number][] {
+  const { coords, cum } = index;
+  if (coords.length < 2 || along <= 0) return [];
+  const out: [number, number][] = [coords[0]];
+  for (let i = 1; i < coords.length; i++) {
+    if (cum[i] <= along) {
+      out.push(coords[i]);
+      continue;
+    }
+    const seg = cum[i] - cum[i - 1];
+    const t = seg > 0 ? (along - cum[i - 1]) / seg : 0;
+    out.push([coords[i - 1][0] + t * (coords[i][0] - coords[i - 1][0]), coords[i - 1][1] + t * (coords[i][1] - coords[i - 1][1])]);
+    break;
+  }
+  return out.length >= 2 ? out : [];
+}
