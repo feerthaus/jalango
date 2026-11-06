@@ -20,7 +20,7 @@ export function createApp() {
   app.get('/', (_req, res) => {
     res.json({
       name: 'JalanGo API',
-      message: 'This is the API server. Open the app at the web URL (http://localhost:5173 in development).',
+      message: 'This is the JalanGo API. Open the app at the web URL (https://jalango.netlify.app, or http://localhost:5173 in development).',
       endpoints: ['/api/health', '/api/directions?from=lng,lat&to=lng,lat', 'POST /api/probes', '/api/geo/search?q=', '/api/geo/reverse?lng=&lat=', '/api/geo/category?category=&lng=&lat='],
     });
   });
