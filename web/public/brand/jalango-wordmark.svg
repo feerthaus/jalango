@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1240 320">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#16213a"/><stop offset="1" stop-color="#0b1220"/></linearGradient>
+    <linearGradient id="go" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5cf0c4"/><stop offset="1" stop-color="#14c493"/></linearGradient>
+  </defs>
+  <g transform="scale(0.625)">
+    <rect width="512" height="512" rx="116" fill="url(#bg)"/>
+    <path d="M300 210 V296 C300 376 248 420 186 420 C150 420 124 406 106 386" fill="none" stroke="#3b4b70" stroke-width="100" stroke-linecap="round"/>
+    <path d="M300 210 V296 C300 376 248 420 186 420 C150 420 124 406 106 386" fill="none" stroke="#e8edf5" stroke-width="12" stroke-linecap="round" stroke-dasharray="28 28" stroke-dashoffset="8" opacity=".9"/>
+    <path d="M300 52 L400 236 L300 192 L200 236 Z" fill="url(#go)" stroke="#0b1220" stroke-width="14" stroke-linejoin="round"/>
+  </g>
+  <text x="370" y="218" font-family="Inter, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="178" font-weight="900" letter-spacing="-6" fill="#0b1220">Jalan<tspan fill="#14c493">Go</tspan></text>
+</svg>

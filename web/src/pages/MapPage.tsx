@@ -1,5 +1,7 @@
 import { Megaphone, WifiOff } from 'lucide-react';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router';
+import { InstallBanner } from '@/components/pwa/InstallBanner';
 import { DemoModeBanner } from '@/components/layout/DemoModeBanner';
 import { LocateButton, MapControls } from '@/components/map/MapControls';
 import { LocationStatusBanner } from '@/components/map/LocationStatusBanner';
@@ -23,6 +25,14 @@ export function MapPage() {
   const planning = !navigating && status !== 'idle';
   const [searchOpen, setSearchOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
+  const [params, setParams] = useSearchParams();
+  // Home-screen shortcut "Report" opens /?report=1
+  useEffect(() => {
+    if (params.get('report') === '1') {
+      setReportOpen(true);
+      setParams({}, { replace: true });
+    }
+  }, [params, setParams]);
   const onSearchOpenChange = useCallback((open: boolean) => setSearchOpen(open), []);
 
   const reportButton = (
@@ -64,6 +74,7 @@ export function MapPage() {
               </div>
             )}
             <LocationStatusBanner />
+            {!selectedPlace && !selectedReport && <InstallBanner />}
           </div>
         )}
       </div>

@@ -1,5 +1,6 @@
 import { Compass, Map, Megaphone, Star, UserRound, type LucideIcon } from 'lucide-react';
 import { NavLink } from 'react-router';
+import { LogoMark, Wordmark } from '@/components/brand/LogoMark';
 import { cn } from '@/lib/cn';
 
 const ITEMS: { to: string; label: string; icon: LucideIcon }[] = [
@@ -49,20 +50,7 @@ export function BottomNav() {
   );
 }
 
+/** Kept for existing imports: mark (+ optional wordmark). */
 export function Logo({ withText = false }: { withText?: boolean }) {
-  return (
-    <span className="inline-flex items-center gap-2">
-      <svg viewBox="0 0 64 64" className="size-10" aria-hidden>
-        <rect width="64" height="64" rx="16" className="fill-ink-950 dark:fill-ink-800" />
-        <path d="M32 10 48 52 32 43 16 52Z" className="fill-jade-400" />
-      </svg>
-      {withText ? (
-        <span className="text-xl font-black tracking-tight">
-          Jalan<span className="text-jade-500">Go</span>
-        </span>
-      ) : (
-        <span className="sr-only">JalanGo</span>
-      )}
-    </span>
-  );
+  return withText ? <Wordmark /> : <LogoMark className="size-10" />;
 }

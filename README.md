@@ -73,6 +73,18 @@ cloudflared tunnel --url http://localhost:5173
 
 Open the printed `https://….trycloudflare.com` address on your phone. The address changes every time the tunnel starts, and it only works while your laptop is running. For a permanent link, deploy the app.
 
+## Install on your phone (PWA)
+
+JalanGo is an installable web app with a manifest, a service worker and home-screen icons.
+
+- **Android (Chrome/Edge):** an **Install JalanGo** card appears on the map, and Profile has an Install button. You can also use ⋮ → *Install app*.
+- **iPhone (Safari):** tap **Share → Add to Home Screen**. The in-app card shows these steps.
+- Installed, it opens full screen like a native app. The home-screen icon also has *Report* and *Saved* shortcuts.
+- The service worker only caches the app shell for offline start. Maps, routes, search, auth and reports always come live from the network.
+- Installing requires `https://`. Use the quick tunnel above or a deployed URL.
+
+Brand assets are in `web/public/brand/` (`jalango-mark.svg`, `jalango-wordmark.svg`) and `web/public/icons/`.
+
 ## Supabase setup (reports, accounts, traffic data)
 
 1. Create a **new** project at https://supabase.com. Use a separate project from any other app.

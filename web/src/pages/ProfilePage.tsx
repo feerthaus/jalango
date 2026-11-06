@@ -1,6 +1,9 @@
 import { CheckCircle2, CircleDashed, Laptop, LogOut, Moon, RefreshCw, Sun, Trash2, UserRound, XCircle } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { AuthForm } from '@/components/auth/AuthForm';
+import { LogoMark } from '@/components/brand/LogoMark';
+import { IosSteps } from '@/components/pwa/InstallBanner';
+import { useInstallPrompt } from '@/hooks/useInstallPrompt';
 import { Logo } from '@/components/layout/BottomNav';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/Button';
@@ -41,6 +44,8 @@ export function ProfilePage() {
   return (
     <PagePanel title="Profile">
       <AccountCard favourites={favourites.length} recents={recents.length} />
+
+      <InstallCard />
 
       <Heading>Map appearance</Heading>
       <div role="radiogroup" aria-label="Theme" className="grid grid-cols-3 gap-1 rounded-2xl bg-ink-100 p-1 dark:bg-ink-900">
@@ -168,6 +173,31 @@ function AccountCard({ favourites, recents }: { favourites: number; recents: num
           <AuthForm />
         </div>
       )}
+    </div>
+  );
+}
+
+function InstallCard() {
+  const { mode, install } = useInstallPrompt();
+  if (mode === 'unavailable') return null;
+  return (
+    <div className="mt-3 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-ink-200 dark:bg-ink-900 dark:ring-ink-800">
+      <div className="flex items-center gap-3">
+        <LogoMark className="size-11" />
+        <div className="min-w-0 flex-1">
+          <p className="font-semibold">{mode === 'installed' ? 'JalanGo is installed' : 'Install JalanGo'}</p>
+          <p className="text-xs text-ink-500 dark:text-ink-400">
+            {mode === 'installed' ? 'You’re using the home-screen app.' : 'Add it to your home screen for full-screen navigation.'}
+          </p>
+        </div>
+        {mode === 'prompt' && (
+          <Button className="px-3 py-2 text-xs" onClick={() => void install()}>
+            Install
+          </Button>
+        )}
+        {mode === 'installed' && <CheckCircle2 className="size-6 text-jade-500" />}
+      </div>
+      {mode === 'ios' && <IosSteps />}
     </div>
   );
 }

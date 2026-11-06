@@ -1,5 +1,6 @@
 import { ArrowLeft, Search, X } from 'lucide-react';
 import { forwardRef, type KeyboardEvent } from 'react';
+import { LogoMark } from '@/components/brand/LogoMark';
 import { Spinner } from '@/components/ui/Spinner';
 import { cn } from '@/lib/cn';
 
@@ -66,8 +67,8 @@ export const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(function S
         </button>
       )}
       {!open && (
-        <span className="mr-1 grid size-10 place-items-center rounded-xl bg-ink-950 text-sm font-black tracking-tight text-jade-400 dark:bg-jade-500 dark:text-ink-950" aria-hidden>
-          JG
+        <span className="mr-1" aria-hidden>
+          <LogoMark className="size-10" title="" />
         </span>
       )}
     </div>
