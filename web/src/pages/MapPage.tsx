@@ -7,15 +7,18 @@ import { SpeedIndicator } from '@/components/map/SpeedIndicator';
 import { NavigationHud } from '@/components/navigation/NavigationHud';
 import { RoutePanel } from '@/components/navigation/RoutePanel';
 import { PlaceCard } from '@/components/places/PlaceCard';
+import { ReportDetailCard } from '@/components/reports/ReportDetailCard';
 import { ReportSheet } from '@/components/reports/ReportSheet';
 import { DestinationSearch } from '@/components/search/DestinationSearch';
 import { IconButton } from '@/components/ui/IconButton';
 import { useMapContext } from '@/contexts/MapContext';
+import { useReports } from '@/contexts/ReportsContext';
 import { useIsNavigating, useRouting } from '@/contexts/RoutingContext';
 
 export function MapPage() {
   const { selectedPlace, clearSelection, tileError } = useMapContext();
   const { status } = useRouting();
+  const { selectedReport, selectReport } = useReports();
   const navigating = useIsNavigating();
   const planning = !navigating && status !== 'idle';
   const [searchOpen, setSearchOpen] = useState(false);
@@ -33,9 +36,12 @@ export function MapPage() {
       <>
         <NavigationHud />
         {status === 'navigating' && (
-          <div className="absolute inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+6.5rem)] z-20 flex items-end justify-between p-3 md:bottom-28 md:p-4">
-            <SpeedIndicator />
-            <div className="ml-auto">{reportButton}</div>
+          <div className="absolute inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+6.5rem)] z-20 space-y-3 p-3 md:bottom-28 md:w-[420px] md:p-4">
+            <div className="flex items-end justify-between">
+              <SpeedIndicator />
+              <div className="ml-auto">{reportButton}</div>
+            </div>
+            {selectedReport && <ReportDetailCard report={selectedReport} onClose={() => selectReport(null)} />}
           </div>
         )}
         {reportOpen && <ReportSheet onClose={() => setReportOpen(false)} />}
@@ -81,6 +87,11 @@ export function MapPage() {
         {planning && (
           <div className="md:hidden">
             <RoutePanel />
+          </div>
+        )}
+        {!planning && selectedReport && !selectedPlace && (
+          <div className="md:max-w-[400px]">
+            <ReportDetailCard report={selectedReport} onClose={() => selectReport(null)} />
           </div>
         )}
         {!planning && selectedPlace && (

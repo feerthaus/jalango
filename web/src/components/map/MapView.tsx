@@ -11,6 +11,7 @@ import { useIsNavigating, useRouting } from '@/contexts/RoutingContext';
 import { DestinationMarker } from './DestinationMarker';
 import { NavigationCamera } from './NavigationCamera';
 import { RouteLayer } from './RouteLayer';
+import { ReportMarkers } from '@/components/reports/ReportMarkers';
 import { UserLocationMarker } from './UserLocationMarker';
 
 if (env.mapboxToken) mapboxgl.accessToken = env.mapboxToken;
@@ -127,6 +128,7 @@ export function MapView() {
       {map && <UserLocationMarker />}
       {map && markerPlace && <DestinationMarker place={markerPlace} />}
       {map && <RouteLayer />}
+      {map && <ReportMarkers />}
       {map && <NavigationCamera />}
 
       {initError && (

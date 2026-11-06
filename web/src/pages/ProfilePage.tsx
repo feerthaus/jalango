@@ -1,6 +1,8 @@
-import { CheckCircle2, CircleDashed, Laptop, Moon, RefreshCw, Sun, Trash2, UserRound, XCircle } from 'lucide-react';
+import { CheckCircle2, CircleDashed, Laptop, LogOut, Moon, RefreshCw, Sun, Trash2, UserRound, XCircle } from 'lucide-react';
 import type { ReactNode } from 'react';
+import { AuthForm } from '@/components/auth/AuthForm';
 import { Logo } from '@/components/layout/BottomNav';
+import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/Button';
 import { PagePanel } from '@/components/ui/PagePanel';
 import { useLocation } from '@/contexts/LocationContext';
@@ -38,18 +40,7 @@ export function ProfilePage() {
 
   return (
     <PagePanel title="Profile">
-      <div className="flex items-center gap-4 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-ink-200 dark:bg-ink-900 dark:ring-ink-800">
-        <span className="grid size-14 place-items-center rounded-full bg-ink-100 text-ink-400 dark:bg-ink-800">
-          <UserRound className="size-7" />
-        </span>
-        <div className="min-w-0 flex-1">
-          <p className="font-semibold">Guest</p>
-          <p className="text-sm text-ink-500 dark:text-ink-400">
-            {favourites.length} favourite{favourites.length === 1 ? '' : 's'} · {recents.length} recent
-          </p>
-          <p className="mt-1 text-xs text-ink-400">Account sign-in (sync favourites & report history) is coming in a later release.</p>
-        </div>
-      </div>
+      <AccountCard favourites={favourites.length} recents={recents.length} />
 
       <Heading>Map appearance</Heading>
       <div role="radiogroup" aria-label="Theme" className="grid grid-cols-3 gap-1 rounded-2xl bg-ink-100 p-1 dark:bg-ink-900">
@@ -147,5 +138,36 @@ function StatusRow({ label, value, ok }: { label: string; value: string; ok: boo
       <span className="flex-1 text-sm font-medium">{label}</span>
       <span className="text-right text-xs text-ink-500 dark:text-ink-400">{value}</span>
     </li>
+  );
+}
+
+function AccountCard({ favourites, recents }: { favourites: number; recents: number }) {
+  const { available, user, loading, signOut } = useAuth();
+  const card = 'rounded-2xl bg-white p-4 shadow-sm ring-1 ring-ink-200 dark:bg-ink-900 dark:ring-ink-800';
+  const name = (user?.user_metadata?.name as string | undefined) || user?.email?.split('@')[0];
+
+  return (
+    <div className={card}>
+      <div className="flex items-center gap-4">
+        <span className="grid size-14 shrink-0 place-items-center rounded-full bg-ink-100 text-lg font-bold text-ink-500 dark:bg-ink-800">
+          {user ? (name ?? '?').slice(0, 1).toUpperCase() : <UserRound className="size-7 text-ink-400" />}
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="truncate font-semibold">{user ? name : 'Guest'}</p>
+          <p className="truncate text-sm text-ink-500 dark:text-ink-400">{user ? user.email : `${favourites} favourite${favourites === 1 ? '' : 's'} · ${recents} recent`}</p>
+        </div>
+        {user && (
+          <Button variant="ghost" className="px-3" onClick={() => void signOut()}>
+            <LogOut className="size-4" /> Sign out
+          </Button>
+        )}
+      </div>
+      {!user && !loading && (
+        <div className="mt-4 border-t border-ink-100 pt-4 dark:border-ink-800">
+          {available && <p className="mb-3 text-sm text-ink-500 dark:text-ink-400">Sign in to report incidents and confirm other drivers’ reports.</p>}
+          <AuthForm />
+        </div>
+      )}
+    </div>
   );
 }

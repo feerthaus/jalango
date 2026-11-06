@@ -10,6 +10,10 @@ export interface ReportTypeMeta {
   tone: string;
 }
 
+export function reportMeta(type: ReportType): ReportTypeMeta {
+  return REPORT_TYPES.find((t) => t.type === type) ?? REPORT_TYPES[3];
+}
+
 /** Must stay in sync with the `report_type` CHECK constraint in the SQL migration. */
 export const REPORT_TYPES: ReportTypeMeta[] = [
   { type: 'accident', label: 'Accident', labelMs: 'Kemalangan', icon: CarFront, tone: 'bg-red-500 text-white' },

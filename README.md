@@ -1,6 +1,6 @@
 # JalanGo
 
-Smart, Malaysia-first navigation: live map, GPS, destination search, traffic-aware routing with turn-by-turn guidance, and opt-in anonymous traffic data collection. Community reports and accounts are coming next.
+Smart, Malaysia-first navigation: live map, GPS, destination search, traffic-aware routing with turn-by-turn guidance, and opt-in anonymous traffic data collection. Also includes community road reports with live updates, and email accounts.
 
 ```
 .
@@ -30,7 +30,7 @@ The app works with **no credentials at all**. Everything that isn't live is labe
 | Place search | Mapbox Search Box + Geocoding via the API server (`MAPBOX_ACCESS_TOKEN`) | ~30 bundled Malaysian cities and landmarks, tagged **Sample** |
 | Routing | Mapbox Directions `driving-traffic`: alternatives, live congestion colouring, toll and highway flags, avoid tolls | A straight line labelled **Demo**, with a rough 50 km/h time estimate. No made-up road route or turns |
 | Nearby petrol / R&R / EV / parking / hospital | Mapbox category search | Not shown. JalanGo doesn't invent locations |
-| Community reports | Supabase (Phase 3) | Empty state. No fake incidents |
+| Community reports and accounts | Supabase: email sign-in, reports, votes, Realtime updates | "Not connected" state. No fake incidents |
 
 The Profile tab shows which sources are live.
 
@@ -57,6 +57,17 @@ The Profile tab shows which sources are live.
 | POST | `/api/probes` | Opt-in anonymous GPS samples (see below). Returns `202 { stored }` |
 
 Inputs are validated with zod. Rate limits per IP: `/api/geo/*` 120 requests/min, `/api/directions` 60/min, `/api/probes` 12/min. Upstream failures map to clean JSON errors (`503 mapbox_not_configured`, `502 upstream_*`, `429`), and the web client falls back to demo data when the service is unavailable.
+
+## Supabase setup (reports, accounts, traffic data)
+
+1. Create a **new** project at https://supabase.com. Use a separate project from any other app.
+2. Open **SQL Editor** and run each file in `supabase/migrations/` in name order. Alternatively, run `supabase link` then `supabase db push`.
+3. In **Authentication → URL Configuration**, set **Site URL** to `http://localhost:5173` (your real domain later). Confirmation emails link back to this address.
+4. In **Project Settings → API**, copy these values:
+   - Project URL → `VITE_SUPABASE_URL` (web) and `SUPABASE_URL` (server)
+   - `anon` public key → `VITE_SUPABASE_ANON_KEY` (web)
+   - `service_role` key → `SUPABASE_SERVICE_ROLE_KEY` (**server only**, never in `web/.env`)
+5. Restart `npm run dev`. Profile → Data sources should show **Community database: Supabase configured**.
 
 ## Database (Supabase)
 
@@ -88,10 +99,10 @@ Under Malaysia's PDPA, location data is personal data. Get legal advice on the p
 
 ```
 src/
-├── components/   map/ search/ places/ reports/ layout/ ui/   (presentational + feature components)
-├── contexts/     Theme, ServiceStatus (live vs demo), Location (single GPS watcher), SavedPlaces, Map, Routing (plan → navigate → arrive)
+├── components/   map/ search/ places/ navigation/ reports/ auth/ layout/ ui/   (presentational + feature components)
+├── contexts/     Theme, Auth, ServiceStatus (live vs demo), Location (single GPS watcher), SavedPlaces, Map, Routing, Reports (+ Realtime)
 ├── hooks/        useGeolocation, usePlaceSearch (debounced, abortable), useShowOnMap, …
-├── services/     apiClient, geocodingService (+ demo fallback), routingService, probeService, healthService, placeStore
+├── services/     apiClient, geocodingService (+ demo fallback), routingService, reportsService, probeService, healthService, placeStore
 ├── lib/          config (env), mapStyles, supabase client, reportTypes
 ├── layouts/      AppLayout: persistent map + routed overlay + nav
 ├── pages/        Map, Explore, Reports, Saved, Profile
@@ -119,6 +130,6 @@ npm run build       # production builds
 - [x] **Phase 2**: traffic-aware routes via the API, alternatives, ETA and arrival time, toll/highway flags, avoid tolls, turn-by-turn banner and list, start/end navigation, rerouting when off-route, arrival detection, driving camera
 - [x] **Own data, step 1**: opt-in anonymous GPS probe collection (`probe_samples`)
 - [ ] **Own data, step 2**: map-match samples to road segments, aggregate speeds, show a JalanGo traffic layer
-- [ ] **Phase 3**: report submission, map markers, confirm/resolve, Supabase Realtime
-- [ ] **Phase 4**: Supabase Auth (email), profiles, synced favourites/recents, report history
+- [x] **Phase 3**: report submission at the GPS position (7 types, optional note), map markers, a nearby list with filters, "still there" / "not there" votes, owners can clear or delete their reports, Supabase Realtime updates, anti-spam in the database plus a client cooldown, email sign-in and registration
+- [ ] **Phase 4**: profile editing, favourites and recents synced to Supabase, report history, password reset
 - [ ] **Phase 5**: E2E tests, offline handling, performance passes

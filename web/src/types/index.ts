@@ -103,7 +103,7 @@ export interface Route {
   source: DataSource;
 }
 
-/* ─── Phase 3: community reports (mirrors the SQL schema) ──────────── */
+/* ─── Community reports (mirrors the SQL schema) ───────────────────── */
 
 export type ReportType =
   | 'accident'
@@ -126,6 +126,15 @@ export interface TrafficReport {
   status: ReportStatus;
   confirm_count: number;
   resolve_count: number;
+  expires_at: string;
   created_at: string;
   updated_at: string;
+}
+
+export type ConfirmationType = 'confirm' | 'resolved';
+
+export interface NewReport {
+  type: ReportType;
+  description: string;
+  coordinates: Coordinates;
 }
