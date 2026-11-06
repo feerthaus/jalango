@@ -128,9 +128,12 @@ export function NavigationHud() {
       {/* Trip bar */}
       <div className="absolute inset-x-0 bottom-0 z-30 space-y-3 p-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem+var(--host-badge-h))] md:w-[420px] md:p-4">
         {!following && (
-          <IconButton label="Re-centre" onClick={() => setFollowing(true)} className="!w-auto gap-2 px-4 text-sm font-semibold">
-            <LocateFixed className="size-5" /> Re-centre
-          </IconButton>
+          // centred so it never covers the speed badge (left) or the report button (right)
+          <div className="flex justify-center">
+            <IconButton label="Re-centre" onClick={() => setFollowing(true)} className="!w-auto gap-2 px-4 text-sm font-semibold">
+              <LocateFixed className="size-5" /> Re-centre
+            </IconButton>
+          </div>
         )}
         <div className="glass pointer-events-auto flex items-center gap-3 rounded-3xl p-3 pl-5 shadow-float ring-1 ring-ink-900/5 dark:ring-white/10">
           <div className="min-w-0 flex-1">
