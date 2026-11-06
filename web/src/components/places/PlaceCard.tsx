@@ -1,5 +1,6 @@
 import { Check, Copy, CornerUpRight, Heart, Share2, Star, ThumbsUp, X } from 'lucide-react';
 import { RecommendPlaceSheet } from '@/components/community/RecommendPlaceSheet';
+import { FlagButton } from '@/components/moderation/FlagButton';
 import { useCommunityPlaces } from '@/contexts/CommunityPlacesContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { categoryMeta } from '@/lib/communityCategories';
@@ -68,6 +69,11 @@ export function PlaceCard({ place, onClose }: { place: Place; onClose: () => voi
           </div>
           {place.address && <p className="mt-0.5 line-clamp-2 text-sm text-ink-500 dark:text-ink-300">{place.address}</p>}
           {pick?.description && <p className="mt-1 text-sm">“{pick.description}”</p>}
+          {pick && (
+            <div className="mt-1">
+              <FlagButton type="place" id={pick.id} ownerId={pick.user_id} />
+            </div>
+          )}
           <p className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-ink-500 dark:text-ink-400">
             {distance !== null && (
               <span title="Straight-line distance from your location. Road distance comes with route calculation.">

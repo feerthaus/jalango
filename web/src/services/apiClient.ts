@@ -39,3 +39,19 @@ export async function apiGet<T>(path: string, params: Record<string, string | nu
   }
   return body as T;
 }
+
+export async function apiPost<T>(path: string, body: unknown, accessToken?: string | null): Promise<T> {
+  let res: Response;
+  try {
+    res = await fetch(`${env.apiBaseUrl}/api${path}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json', ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}) },
+      body: JSON.stringify(body ?? {}),
+    });
+  } catch {
+    throw new ApiError(0, 'network_error', 'Cannot reach the JalanGo server');
+  }
+  const json = res.headers.get('content-type')?.includes('application/json') ? await res.json().catch(() => null) : null;
+  if (!res.ok) throw new ApiError(res.status, json?.error?.code ?? 'http_error', json?.error?.message ?? `Request failed (${res.status})`);
+  return json as T;
+}

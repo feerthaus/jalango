@@ -1,6 +1,7 @@
 import { Loader2, Navigation, ThumbsDown, ThumbsUp, Trash2, X } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/Button';
+import { FlagButton } from '@/components/moderation/FlagButton';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouting } from '@/contexts/RoutingContext';
 import { useShortcuts } from '@/contexts/ShortcutsContext';
@@ -69,7 +70,10 @@ export function ShortcutCard({ shortcut, onClose }: { shortcut: Shortcut; onClos
       <Button className="mt-3 w-full py-3" onClick={() => { applyShortcut(shortcut, destination); onClose(); }}>
         <Navigation className="size-5" /> {destination ? `Use on my trip to ${destination.name}` : 'Drive this shortcut'}
       </Button>
-      <p className="mt-2 text-[11px] text-ink-400">Shared by a JalanGo driver. Check road signs — conditions may change.</p>
+      <p className="mt-2 flex items-center justify-between gap-2 text-[11px] text-ink-400">
+        <span>Shared by a JalanGo driver. Check road signs — conditions may change.</span>
+        <FlagButton type="shortcut" id={shortcut.id} ownerId={shortcut.user_id} />
+      </p>
     </article>
   );
 }

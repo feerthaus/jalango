@@ -7,6 +7,7 @@ import { rateLimit } from './middleware/rateLimit.js';
 import { directionsRouter } from './routes/directions.js';
 import { geocodingRouter } from './routes/geocoding.js';
 import { probesRouter } from './routes/probes.js';
+import { accountRouter, feedbackRouter } from './routes/account.js';
 
 export function createApp() {
   const app = express();
@@ -32,6 +33,8 @@ export function createApp() {
   app.use('/api/geo', rateLimit({ windowMs: 60_000, max: 120 }), geocodingRouter);
   app.use('/api/directions', rateLimit({ windowMs: 60_000, max: 60 }), directionsRouter);
   app.use('/api/probes', rateLimit({ windowMs: 60_000, max: 12 }), probesRouter);
+  app.use('/api/account', rateLimit({ windowMs: 10 * 60_000, max: 5 }), accountRouter);
+  app.use('/api/feedback', rateLimit({ windowMs: 10 * 60_000, max: 5 }), feedbackRouter);
   // Phase 3: app.use('/api/reports', reportsRouter)
 
   app.use(notFound);

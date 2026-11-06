@@ -2,6 +2,11 @@ import { CheckCircle2, CircleDashed, Laptop, LogOut, Moon, RefreshCw, Sun, Trash
 import type { ReactNode } from 'react';
 import { Link } from 'react-router';
 import { AuthForm } from '@/components/auth/AuthForm';
+import { FeedbackSheet } from '@/components/feedback/FeedbackSheet';
+import { DeleteAccount } from '@/components/moderation/DeleteAccount';
+import { isAdmin } from '@/services/moderationService';
+import { useEffect, useState } from 'react';
+import { MessageSquareHeart, ShieldCheck } from 'lucide-react';
 import { LogoMark } from '@/components/brand/LogoMark';
 import { IosSteps } from '@/components/pwa/InstallBanner';
 import { useInstallPrompt } from '@/hooks/useInstallPrompt';
@@ -49,6 +54,7 @@ export function ProfilePage() {
       <AccountCard favourites={favourites.length} recents={recents.length} />
 
       <InstallCard />
+      <FeedbackCard />
 
       <VoiceSettings />
 
@@ -180,6 +186,7 @@ function AccountCard({ favourites, recents }: { favourites: number; recents: num
           </Button>
         )}
       </div>
+      {user && <AccountExtras />}
       {!user && !loading && (
         <div className="mt-4 border-t border-ink-100 pt-4 dark:border-ink-800">
           {available && <p className="mb-3 text-sm text-ink-500 dark:text-ink-400">Sign in to report incidents and confirm other drivers’ reports.</p>}
@@ -267,5 +274,44 @@ function VoiceSettings() {
         )}
       </div>
     </>
+  );
+}
+
+function FeedbackCard() {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="mt-3 flex w-full items-center gap-3 rounded-2xl bg-white p-4 text-left shadow-sm ring-1 ring-ink-200 hover:ring-jade-500 dark:bg-ink-900 dark:ring-ink-800"
+      >
+        <MessageSquareHeart className="size-6 shrink-0 text-jade-500" />
+        <span className="min-w-0 flex-1">
+          <span className="block font-semibold">Send feedback</span>
+          <span className="block text-xs text-ink-500 dark:text-ink-400">Report a problem, wrong map data or share an idea</span>
+        </span>
+      </button>
+      {open && <FeedbackSheet onClose={() => setOpen(false)} />}
+    </>
+  );
+}
+
+function AccountExtras() {
+  const [admin, setAdmin] = useState(false);
+  useEffect(() => {
+    void isAdmin().then(setAdmin);
+  }, []);
+  return (
+    <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-ink-100 pt-3 dark:border-ink-800">
+      {admin ? (
+        <Link to="/admin" className="flex items-center gap-1.5 text-sm font-semibold text-jade-700 hover:underline dark:text-jade-400">
+          <ShieldCheck className="size-4" /> Moderation
+        </Link>
+      ) : (
+        <span />
+      )}
+      <DeleteAccount />
+    </div>
   );
 }

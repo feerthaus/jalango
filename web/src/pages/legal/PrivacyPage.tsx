@@ -21,6 +21,7 @@ const ms: LegalSection[] = [
         <li><strong>Sejarah perjalanan:</strong> destinasi, masa, jarak, tempoh dan rating. Disimpan dalam peranti, dan dalam akaun anda jika log masuk. <strong>Jejak GPS perjalanan disimpan dalam peranti sahaja</strong> dan hanya dikongsi jika anda sendiri memilih untuk berkongsi jalan pintas.</li>
         <li><strong>Data trafik tanpa nama (pilihan):</strong> jika anda bersetuju, kelajuan dan kedudukan semasa navigasi dihantar <strong>tanpa akaun</strong>, menggunakan ID perjalanan rawak. Kedudukan dalam lingkungan 300 m dari titik mula dan destinasi tidak dihantar.</li>
         <li><strong>Dalam peranti sahaja:</strong> tempat kegemaran, sejarah carian, tetapan dan perjalanan yang sedang berjalan disimpan dalam pelayar anda.</li>
+        <li><strong>Maklum balas dan laporan salah guna:</strong> mesej yang anda hantar melalui “Send feedback” (termasuk email/telefon jika anda beri) dan laporan kandungan yang anda tandakan.</li>
         <li><strong>Teknikal:</strong> alamat IP dan maklumat permintaan direkod sementara oleh pelayan untuk keselamatan dan had penggunaan (anti-spam).</li>
       </Ul>
     ),
@@ -33,7 +34,7 @@ const ms: LegalSection[] = [
         <li>Memaparkan laporan, jalan pintas dan tempat komuniti kepada pengguna lain.</li>
         <li>Menguruskan akaun dan sejarah perjalanan anda.</li>
         <li>Membina maklumat trafik JalanGo sendiri daripada data tanpa nama (jika anda bersetuju).</li>
-        <li>Mencegah spam, penyalahgunaan dan melindungi keselamatan perkhidmatan.</li>
+        <li>Mencegah spam dan penyalahgunaan (termasuk menyemak kandungan yang dilaporkan dan menggantung akaun yang melanggar terma), dan melindungi keselamatan perkhidmatan.</li>
       </Ul>
     ),
   },
@@ -91,7 +92,7 @@ const ms: LegalSection[] = [
           <li>meminta akses kepada dan pembetulan data peribadi anda;</li>
           <li>menarik balik persetujuan, contohnya mematikan data trafik tanpa nama di <strong>Profil → Privasi</strong>, atau menghentikan akses lokasi dalam tetapan telefon;</li>
           <li>memadam kandungan yang anda kongsi dan sejarah perjalanan dalam app;</li>
-          <li>meminta akaun dan data anda dipadam.</li>
+          <li>memadam akaun dan semua data berkaitan sendiri di <strong>Profil → Delete account</strong>, atau meminta kami memadamnya.</li>
         </Ul>
         <p>Untuk permintaan, hubungi <Contact lang="ms" />.</p>
       </>
@@ -136,6 +137,7 @@ const en: LegalSection[] = [
         <li><strong>Trip history:</strong> destination, times, distance, duration and rating — on your device, and in your account if signed in. <strong>The GPS trace of a trip stays on your device</strong> and is only shared if you choose to share a shortcut.</li>
         <li><strong>Anonymous traffic data (optional):</strong> if you agree, speed and position while navigating are sent <strong>without your account</strong>, under a random trip ID. Positions within 300 m of the start and destination are never sent.</li>
         <li><strong>On your device only:</strong> favourites, search history, settings and the trip in progress are stored in your browser.</li>
+        <li><strong>Feedback and abuse reports:</strong> messages you send via “Send feedback” (including an email/phone if you give one) and content you flag.</li>
         <li><strong>Technical:</strong> IP address and request details are logged temporarily by our servers for security and rate limiting (anti-spam).</li>
       </Ul>
     ),
@@ -148,7 +150,7 @@ const en: LegalSection[] = [
         <li>To show reports, shortcuts and community places to other users.</li>
         <li>To manage your account and trip history.</li>
         <li>To build JalanGo’s own traffic information from anonymous data (if you agree).</li>
-        <li>To prevent spam and abuse and keep the service secure.</li>
+        <li>To prevent spam and abuse (including reviewing reported content and suspending accounts that break the terms) and keep the service secure.</li>
       </Ul>
     ),
   },
@@ -205,7 +207,7 @@ const en: LegalSection[] = [
           <li>request access to and correction of your personal data;</li>
           <li>withdraw consent — e.g. turn off anonymous traffic data in <strong>Profile → Privacy</strong>, or stop location access in your phone settings;</li>
           <li>delete content you shared and your trip history in the app;</li>
-          <li>ask for your account and data to be deleted.</li>
+          <li>delete your account and all linked data yourself in <strong>Profile → Delete account</strong>, or ask us to.</li>
         </Ul>
         <p>For requests, contact <Contact lang="en" />.</p>
       </>

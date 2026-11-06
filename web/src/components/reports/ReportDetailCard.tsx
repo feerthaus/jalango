@@ -2,6 +2,7 @@ import { Check, CheckCheck, Loader2, ThumbsUp, Trash2, X } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { Button } from '@/components/ui/Button';
+import { FlagButton } from '@/components/moderation/FlagButton';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLocation } from '@/contexts/LocationContext';
 import { useReports } from '@/contexts/ReportsContext';
@@ -75,7 +76,10 @@ export function ReportDetailCard({ report, onClose }: { report: TrafficReport; o
         </button>
       </div>
 
-      <p className="mt-3 text-[11px] text-ink-400">Community report from JalanGo users — not verified by authorities.</p>
+      <p className="mt-3 flex items-center justify-between gap-2 text-[11px] text-ink-400">
+        <span>Community report from JalanGo users — not verified by authorities.</span>
+        <FlagButton type="report" id={report.id} ownerId={report.user_id} />
+      </p>
 
       {error && (
         <p role="alert" className="mt-2 text-sm text-red-600 dark:text-red-400">

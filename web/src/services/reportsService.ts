@@ -40,6 +40,7 @@ export function toReportError(err: PgError): ReportError {
   if (hint === 'own_report' || hint === 'own_shortcut') return new ReportError(err.message, 'own_report');
   if (err.code === '23505') return new ReportError('You have already voted on this report.', 'duplicate');
   if (err.code === '23514') return new ReportError('Reports can only be made for locations in Malaysia.', 'invalid');
+  if (/banned/i.test(err.message)) return new ReportError('Your account has been suspended for breaking the community rules.', 'auth');
   if (err.code === '42501' || /row-level security|JWT|not allowed/i.test(err.message)) {
     return new ReportError('Please sign in again to continue.', 'auth');
   }
