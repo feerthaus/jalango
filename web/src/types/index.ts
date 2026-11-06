@@ -19,7 +19,7 @@ export type PlaceKind =
   | 'other';
 
 /** Where a record came from. `demo` = bundled sample data, never live. */
-export type DataSource = 'mapbox' | 'demo';
+export type DataSource = 'mapbox' | 'demo' | 'community';
 
 export interface Place {
   id: string;
@@ -177,5 +177,22 @@ export interface Shortcut {
   distance_m: number;
   upvotes: number;
   downvotes: number;
+  created_at: string;
+}
+
+/* ─── Community picks (best food, attractions …) ───────────────────── */
+
+export type CommunityCategory = 'food' | 'cafe' | 'attraction' | 'nature' | 'stay' | 'other';
+
+export interface CommunityPlace {
+  id: string;
+  user_id: string;
+  name: string;
+  category: CommunityCategory;
+  description: string | null;
+  address: string | null;
+  latitude: number;
+  longitude: number;
+  recommend_count: number;
   created_at: string;
 }

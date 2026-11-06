@@ -11,6 +11,7 @@ import { useServiceStatus } from '@/contexts/ServiceStatusContext';
 import { DEMO_PLACES, STATE_CAPITALS } from '@/data/demoPlaces';
 import { useShowOnMap } from '@/hooks/useShowOnMap';
 import { useShortcuts } from '@/contexts/ShortcutsContext';
+import { CommunityPicks } from '@/components/community/CommunityPicks';
 import { useNavigate } from 'react-router';
 import { formatDistance } from '@/utils/geo';
 import { cn } from '@/lib/cn';
@@ -90,6 +91,8 @@ export function ExplorePage() {
           onRetry={() => setNonce((n) => n + 1)}
         />
       </div>
+
+      <CommunityPicks />
 
       <CommunityShortcuts />
 

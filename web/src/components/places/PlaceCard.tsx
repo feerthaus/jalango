@@ -1,4 +1,9 @@
-import { Check, Copy, CornerUpRight, Share2, Star, X } from 'lucide-react';
+import { Check, Copy, CornerUpRight, Heart, Share2, Star, ThumbsUp, X } from 'lucide-react';
+import { RecommendPlaceSheet } from '@/components/community/RecommendPlaceSheet';
+import { useCommunityPlaces } from '@/contexts/CommunityPlacesContext';
+import { useAuth } from '@/contexts/AuthContext';
+import { categoryMeta } from '@/lib/communityCategories';
+import type { CommunityCategory } from '@/types';
 import { useRouting } from '@/contexts/RoutingContext';
 import { useState } from 'react';
 import { Button } from '@/components/ui/Button';
@@ -15,6 +20,11 @@ export function PlaceCard({ place, onClose }: { place: Place; onClose: () => voi
   const { isFavourite, toggleFavourite } = useSavedPlaces();
   const { planRoute } = useRouting();
   const [copied, setCopied] = useState(false);
+  const [recommending, setRecommending] = useState(false);
+  const { user } = useAuth();
+  const community = useCommunityPlaces();
+  const pick = place.source === 'community' ? community.findById(place.id.replace(/^community:/, '')) : undefined;
+  const picked = pick ? community.recommended.has(pick.id) : false;
   const canShare = typeof navigator.share === 'function';
   const Icon = placeIcon(place);
   const saved = isFavourite(place.id);
@@ -50,8 +60,14 @@ export function PlaceCard({ place, onClose }: { place: Place; onClose: () => voi
           <div className="flex flex-wrap items-center gap-2">
             <h2 className="truncate text-lg font-bold leading-tight">{place.name}</h2>
             {place.source === 'demo' && <DemoBadge label="Sample place" />}
+            {pick && (
+              <span className="rounded-full bg-jade-500/15 px-2 py-0.5 text-[11px] font-semibold text-jade-700 dark:text-jade-300">
+                Community pick · {categoryMeta(pick.category).label}
+              </span>
+            )}
           </div>
           {place.address && <p className="mt-0.5 line-clamp-2 text-sm text-ink-500 dark:text-ink-300">{place.address}</p>}
+          {pick?.description && <p className="mt-1 text-sm">“{pick.description}”</p>}
           <p className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-ink-500 dark:text-ink-400">
             {distance !== null && (
               <span title="Straight-line distance from your location. Road distance comes with route calculation.">
@@ -74,7 +90,7 @@ export function PlaceCard({ place, onClose }: { place: Place; onClose: () => voi
       <Button className="mt-4 w-full py-3 text-base" onClick={() => planRoute(place)}>
         <CornerUpRight className="size-5" /> Directions
       </Button>
-      <div className="mt-2 grid grid-cols-2 gap-2">
+      <div className="mt-2 grid grid-cols-3 gap-2">
         <Button variant="secondary" className={saved ? 'text-amber-600 dark:text-amber-400' : undefined} onClick={() => toggleFavourite(place)} aria-pressed={saved}>
           <Star className="size-4" fill={saved ? 'currentColor' : 'none'} />
           {saved ? 'Saved' : 'Save'}
@@ -83,7 +99,38 @@ export function PlaceCard({ place, onClose }: { place: Place; onClose: () => voi
           {copied ? <Check className="size-4" /> : canShare ? <Share2 className="size-4" /> : <Copy className="size-4" />}
           {copied ? 'Copied' : 'Share'}
         </Button>
+        {pick ? (
+          <Button
+            variant={picked ? 'primary' : 'secondary'}
+            aria-pressed={picked}
+            disabled={!user || pick.user_id === user.id}
+            onClick={() => void community.toggleRecommend(pick.id).catch(() => {})}
+            title={!user ? 'Sign in to recommend' : undefined}
+          >
+            <ThumbsUp className="size-4" /> {pick.recommend_count}
+          </Button>
+        ) : (
+          <Button variant="secondary" onClick={() => setRecommending(true)} disabled={!community.available}>
+            <Heart className="size-4" /> Recommend
+          </Button>
+        )}
       </div>
+      {recommending && (
+        <RecommendPlaceSheet
+          initial={{ name: place.name, address: place.address, coordinates: place.coordinates, category: guessCategory(place.category) }}
+          onClose={() => setRecommending(false)}
+        />
+      )}
     </article>
   );
+}
+
+function guessCategory(category?: string): CommunityCategory | undefined {
+  const c = category?.toLowerCase() ?? '';
+  if (/restaurant|food|nasi|mamak|eat/.test(c)) return 'food';
+  if (/cafe|coffee/.test(c)) return 'cafe';
+  if (/hotel|resort|homestay/.test(c)) return 'stay';
+  if (/park|beach|waterfall|hill|nature|lake/.test(c)) return 'nature';
+  if (/landmark|museum|attraction|mall|tourist/.test(c)) return 'attraction';
+  return undefined;
 }

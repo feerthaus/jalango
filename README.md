@@ -118,6 +118,15 @@ Brand assets are in `web/public/brand/` (`jalango-mark.svg`, `jalango-wordmark.s
    - `service_role` key → `SUPABASE_SERVICE_ROLE_KEY` (**server only**, never in `web/.env`)
 5. Restart `npm run dev`. Profile → Data sources should show **Community database: Supabase configured**.
 
+### Google and Facebook sign-in
+
+1. **Google:** in Google Cloud Console, go to APIs & Services → Credentials → *Create OAuth client ID* (Web application). Under *Authorized redirect URIs*, add `https://<your-project>.supabase.co/auth/v1/callback`.
+2. **Facebook:** at developers.facebook.com, create an app, add *Facebook Login*, and set *Valid OAuth Redirect URIs* to the same callback URL.
+3. In Supabase, go to **Authentication → Providers**, enable Google and Facebook, and paste each client ID and secret.
+4. Under **Authentication → URL Configuration**, add `https://jalango.netlify.app/**` (and `http://localhost:5173/**`) to Redirect URLs.
+
+Both providers require a public privacy policy URL before the app can be used by everyone.
+
 ## Database (Supabase)
 
 Use a **dedicated Supabase project** for JalanGo, then apply `supabase/migrations/*.sql` with `supabase db push` or the SQL editor.
@@ -182,5 +191,9 @@ npm run build       # production builds
 - [x] **Phase 3**: report submission at the GPS position (7 types, optional note), map markers, a nearby list with filters, "still there" / "not there" votes, owners can clear or delete their reports, Supabase Realtime updates, anti-spam in the database plus a client cooldown, email sign-in and registration
 - [x] **Hazard alerts while navigating**: the nearest report on the route ahead, with vibration and voice at about 800 m (mutable), a "still there?" prompt after passing, and a report count on each route option
 - [x] **Driving comfort**: GPS starts automatically on open (unless blocked), the active trip resumes after the app is closed (recalculated from the current position, kept for 8 h), and the screen stays on while navigating (Wake Lock)
+- [x] **Trip history and ratings**: every navigation is saved (device, plus the user's private `trips` table), with a 1–5 star rating and tags on arrival
+- [x] **Community shortcuts**: share the road you drove (ends trimmed for privacy), get suggestions when your route is jammed, and route through a shortcut
+- [x] **Community picks**: recommend the best food, cafés, attractions, nature spots and stays, with 👍 from other users
+- [x] **Google and Facebook sign-in** (Supabase OAuth, enabled per provider in the Supabase dashboard)
 - [ ] **Phase 4**: profile editing, favourites and recents synced to Supabase, report history, password reset
 - [ ] **Phase 5**: E2E tests, offline handling, performance passes

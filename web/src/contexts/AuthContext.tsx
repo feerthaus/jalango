@@ -12,7 +12,14 @@ interface AuthValue {
   /** Returns true when the user must confirm their email before signing in */
   signUp: (email: string, password: string, name: string) => Promise<{ needsConfirmation: boolean }>;
   signOut: () => Promise<void>;
+  /** Google / Facebook sign-in (redirects away and back) */
+  signInWithProvider: (provider: OAuthProvider) => Promise<void>;
+  /** Error returned by a social sign-in redirect, if any */
+  authError: string | null;
+  clearAuthError: () => void;
 }
+
+export type OAuthProvider = 'google' | 'facebook';
 
 const AuthContext = createContext<AuthValue | null>(null);
 
@@ -29,6 +36,20 @@ function friendly(message: string): string {
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(Boolean(supabase));
+  const [authError, setAuthError] = useState<string | null>(null);
+
+  // A failed social sign-in comes back as ?error_description=… (or in the #hash)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search || window.location.hash.replace(/^#/, ''));
+    const desc = params.get('error_description');
+    if (!desc) return;
+    setAuthError(
+      /provider is not enabled|unsupported provider/i.test(desc)
+        ? 'This sign-in option isn’t switched on yet. Please use email for now.'
+        : desc.replace(/\+/g, ' '),
+    );
+    window.history.replaceState(null, '', window.location.pathname);
+  }, []);
 
   useEffect(() => {
     if (!supabase) return;
@@ -62,13 +83,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { needsConfirmation: !data.session };
   }, []);
 
+  const signInWithProvider = useCallback(async (provider: OAuthProvider) => {
+    if (!supabase) throw new Error('Accounts are not available yet.');
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider,
+      options: { redirectTo: `${window.location.origin}/profile` },
+    });
+    if (error) throw new Error(friendly(error.message));
+  }, []);
+
   const signOut = useCallback(async () => {
     await supabase?.auth.signOut();
   }, []);
 
   const value = useMemo<AuthValue>(
-    () => ({ available: Boolean(supabase), loading, user: session?.user ?? null, session, signIn, signUp, signOut }),
-    [loading, session, signIn, signUp, signOut],
+    () => ({
+      available: Boolean(supabase),
+      loading,
+      user: session?.user ?? null,
+      session,
+      signIn,
+      signUp,
+      signOut,
+      signInWithProvider,
+      authError,
+      clearAuthError: () => setAuthError(null),
+    }),
+    [loading, session, signIn, signUp, signOut, signInWithProvider, authError],
   );
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

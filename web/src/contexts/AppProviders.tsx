@@ -9,6 +9,7 @@ import { ServiceStatusProvider } from './ServiceStatusContext';
 import { ThemeProvider } from './ThemeContext';
 import { TripsProvider } from './TripsContext';
 import { ShortcutsProvider } from './ShortcutsContext';
+import { CommunityPlacesProvider } from './CommunityPlacesContext';
 
 export function AppProviders({ children }: { children: ReactNode }) {
   return (
@@ -20,9 +21,11 @@ export function AppProviders({ children }: { children: ReactNode }) {
               <MapProvider>
                 <TripsProvider>
                   <ShortcutsProvider>
-                    <RoutingProvider>
-                      <ReportsProvider>{children}</ReportsProvider>
-                    </RoutingProvider>
+                    <CommunityPlacesProvider>
+                      <RoutingProvider>
+                        <ReportsProvider>{children}</ReportsProvider>
+                      </RoutingProvider>
+                    </CommunityPlacesProvider>
                   </ShortcutsProvider>
                 </TripsProvider>
               </MapProvider>
