@@ -2,12 +2,15 @@ import { Loader2, MailCheck } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
 import { Link } from 'react-router';
 import { Button } from '@/components/ui/Button';
+import { useOAuthProviders } from '@/hooks/useOAuthProviders';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/cn';
 
 /** Email + password sign in / register (Supabase Auth). */
 export function AuthForm({ compact = false, onDone }: { compact?: boolean; onDone?: () => void }) {
   const { available, signIn, signUp, signInWithProvider, authError } = useAuth();
+  const providers = useOAuthProviders();
+  const anySocial = Boolean(providers?.google || providers?.facebook);
   const [mode, setMode] = useState<'signin' | 'signup'>('signin');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -73,7 +76,9 @@ export function AuthForm({ compact = false, onDone }: { compact?: boolean; onDon
 
   return (
     <form onSubmit={submit} className="space-y-2.5" noValidate>
-      <div className="grid grid-cols-2 gap-2">
+      {anySocial && (
+        <div className={providers?.google && providers?.facebook ? 'grid grid-cols-2 gap-2' : 'grid gap-2'}>
+          {providers?.google && (
         <button
           type="button"
           onClick={() => void social('google')}
@@ -82,6 +87,8 @@ export function AuthForm({ compact = false, onDone }: { compact?: boolean; onDon
         >
           <GoogleIcon /> Google
         </button>
+          )}
+          {providers?.facebook && (
         <button
           type="button"
           onClick={() => void social('facebook')}
@@ -90,15 +97,19 @@ export function AuthForm({ compact = false, onDone }: { compact?: boolean; onDon
         >
           <FacebookIcon /> Facebook
         </button>
-      </div>
+          )}
+        </div>
+      )}
       {authError && (
         <p role="alert" className="text-sm text-red-600 dark:text-red-400">
           {authError}
         </p>
       )}
+      {anySocial && (
       <div className="flex items-center gap-3 py-1 text-xs text-ink-400">
         <span className="h-px flex-1 bg-ink-200 dark:bg-ink-700" /> or with email <span className="h-px flex-1 bg-ink-200 dark:bg-ink-700" />
       </div>
+      )}
       {!compact && (
         <div role="tablist" className="grid grid-cols-2 gap-1 rounded-xl bg-ink-100 p-1 dark:bg-ink-800">
           {(['signin', 'signup'] as const).map((m) => (
