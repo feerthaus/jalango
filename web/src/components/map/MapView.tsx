@@ -12,6 +12,7 @@ import { DestinationMarker } from './DestinationMarker';
 import { NavigationCamera } from './NavigationCamera';
 import { RouteLayer } from './RouteLayer';
 import { ReportMarkers } from '@/components/reports/ReportMarkers';
+import { ShortcutLayer } from '@/components/shortcuts/ShortcutLayer';
 import { UserLocationMarker } from './UserLocationMarker';
 
 if (env.mapboxToken) mapboxgl.accessToken = env.mapboxToken;
@@ -128,6 +129,7 @@ export function MapView() {
       {map && <UserLocationMarker />}
       {map && markerPlace && <DestinationMarker place={markerPlace} />}
       {map && <RouteLayer />}
+      {map && <ShortcutLayer />}
       {map && <ReportMarkers />}
       {map && <NavigationCamera />}
 

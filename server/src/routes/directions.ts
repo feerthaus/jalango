@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { z } from 'zod';
-import { getDirections } from '../services/directions.js';
+import { getDirections, MAX_VIA } from '../services/directions.js';
 
 const point = z
   .string()
@@ -11,9 +11,19 @@ const point = z
   })
   .refine((p) => Math.abs(p.lng) <= 180 && Math.abs(p.lat) <= 90, 'out of range');
 
+const viaList = z
+  .string()
+  .regex(/^-?\d+(\.\d+)?,-?\d+(\.\d+)?(;-?\d+(\.\d+)?,-?\d+(\.\d+)?)*$/, 'expected "lng,lat;lng,lat"')
+  .transform((s) => s.split(';').map((pair) => {
+    const [lng, lat] = pair.split(',').map(Number);
+    return { lng, lat };
+  }))
+  .refine((pts) => pts.length <= MAX_VIA && pts.every((p) => Math.abs(p.lng) <= 180 && Math.abs(p.lat) <= 90), `at most ${MAX_VIA} valid points`);
+
 const query = z.object({
   from: point,
   to: point,
+  via: viaList.optional(),
   avoidTolls: z
     .enum(['0', '1', 'true', 'false'])
     .optional()
@@ -23,6 +33,6 @@ const query = z.object({
 export const directionsRouter = Router();
 
 directionsRouter.get('/', async (req, res) => {
-  const { from, to, avoidTolls } = query.parse(req.query);
-  res.json({ routes: await getDirections(from, to, { avoidTolls }) });
+  const { from, to, avoidTolls, via } = query.parse(req.query);
+  res.json({ routes: await getDirections(from, to, { avoidTolls, via }) });
 });

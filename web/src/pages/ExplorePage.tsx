@@ -10,6 +10,9 @@ import { useMapContext } from '@/contexts/MapContext';
 import { useServiceStatus } from '@/contexts/ServiceStatusContext';
 import { DEMO_PLACES, STATE_CAPITALS } from '@/data/demoPlaces';
 import { useShowOnMap } from '@/hooks/useShowOnMap';
+import { useShortcuts } from '@/contexts/ShortcutsContext';
+import { useNavigate } from 'react-router';
+import { formatDistance } from '@/utils/geo';
 import { cn } from '@/lib/cn';
 import { searchNearbyCategory } from '@/services/geocodingService';
 import type { Coordinates, ExploreCategory, Place } from '@/types';
@@ -87,6 +90,8 @@ export function ExplorePage() {
           onRetry={() => setNonce((n) => n + 1)}
         />
       </div>
+
+      <CommunityShortcuts />
 
       <h2 className="px-1 pb-2 pt-6 text-xs font-semibold uppercase tracking-wider text-ink-400">States &amp; cities</h2>
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
@@ -169,6 +174,51 @@ function NearbyResults(props: {
           <PlaceRow key={p.id} place={p} onSelect={onSelect} />
         ))}
       </ul>
+    </>
+  );
+}
+
+function CommunityShortcuts() {
+  const { available, shortcuts, selectShortcut } = useShortcuts();
+  const navigate = useNavigate();
+  if (!available) return null;
+  return (
+    <>
+      <h2 className="px-1 pb-2 pt-6 text-xs font-semibold uppercase tracking-wider text-ink-400">Community shortcuts nearby</h2>
+      <div className="rounded-2xl bg-white p-2 shadow-sm ring-1 ring-ink-200 dark:bg-ink-900 dark:ring-ink-800">
+        {shortcuts.length === 0 ? (
+          <p className="p-3 text-sm text-ink-500 dark:text-ink-400">
+            No shortcuts shared around here yet. After a trip, open <strong>Saved → Trips</strong> and tap <strong>Shortcut</strong> to share the road you took.
+          </p>
+        ) : (
+          <ul>
+            {shortcuts.slice(0, 8).map((s) => (
+              <li key={s.id}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    selectShortcut(s);
+                    navigate('/');
+                  }}
+                  className="flex w-full items-center gap-3 rounded-xl px-2 py-2.5 text-left hover:bg-ink-100 dark:hover:bg-ink-800"
+                >
+                  <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-violet-500 text-white">
+                    <MapPinned className="size-5" />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate font-medium">{s.title}</span>
+                    <span className="block truncate text-xs text-ink-500 dark:text-ink-400">
+                      {formatDistance(s.distance_m)}
+                      {s.avoids && ` · avoids ${s.avoids}`}
+                    </span>
+                  </span>
+                  <span className="shrink-0 text-xs font-semibold text-violet-600 dark:text-violet-300">👍 {s.upvotes}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
     </>
   );
 }

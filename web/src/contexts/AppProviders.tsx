@@ -7,6 +7,8 @@ import { RoutingProvider } from './RoutingContext';
 import { SavedPlacesProvider } from './SavedPlacesContext';
 import { ServiceStatusProvider } from './ServiceStatusContext';
 import { ThemeProvider } from './ThemeContext';
+import { TripsProvider } from './TripsContext';
+import { ShortcutsProvider } from './ShortcutsContext';
 
 export function AppProviders({ children }: { children: ReactNode }) {
   return (
@@ -16,9 +18,13 @@ export function AppProviders({ children }: { children: ReactNode }) {
           <LocationProvider>
             <SavedPlacesProvider>
               <MapProvider>
-                <RoutingProvider>
-                  <ReportsProvider>{children}</ReportsProvider>
-                </RoutingProvider>
+                <TripsProvider>
+                  <ShortcutsProvider>
+                    <RoutingProvider>
+                      <ReportsProvider>{children}</ReportsProvider>
+                    </RoutingProvider>
+                  </ShortcutsProvider>
+                </TripsProvider>
               </MapProvider>
             </SavedPlacesProvider>
           </LocationProvider>

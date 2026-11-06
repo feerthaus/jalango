@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Route, TrafficReport } from '@/types';
-import { justPassed, reportsOnRoute, upcomingAlerts } from './routeAlerts';
+import { justPassed, reportsOnRoute, shortcutsOnRoute, upcomingAlerts } from './routeAlerts';
 import { buildRouteIndex } from './routeProgress';
 
 const route: Route = {
@@ -49,5 +49,14 @@ describe('route alerts', () => {
   it('finds reports just passed', () => {
     const along = 0.003 * 110_574;
     expect(justPassed(onRoute, along).map((r) => r.report.id)).toEqual(['behind']);
+  });
+});
+
+describe('shortcutsOnRoute', () => {
+  const index = buildRouteIndex(route);
+  const sc = (id: string, sLat: number, eLat: number, lng = 101.701) => ({ id, start_lat: sLat, start_lng: lng, end_lat: eLat, end_lng: lng });
+  it('keeps shortcuts that leave and rejoin the route in the travel direction', () => {
+    const found = shortcutsOnRoute(index, [sc('ok', 3.102, 3.115), sc('reverse', 3.115, 3.102), sc('far', 3.102, 3.115, 101.75), sc('tiny', 3.105, 3.1055)]);
+    expect(found.map((s) => s.id)).toEqual(['ok']);
   });
 });

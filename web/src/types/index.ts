@@ -138,3 +138,44 @@ export interface NewReport {
   description: string;
   coordinates: Coordinates;
 }
+
+/* ─── Trip history ─────────────────────────────────────────────────── */
+
+export type TripTag = 'fast_route' | 'accurate_directions' | 'heavy_traffic' | 'wrong_directions' | 'toll_worth_it' | 'good_shortcut';
+
+export interface Trip {
+  id: string;
+  destination: { name: string; address?: string; coordinates: Coordinates; placeId?: string };
+  startedAt: string;
+  endedAt: string;
+  distanceMeters: number;
+  durationSeconds: number;
+  arrived: boolean;
+  routeSummary?: string;
+  rating?: number;
+  ratingTags?: TripTag[];
+  ratingComment?: string;
+  /** Driven path, kept on this device only (for sharing as a shortcut) */
+  trace?: [number, number][];
+  /** id of the matching row in Supabase when synced */
+  remoteId?: string;
+}
+
+/* ─── Community shortcuts ──────────────────────────────────────────── */
+
+export interface Shortcut {
+  id: string;
+  user_id: string;
+  title: string;
+  description: string | null;
+  avoids: string | null;
+  path: [number, number][];
+  start_lat: number;
+  start_lng: number;
+  end_lat: number;
+  end_lng: number;
+  distance_m: number;
+  upvotes: number;
+  downvotes: number;
+  created_at: string;
+}

@@ -11,6 +11,8 @@ import { RoutePanel } from '@/components/navigation/RoutePanel';
 import { PlaceCard } from '@/components/places/PlaceCard';
 import { ReportDetailCard } from '@/components/reports/ReportDetailCard';
 import { ReportSheet } from '@/components/reports/ReportSheet';
+import { ShortcutCard } from '@/components/shortcuts/ShortcutCard';
+import { useShortcuts } from '@/contexts/ShortcutsContext';
 import { DestinationSearch } from '@/components/search/DestinationSearch';
 import { IconButton } from '@/components/ui/IconButton';
 import { useMapContext } from '@/contexts/MapContext';
@@ -21,6 +23,7 @@ export function MapPage() {
   const { selectedPlace, clearSelection, tileError } = useMapContext();
   const { status } = useRouting();
   const { selectedReport, selectReport } = useReports();
+  const { selectedShortcut, selectShortcut } = useShortcuts();
   const navigating = useIsNavigating();
   const planning = !navigating && status !== 'idle';
   const [searchOpen, setSearchOpen] = useState(false);
@@ -74,7 +77,7 @@ export function MapPage() {
               </div>
             )}
             <LocationStatusBanner />
-            {!selectedPlace && !selectedReport && <InstallBanner />}
+            {!selectedPlace && !selectedReport && !selectedShortcut && <InstallBanner />}
           </div>
         )}
       </div>
@@ -100,7 +103,12 @@ export function MapPage() {
             <RoutePanel />
           </div>
         )}
-        {!planning && selectedReport && !selectedPlace && (
+        {!planning && selectedShortcut && !selectedPlace && (
+          <div className="md:max-w-[400px]">
+            <ShortcutCard shortcut={selectedShortcut} onClose={() => selectShortcut(null)} />
+          </div>
+        )}
+        {!planning && selectedReport && !selectedPlace && !selectedShortcut && (
           <div className="md:max-w-[400px]">
             <ReportDetailCard report={selectedReport} onClose={() => selectReport(null)} />
           </div>

@@ -4,6 +4,7 @@ import { DemoBadge } from '@/components/ui/DemoBadge';
 import { useReports } from '@/contexts/ReportsContext';
 import { useRouting } from '@/contexts/RoutingContext';
 import { ResumeToast } from './ResumeToast';
+import { ShortcutSuggestions } from '@/components/shortcuts/ShortcutSuggestions';
 import { reportsOnRoute } from '@/utils/routeAlerts';
 import { buildRouteIndex } from '@/utils/routeProgress';
 import { useMemo } from 'react';
@@ -82,6 +83,7 @@ export function RoutePanel() {
                 <span>{notice ?? 'Routing isn’t connected, so this is a straight line, not a road route. The time is a rough estimate at 50 km/h.'}</span>
               </div>
             )}
+            <ShortcutSuggestions />
             <ul role="radiogroup" aria-label="Routes" className="space-y-2 pb-2">
               {routes.map((r, i) => (
                 <RouteOption key={r.id} route={r} reportCount={reportCounts[i] ?? 0} selected={i === selectedIndex} fastest={routes.length > 1 && i === fastest} onSelect={() => selectRoute(i)} />

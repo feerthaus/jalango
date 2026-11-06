@@ -1,4 +1,4 @@
-import type { Place } from '@/types';
+import type { Coordinates, Place } from '@/types';
 
 /**
  * Remembers the current trip on this device so a closed or killed app can
@@ -10,6 +10,9 @@ export interface SavedTrip {
   avoidTolls: boolean;
   /** true = was in turn-by-turn mode, false = was choosing a route */
   navigating: boolean;
+  /** route was going through a community shortcut */
+  via?: Coordinates[];
+  shortcutTitle?: string;
   savedAt: number;
 }
 
@@ -51,6 +54,40 @@ export function saveTrip(trip: Omit<SavedTrip, 'savedAt'>): void {
 export function clearTrip(): void {
   try {
     localStorage.removeItem(KEY);
+  } catch {
+    /* ignore */
+  }
+}
+
+/* ─── Trace of the trip in progress (survives the app being closed) ─── */
+
+const TRACE_KEY = 'jalango:active-trace';
+
+export interface ActiveTrace {
+  startedAt: string;
+  trace: [number, number][];
+}
+
+export function saveActiveTrace(t: ActiveTrace): void {
+  try {
+    localStorage.setItem(TRACE_KEY, JSON.stringify(t));
+  } catch {
+    /* ignore */
+  }
+}
+
+export function loadActiveTrace(): ActiveTrace | null {
+  try {
+    const t = JSON.parse(localStorage.getItem(TRACE_KEY) ?? 'null') as ActiveTrace | null;
+    return t && typeof t.startedAt === 'string' && Array.isArray(t.trace) ? t : null;
+  } catch {
+    return null;
+  }
+}
+
+export function clearActiveTrace(): void {
+  try {
+    localStorage.removeItem(TRACE_KEY);
   } catch {
     /* ignore */
   }

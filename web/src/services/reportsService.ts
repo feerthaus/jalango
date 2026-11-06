@@ -37,7 +37,7 @@ export function toReportError(err: PgError): ReportError {
   if (hint === 'rate_limited') return new ReportError(err.message, 'rate_limited');
   if (hint === 'duplicate') return new ReportError(err.message, 'duplicate');
   if (hint === 'inactive') return new ReportError(err.message, 'inactive');
-  if (hint === 'own_report') return new ReportError(err.message, 'own_report');
+  if (hint === 'own_report' || hint === 'own_shortcut') return new ReportError(err.message, 'own_report');
   if (err.code === '23505') return new ReportError('You have already voted on this report.', 'duplicate');
   if (err.code === '23514') return new ReportError('Reports can only be made for locations in Malaysia.', 'invalid');
   if (err.code === '42501' || /row-level security|JWT|not allowed/i.test(err.message)) {

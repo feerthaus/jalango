@@ -2,7 +2,10 @@ import { config } from '../config.js';
 import { HttpError } from '../lib/errors.js';
 import type { Congestion, Coordinates, Route, RouteStep } from '../types.js';
 
-const DIRECTIONS = 'https://api.mapbox.com/directions/v5/mapbox/driving-traffic';
+const DIRECTIONS_TRAFFIC = 'https://api.mapbox.com/directions/v5/mapbox/driving-traffic';
+// driving-traffic accepts at most 3 coordinates; routes through a shortcut need more
+const DIRECTIONS_PLAIN = 'https://api.mapbox.com/directions/v5/mapbox/driving';
+export const MAX_VIA = 20;
 const TIMEOUT_MS = 8000;
 
 interface MbIntersection {
@@ -79,18 +82,33 @@ export function normalizeRoute(r: MbRoute, index: number): Route {
   };
 }
 
-export async function getDirections(from: Coordinates, to: Coordinates, opts: { avoidTolls?: boolean } = {}): Promise<Route[]> {
-  if (!config.mapboxToken) {
-    throw new HttpError(503, 'mapbox_not_configured', 'Mapbox is not configured on the server');
-  }
-  const url = new URL(`${DIRECTIONS}/${from.lng},${from.lat};${to.lng},${to.lat}`);
-  url.searchParams.set('alternatives', 'true');
+export function buildDirectionsUrl(from: Coordinates, to: Coordinates, opts: { avoidTolls?: boolean; via?: Coordinates[] } = {}): URL {
+  const via = (opts.via ?? []).slice(0, MAX_VIA);
+  const points = [from, ...via, to];
+  const useTraffic = via.length <= 1;
+  const url = new URL(`${useTraffic ? DIRECTIONS_TRAFFIC : DIRECTIONS_PLAIN}/${points.map((p) => `${p.lng},${p.lat}`).join(';')}`);
+  // Alternatives only make sense (and are only allowed) between two points
+  url.searchParams.set('alternatives', via.length === 0 ? 'true' : 'false');
   url.searchParams.set('geometries', 'geojson');
   url.searchParams.set('overview', 'full');
   url.searchParams.set('steps', 'true');
-  url.searchParams.set('annotations', 'congestion');
+  if (useTraffic) url.searchParams.set('annotations', 'congestion');
   url.searchParams.set('language', 'en');
+  // Via points are silent: no "you have arrived" at each one
+  if (via.length > 0) url.searchParams.set('waypoints', `0;${points.length - 1}`);
   if (opts.avoidTolls) url.searchParams.set('exclude', 'toll');
+  return url;
+}
+
+export async function getDirections(
+  from: Coordinates,
+  to: Coordinates,
+  opts: { avoidTolls?: boolean; via?: Coordinates[] } = {},
+): Promise<Route[]> {
+  if (!config.mapboxToken) {
+    throw new HttpError(503, 'mapbox_not_configured', 'Mapbox is not configured on the server');
+  }
+  const url = buildDirectionsUrl(from, to, opts);
   url.searchParams.set('access_token', config.mapboxToken);
 
   let res: Response;

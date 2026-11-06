@@ -2,9 +2,15 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { useProbeConsent } from '@/hooks/useProbeConsent';
 import { ProbeCollector } from '@/services/probeService';
 import { fetchRoutes } from '@/services/routingService';
-import { clearTrip, loadTrip, saveTrip } from '@/services/tripStore';
+import { clearActiveTrace, clearTrip, loadActiveTrace, loadTrip, saveActiveTrace, saveTrip } from '@/services/tripStore';
+import type { Shortcut } from '@/types';
+import { haversineMeters } from '@/utils/geo';
+import { pathLength, roundPath, sampleWaypoints, simplify } from '@/utils/trace';
+import { useTrips } from './TripsContext';
 import type { Coordinates, Place, Route } from '@/types';
-import { buildRouteIndex, computeProgress, type RouteIndex, type RouteProgress } from '@/utils/routeProgress';
+import { buildRouteIndex, computeProgress, projectOnRoute, type RouteIndex, type RouteProgress } from '@/utils/routeProgress';
+
+const computeAlongSafe = (index: RouteIndex, p: Coordinates, hint?: number) => projectOnRoute(index, p, hint).along;
 import { useLocation } from './LocationContext';
 import { useServiceStatus } from './ServiceStatusContext';
 
@@ -32,6 +38,13 @@ interface RoutingValue {
   startNavigation: () => void;
   endNavigation: () => void;
   clearRoute: () => void;
+  /** Community shortcut the current route goes through */
+  shortcut: Shortcut | null;
+  shortcutTitle: string | null;
+  applyShortcut: (s: Shortcut, destination?: Place | null) => void;
+  clearShortcut: () => void;
+  /** Trip just recorded on arrival (for the rating prompt) */
+  finishedTripId: string | null;
 }
 
 const RoutingContext = createContext<RoutingValue | null>(null);
@@ -69,6 +82,13 @@ export function RoutingProvider({ children }: { children: ReactNode }) {
   /** What to do once a restored trip's routes are loaded */
   const resumeRef = useRef<'navigate' | 'preview' | null>(null);
   const [resumedTo, setResumedTo] = useState<string | null>(null);
+  const { recordTrip } = useTrips();
+  const [shortcut, setShortcut] = useState<Shortcut | null>(null);
+  const [shortcutTitle, setShortcutTitle] = useState<string | null>(null);
+  const viaRef = useRef<Coordinates[]>([]);
+  const traceRef = useRef<[number, number][]>([]);
+  const startedAtRef = useRef<string | null>(null);
+  const [finishedTripId, setFinishedTripId] = useState<string | null>(null);
 
   const selectedRoute = routes[selectedIndex] ?? null;
 
@@ -87,6 +107,7 @@ export function RoutingProvider({ children }: { children: ReactNode }) {
       live: searchMode === 'live',
       avoidTolls,
       destinationName: destination.name,
+      via: viaRef.current,
       signal: controller.signal,
     })
       .then((res) => {
@@ -116,11 +137,23 @@ export function RoutingProvider({ children }: { children: ReactNode }) {
       return;
     }
     originRef.current = here;
+    // When rerouting mid-trip, skip shortcut points we've already driven past
+    if (navigatingRef.current && viaRef.current.length && indexRef.current && segmentHint.current !== undefined) {
+      const index = indexRef.current;
+      const along = computeAlongSafe(index, here, segmentHint.current);
+      viaRef.current = viaRef.current.filter((v) => {
+        const a = computeAlongSafe(index, v);
+        return a > along + 50 && haversineMeters(v, here) > 80;
+      });
+    }
     setRequestId((n) => n + 1);
   }, [requestLocation]);
 
   const planRoute = useCallback(
     (place: Place) => {
+      viaRef.current = [];
+      setShortcut(null);
+      setShortcutTitle(null);
       setDestination(place);
       setRoutes([]);
       setProgress(null);
@@ -154,11 +187,13 @@ export function RoutingProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (status !== 'navigating' || !fix || !selectedRoute || !indexRef.current) return;
     collector.current?.add(fix);
+    recordPoint(fix.coordinates, fix.accuracy);
     const p = computeProgress(selectedRoute, indexRef.current, fix.coordinates, segmentHint.current);
     segmentHint.current = p.segment;
     setProgress(p);
 
     if (p.arrived) {
+      finishTrip(true);
       setStatus('arrived');
       return;
     }
@@ -177,8 +212,48 @@ export function RoutingProvider({ children }: { children: ReactNode }) {
     collector.current = null;
   };
 
+  const recordPoint = (c: Coordinates, accuracy: number) => {
+    if (accuracy > 60) return;
+    const t = traceRef.current;
+    const last = t[t.length - 1];
+    if (last && haversineMeters({ lng: last[0], lat: last[1] }, c) < 20) return;
+    if (t.length >= 4000) return;
+    t.push([c.lng, c.lat]);
+    if (startedAtRef.current && t.length % 10 === 0) saveActiveTrace({ startedAt: startedAtRef.current, trace: t });
+  };
+
+  /** Save the trip to history. Ended early trips under 300 m aren't worth keeping. */
+  const finishTrip = (arrived: boolean) => {
+    const startedAt = startedAtRef.current;
+    const dest = destination;
+    startedAtRef.current = null;
+    clearActiveTrace();
+    if (!startedAt || !dest) return;
+    const trace = roundPath(simplify(traceRef.current, 5));
+    traceRef.current = [];
+    const driven = pathLength(trace);
+    if (!arrived && driven < 300) return;
+    const endedAt = new Date().toISOString();
+    const id = recordTrip({
+      destination: { name: dest.name, address: dest.address, coordinates: dest.coordinates, placeId: dest.id },
+      startedAt,
+      endedAt,
+      distanceMeters: driven > 0 ? driven : (selectedRoute?.distanceMeters ?? 0),
+      durationSeconds: Math.max(0, (Date.parse(endedAt) - Date.parse(startedAt)) / 1000),
+      arrived,
+      routeSummary: shortcutTitle ? `via shortcut: ${shortcutTitle}` : selectedRoute?.summary || undefined,
+      trace: trace.length >= 2 ? trace : undefined,
+    });
+    if (arrived) setFinishedTripId(id);
+  };
+
   const startNavigation = useCallback(() => {
     if (!selectedRoute || !destination) return;
+    if (!startedAtRef.current) {
+      startedAtRef.current = new Date().toISOString();
+      traceRef.current = [];
+      if (originRef.current) recordPoint(originRef.current, 0);
+    }
     navigatingRef.current = true;
     setStatus('navigating');
     // keep only the chosen route
@@ -194,6 +269,17 @@ export function RoutingProvider({ children }: { children: ReactNode }) {
     const trip = loadTrip();
     if (!trip) return;
     resumeRef.current = trip.navigating ? 'navigate' : 'preview';
+    if (trip.navigating) {
+      const active = loadActiveTrace();
+      if (active) {
+        startedAtRef.current = active.startedAt;
+        traceRef.current = active.trace;
+      }
+    }
+    if (trip.via?.length) {
+      viaRef.current = trip.via;
+      setShortcutTitle(trip.shortcutTitle ?? 'Community shortcut');
+    }
     setDestination(trip.destination);
     setAvoidTollsState(trip.avoidTolls);
     setResumedTo(trip.destination.name);
@@ -221,8 +307,14 @@ export function RoutingProvider({ children }: { children: ReactNode }) {
       clearTrip();
       return;
     }
-    saveTrip({ destination, avoidTolls, navigating: status === 'navigating' || resumeRef.current === 'navigate' });
-  }, [destination, status, avoidTolls]);
+    saveTrip({
+      destination,
+      avoidTolls,
+      navigating: status === 'navigating' || resumeRef.current === 'navigate',
+      via: viaRef.current.length ? viaRef.current : undefined,
+      shortcutTitle: shortcutTitle ?? undefined,
+    });
+  }, [destination, status, avoidTolls, shortcutTitle]);
 
   useEffect(() => {
     if (!resumedTo) return;
@@ -247,12 +339,55 @@ export function RoutingProvider({ children }: { children: ReactNode }) {
     setRerouting(false);
     resumeRef.current = null;
     setResumedTo(null);
+    viaRef.current = [];
+    setShortcut(null);
+    setShortcutTitle(null);
+    traceRef.current = [];
+    startedAtRef.current = null;
+    clearActiveTrace();
+    setFinishedTripId(null);
   }, []);
 
+  const statusRef = useRef(status);
+  statusRef.current = status;
+  const finishTripRef = useRef(finishTrip);
+  finishTripRef.current = finishTrip;
+
   const endNavigation = useCallback(() => {
+    // Ending mid-trip still records it in the history (arrival already did)
+    if (statusRef.current === 'navigating') finishTripRef.current(false);
     reset();
     setDestination(null);
   }, [reset]);
+
+  const applyShortcut = useCallback(
+    (s: Shortcut, dest?: Place | null) => {
+      const end = s.path[s.path.length - 1];
+      const target: Place = dest ?? {
+        id: `shortcut-end:${s.id}`,
+        name: `End of “${s.title}”`,
+        address: s.avoids ? `Shortcut · avoids ${s.avoids}` : 'Community shortcut',
+        coordinates: { lng: end[0], lat: end[1] },
+        kind: 'other',
+        source: 'mapbox',
+      };
+      viaRef.current = sampleWaypoints(s.path, 12);
+      setShortcut(s);
+      setShortcutTitle(s.title);
+      setDestination(target);
+      setRoutes([]);
+      setProgress(null);
+      queueMicrotask(request);
+    },
+    [request],
+  );
+
+  const clearShortcut = useCallback(() => {
+    viaRef.current = [];
+    setShortcut(null);
+    setShortcutTitle(null);
+    queueMicrotask(request);
+  }, [request]);
 
   const clearRoute = useCallback(() => {
     reset();
@@ -283,8 +418,13 @@ export function RoutingProvider({ children }: { children: ReactNode }) {
       startNavigation,
       endNavigation,
       clearRoute,
+      shortcut,
+      shortcutTitle,
+      applyShortcut,
+      clearShortcut,
+      finishedTripId,
     }),
-    [status, destination, routes, selectedIndex, selectedRoute, mode, notice, error, avoidTolls, progress, rerouting, resumedTo, planRoute, request, setAvoidTolls, startNavigation, endNavigation, clearRoute],
+    [status, destination, routes, selectedIndex, selectedRoute, mode, notice, error, avoidTolls, progress, rerouting, resumedTo, planRoute, request, setAvoidTolls, startNavigation, endNavigation, clearRoute, shortcut, shortcutTitle, applyShortcut, clearShortcut, finishedTripId],
   );
 
   return <RoutingContext.Provider value={value}>{children}</RoutingContext.Provider>;

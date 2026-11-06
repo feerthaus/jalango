@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { normalizeRoute } from './directions.js';
+import { buildDirectionsUrl, normalizeRoute } from './directions.js';
 
 const fixture = {
   distance: 12_345,
@@ -55,5 +55,26 @@ describe('normalizeRoute', () => {
     const r = normalizeRoute({ ...fixture, legs: [{ ...fixture.legs[0], annotation: { congestion: ['low'] } }] }, 1);
     expect(r.congestion).toBeUndefined();
     expect(r.id).toBe('mapbox-1');
+  });
+});
+
+describe('buildDirectionsUrl', () => {
+  const a = { lng: 101.68, lat: 3.13 };
+  const b = { lng: 101.7, lat: 3.15 };
+  it('uses live traffic with alternatives for a plain A→B route', () => {
+    const u = buildDirectionsUrl(a, b);
+    expect(u.pathname).toContain('/driving-traffic/101.68,3.13;101.7,3.15');
+    expect(u.searchParams.get('alternatives')).toBe('true');
+    expect(u.searchParams.get('annotations')).toBe('congestion');
+    expect(u.searchParams.has('waypoints')).toBe(false);
+  });
+  it('routes through silent via points on the plain driving profile', () => {
+    const via = [{ lng: 101.69, lat: 3.14 }, { lng: 101.695, lat: 3.145 }];
+    const u = buildDirectionsUrl(a, b, { via, avoidTolls: true });
+    expect(u.pathname).toContain('/mapbox/driving/101.68,3.13;101.69,3.14;101.695,3.145;101.7,3.15');
+    expect(u.searchParams.get('alternatives')).toBe('false');
+    expect(u.searchParams.get('waypoints')).toBe('0;3');
+    expect(u.searchParams.get('exclude')).toBe('toll');
+    expect(u.searchParams.has('annotations')).toBe(false);
   });
 });

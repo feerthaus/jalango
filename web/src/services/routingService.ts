@@ -16,7 +16,7 @@ export interface RoutesResponse {
 export async function fetchRoutes(
   from: Coordinates,
   to: Coordinates,
-  opts: { live: boolean; avoidTolls: boolean; destinationName: string; signal?: AbortSignal },
+  opts: { live: boolean; avoidTolls: boolean; destinationName: string; via?: Coordinates[]; signal?: AbortSignal },
 ): Promise<RoutesResponse> {
   const demo = (notice?: string): RoutesResponse => ({ routes: [straightLineRoute(from, to, opts.destinationName)], mode: 'demo', notice });
 
@@ -24,7 +24,12 @@ export async function fetchRoutes(
   try {
     const { routes } = await apiGet<{ routes: Route[] }>(
       '/directions',
-      { from: `${from.lng},${from.lat}`, to: `${to.lng},${to.lat}`, avoidTolls: opts.avoidTolls ? 1 : undefined },
+      {
+        from: `${from.lng},${from.lat}`,
+        to: `${to.lng},${to.lat}`,
+        avoidTolls: opts.avoidTolls ? 1 : undefined,
+        via: opts.via?.length ? opts.via.map((p) => `${p.lng.toFixed(5)},${p.lat.toFixed(5)}`).join(';') : undefined,
+      },
       opts.signal,
     );
     if (routes.length === 0) throw new ApiError(422, 'no_route', 'No driving route found');

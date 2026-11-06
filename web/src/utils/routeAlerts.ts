@@ -36,3 +36,20 @@ export function upcomingAlerts(onRoute: ReportOnRoute[], along: number, horizon 
 export function justPassed(onRoute: ReportOnRoute[], along: number, min = 30, max = 400): ReportOnRoute[] {
   return onRoute.filter((r) => along - r.along >= min && along - r.along <= max);
 }
+
+/**
+ * Community shortcuts that branch off this route and rejoin it later:
+ * both ends within `maxOffset` of the route, start before end.
+ */
+export function shortcutsOnRoute<T extends { start_lat: number; start_lng: number; end_lat: number; end_lng: number }>(
+  index: RouteIndex,
+  shortcuts: T[],
+  maxOffset = 300,
+): T[] {
+  if (index.coords.length < 2) return [];
+  return shortcuts.filter((s) => {
+    const a = projectOnRoute(index, { lat: s.start_lat, lng: s.start_lng });
+    const b = projectOnRoute(index, { lat: s.end_lat, lng: s.end_lng });
+    return a.offset <= maxOffset && b.offset <= maxOffset && b.along - a.along > 300;
+  });
+}

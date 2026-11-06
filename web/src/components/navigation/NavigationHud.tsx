@@ -4,6 +4,8 @@ import { useVoiceAlerts } from '@/hooks/useVoiceAlerts';
 import { useWakeLock } from '@/hooks/useWakeLock';
 import { ResumeToast } from './ResumeToast';
 import { RouteAlerts } from './RouteAlerts';
+import { RateTrip } from '@/components/trips/RateTrip';
+import { useTrips } from '@/contexts/TripsContext';
 import { useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { DemoBadge } from '@/components/ui/DemoBadge';
@@ -18,7 +20,9 @@ import { ManeuverIcon } from './ManeuverIcon';
 
 /** Turn-by-turn banner (top) and trip bar (bottom) while navigating. */
 export function NavigationHud() {
-  const { status, selectedRoute: route, progress, destination, endNavigation, rerouting } = useRouting();
+  const { status, selectedRoute: route, progress, destination, endNavigation, rerouting, finishedTripId } = useRouting();
+  const { getTrip } = useTrips();
+  const finishedTrip = finishedTripId ? getTrip(finishedTripId) : undefined;
   const { following, setFollowing } = useMapContext();
   const [showSteps, setShowSteps] = useState(false);
   const alerts = useRouteAlerts();
@@ -35,7 +39,13 @@ export function NavigationHud() {
           </span>
           <h2 className="text-xl font-bold">You’ve arrived</h2>
           <p className="mt-1 text-sm text-ink-500 dark:text-ink-300">{destination.name}</p>
-          <Button className="mt-4 w-full py-3" onClick={endNavigation}>
+          {finishedTrip && (
+            <div className="mt-4 border-t border-ink-100 pt-4 dark:border-ink-800">
+              <p className="mb-2 text-sm font-semibold">How was this trip?</p>
+              <RateTrip trip={finishedTrip} compact />
+            </div>
+          )}
+          <Button variant={finishedTrip?.rating ? 'primary' : 'secondary'} className="mt-4 w-full py-3" onClick={endNavigation}>
             Done
           </Button>
         </div>

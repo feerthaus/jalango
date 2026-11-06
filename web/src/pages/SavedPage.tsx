@@ -1,5 +1,9 @@
 import { Clock, Star, Trash2, X } from 'lucide-react';
+import { useState } from 'react';
 import { PlaceRow } from '@/components/places/PlaceRow';
+import { TripHistory } from '@/components/trips/TripHistory';
+import { cn } from '@/lib/cn';
+import { useTrips } from '@/contexts/TripsContext';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { PagePanel } from '@/components/ui/PagePanel';
 import { useSavedPlaces } from '@/contexts/SavedPlacesContext';
@@ -9,9 +13,29 @@ import { formatRelativeTime } from '@/utils/format';
 export function SavedPage() {
   const { favourites, recents, removeFavourite, removeRecent, clearRecents } = useSavedPlaces();
   const showOnMap = useShowOnMap();
+  const { trips } = useTrips();
+  const [tab, setTab] = useState<'places' | 'trips'>('places');
 
   return (
-    <PagePanel title="Saved" subtitle="Stored on this device">
+    <PagePanel title="Saved" subtitle="Places and trip history">
+      <div role="tablist" className="mb-2 grid grid-cols-2 gap-1 rounded-2xl bg-ink-100 p-1 dark:bg-ink-900">
+        {(['places', 'trips'] as const).map((t) => (
+          <button
+            key={t}
+            type="button"
+            role="tab"
+            aria-selected={tab === t}
+            onClick={() => setTab(t)}
+            className={cn('rounded-xl py-2 text-sm font-semibold', tab === t ? 'bg-white shadow-sm dark:bg-ink-700' : 'text-ink-500')}
+          >
+            {t === 'places' ? `Places (${favourites.length})` : `Trips (${trips.length})`}
+          </button>
+        ))}
+      </div>
+      {tab === 'trips' ? (
+        <TripHistory />
+      ) : (
+      <>
       <h2 className="px-1 pb-2 pt-2 text-xs font-semibold uppercase tracking-wider text-ink-400">Favourites</h2>
       <div className="rounded-2xl bg-white p-2 shadow-sm ring-1 ring-ink-200 dark:bg-ink-900 dark:ring-ink-800">
         {favourites.length === 0 ? (
@@ -58,6 +82,8 @@ export function SavedPage() {
           </ul>
         )}
       </div>
+      </>
+      )}
     </PagePanel>
   );
 }
