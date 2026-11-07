@@ -54,3 +54,13 @@ describe('street search helpers', () => {
     expect(r.map((p) => p.id)).toEqual(['a', 'd']);
   });
 });
+
+describe('photonToPlace', () => {
+  it('maps OSM streets in Malaysia and drops other countries', async () => {
+    const { photonToPlace } = await import('./mapbox.js');
+    expect(photonToPlace({ geometry: { coordinates: [101.56, 2.83] }, properties: { osm_id: 123, osm_type: 'W', name: 'Jalan CJ 7', type: 'street', district: 'Taman Changgang Jaya', city: 'Banting', postcode: '42700', state: 'Selangor', countrycode: 'MY' } })).toEqual({
+      id: 'osm:W123', name: 'Jalan CJ 7', address: 'Taman Changgang Jaya, 42700 Banting, Selangor', coordinates: { lng: 101.56, lat: 2.83 }, kind: 'street', source: 'osm',
+    });
+    expect(photonToPlace({ geometry: { coordinates: [103.8, 1.3] }, properties: { name: 'Orchard Road', type: 'street', countrycode: 'SG' } })).toBeNull();
+  });
+});

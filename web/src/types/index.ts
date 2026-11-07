@@ -19,7 +19,7 @@ export type PlaceKind =
   | 'other';
 
 /** Where a record came from. `demo` = bundled sample data, never live. */
-export type DataSource = 'mapbox' | 'demo' | 'community';
+export type DataSource = 'mapbox' | 'demo' | 'community' | 'osm';
 
 export interface Place {
   id: string;

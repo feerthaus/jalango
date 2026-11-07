@@ -132,6 +132,69 @@ async function geocodeStreets(q: string, near: Coordinates | undefined, limit: n
   return toPlaces(await request(url));
 }
 
+interface PhotonFeature {
+  geometry?: { coordinates?: [number, number] };
+  properties?: {
+    osm_id?: number;
+    osm_type?: string;
+    name?: string;
+    street?: string;
+    housenumber?: string;
+    district?: string;
+    city?: string;
+    county?: string;
+    state?: string;
+    postcode?: string;
+    countrycode?: string;
+    type?: string;
+  };
+}
+
+/** Photon (OpenStreetMap) result → Place. Only Malaysian results are kept. */
+export function photonToPlace(f: PhotonFeature): Place | null {
+  const p = f.properties ?? {};
+  const c = f.geometry?.coordinates;
+  if (!c || p.countrycode?.toUpperCase() !== 'MY') return null;
+  const name = p.name ?? (p.street ? `${p.housenumber ? `${p.housenumber}, ` : ''}${p.street}` : null);
+  if (!name) return null;
+  const kind: PlaceKind = p.type === 'street' ? 'street' : p.type === 'house' ? 'address' : p.type === 'city' || p.type === 'district' ? 'place' : 'poi';
+  const area = [p.district, p.postcode ? `${p.postcode} ${p.city ?? ''}`.trim() : p.city, p.state].filter((x, i, a) => x && a.indexOf(x) === i);
+  return {
+    id: `osm:${p.osm_type ?? ''}${p.osm_id ?? `${c[0]},${c[1]}`}`,
+    name,
+    address: area.join(', '),
+    coordinates: { lng: c[0], lat: c[1] },
+    kind,
+    source: 'osm',
+  };
+}
+
+/**
+ * OpenStreetMap search (Photon, by Komoot) — many Malaysian housing-estate
+ * streets ("Jalan CJ 7") exist in OSM but not in Mapbox's search. Best effort:
+ * short timeout, empty on any error. Data © OpenStreetMap contributors.
+ */
+export async function searchOsm(q: string, near: Coordinates | undefined, limit: number): Promise<Place[]> {
+  const url = new URL('https://photon.komoot.io/api/');
+  url.searchParams.set('q', q);
+  url.searchParams.set('limit', String(Math.min(limit, 10)));
+  url.searchParams.set('bbox', MALAYSIA_BBOX);
+  if (near) {
+    url.searchParams.set('lat', String(near.lat));
+    url.searchParams.set('lon', String(near.lng));
+  }
+  try {
+    const res = await fetch(url, { signal: AbortSignal.timeout(3500), headers: { 'User-Agent': 'JalanGo/1.0 (+https://jalango.netlify.app)' } });
+    if (!res.ok) return [];
+    const body = (await res.json()) as { features?: PhotonFeature[] };
+    return (body.features ?? []).map(photonToPlace).filter((p): p is Place => p !== null);
+  } catch {
+    return [];
+  }
+}
+
+const isStreetLike = (p: Place) => p.kind === 'street' || p.kind === 'address';
+
 export async function searchPlaces(query: string, near?: Coordinates, limit = 8): Promise<Place[]> {
   const q = query.trim();
 
@@ -156,6 +219,14 @@ export async function searchPlaces(query: string, near?: Coordinates, limit = 8)
   let results = streets ? mergePlaces(streets.filter((p) => p.kind === 'street' || p.kind === 'address').concat(pois), [], limit) : pois;
   if (streets) results = mergePlaces(results, streets, limit);
   if (results.length < 3 && !streets) results = mergePlaces(results, await geocodeStreets(q, near, limit).catch(() => []), limit);
+
+  // Asked for a street but Mapbox has none: try OpenStreetMap (as typed, then "cj 7" spacing)
+  if (streety && !results.some(isStreetLike)) {
+    let osm = await searchOsm(q, near, limit);
+    if (!osm.some(isStreetLike) && spaceStreetCodes(q) !== q) osm = osm.concat(await searchOsm(spaceStreetCodes(q), near, limit));
+    const osmStreets = osm.filter(isStreetLike);
+    if (osmStreets.length) results = mergePlaces(osmStreets, results, limit);
+  }
 
   // "cj7" vs "cj 7"
   const spaced = spaceStreetCodes(q);
