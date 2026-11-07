@@ -25,6 +25,18 @@ export function ServiceStatusProvider({ children }: { children: ReactNode }) {
     return () => controller.abort();
   }, [nonce]);
 
+  // Server unreachable (weak signal when the app opened)? Check again quietly.
+  useEffect(() => {
+    if (!server || server.reachable) return;
+    const id = setTimeout(() => setNonce((n) => n + 1), 20_000);
+    const online = () => setNonce((n) => n + 1);
+    window.addEventListener('online', online);
+    return () => {
+      clearTimeout(id);
+      window.removeEventListener('online', online);
+    };
+  }, [server]);
+
   const refresh = useCallback(() => {
     setServer(null);
     setNonce((n) => n + 1);

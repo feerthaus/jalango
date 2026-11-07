@@ -51,6 +51,7 @@ const RoutingContext = createContext<RoutingValue | null>(null);
 
 const OFF_ROUTE_METERS = 60;
 const OFF_ROUTE_FIXES = 3;
+const DEMO_RETRY_MS = 20_000;
 const REROUTE_COOLDOWN_MS = 15_000;
 
 export function RoutingProvider({ children }: { children: ReactNode }) {
@@ -91,6 +92,8 @@ export function RoutingProvider({ children }: { children: ReactNode }) {
   const [finishedTripId, setFinishedTripId] = useState<string | null>(null);
 
   const selectedRoute = routes[selectedIndex] ?? null;
+  const selectedRouteRef = useRef<Route | null>(null);
+  selectedRouteRef.current = selectedRoute;
 
   // Fetch routes whenever a request is made (plan, retry, toggle tolls, reroute)
   useEffect(() => {
@@ -104,13 +107,17 @@ export function RoutingProvider({ children }: { children: ReactNode }) {
     setError(null);
 
     fetchRoutes(origin, destination.coordinates, {
-      live: searchMode === 'live',
+      // Still checking the server (e.g. right after the app reopens)? Try live anyway —
+      // fetchRoutes falls back to the straight-line preview if it really is down.
+      live: searchMode !== 'demo',
       avoidTolls,
       destinationName: destination.name,
       via: viaRef.current,
       signal: controller.signal,
     })
       .then((res) => {
+        // A reroute that hit a network blip must not swap a real road route for a straight line
+        if (isReroute && res.mode === 'demo' && selectedRouteRef.current && selectedRouteRef.current.source !== 'demo') return;
         setRoutes(res.routes);
         setSelectedIndex(0);
         setMode(res.mode);
@@ -206,6 +213,13 @@ export function RoutingProvider({ children }: { children: ReactNode }) {
       request();
     }
   }, [fix, status, selectedRoute, request]);
+
+  // Navigating on a straight-line fallback: keep trying to get the real road route
+  useEffect(() => {
+    if (status !== 'navigating' || selectedRoute?.source !== 'demo' || searchMode === 'demo') return;
+    const id = setInterval(() => request(), DEMO_RETRY_MS);
+    return () => clearInterval(id);
+  }, [status, selectedRoute, searchMode, request]);
 
   const stopCollector = () => {
     collector.current?.stop();
