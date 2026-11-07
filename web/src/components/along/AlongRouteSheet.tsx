@@ -7,6 +7,7 @@ import { ALONG_CATEGORIES, alongMeta } from '@/lib/alongCategories';
 import { cn } from '@/lib/cn';
 import { formatDistance } from '@/utils/geo';
 import { googleMapsReviewsUrl } from '@/utils/googleMapsLink';
+import { FuelPriceCard } from '@/components/fuel/FuelPriceCard';
 
 /** Food, cafés, attractions, R&R and fuel ahead on the current route, with "stop here". Results are also plotted on the map. */
 export function AlongRouteSheet({ onClose }: { onClose: () => void }) {
@@ -70,6 +71,8 @@ export function AlongRouteSheet({ onClose }: { onClose: () => void }) {
           )}
         </div>
       </div>
+
+      {category === 'petrol' && <FuelPriceCard className="mb-3" />}
 
       {!live ? (
         <p className="text-sm text-ink-500">Carian sepanjang laluan perlukan laluan sebenar dan sambungan internet.</p>

@@ -17,6 +17,7 @@ import { formatDistance } from '@/utils/geo';
 import { cn } from '@/lib/cn';
 import { searchNearbyCategory } from '@/services/geocodingService';
 import type { Coordinates, ExploreCategory, Place } from '@/types';
+import { FuelPriceCard } from '@/components/fuel/FuelPriceCard';
 
 const CATEGORIES: { id: ExploreCategory; label: string; icon: LucideIcon }[] = [
   { id: 'petrol', label: 'Petrol', icon: Fuel },
@@ -79,6 +80,8 @@ export function ExplorePage() {
           </button>
         ))}
       </div>
+
+      {category === 'petrol' && <FuelPriceCard className="mt-2" />}
 
       <div className="mt-2 rounded-2xl bg-white p-2 shadow-sm ring-1 ring-ink-200 dark:bg-ink-900 dark:ring-ink-800">
         <NearbyResults
