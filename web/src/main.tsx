@@ -3,7 +3,9 @@ import { createRoot } from 'react-dom/client';
 import { App } from './App';
 import './index.css';
 import { registerServiceWorker } from './lib/pwa';
+import { initMonitoring } from './lib/monitoring';
 
+initMonitoring();
 registerServiceWorker();
 
 // Free-tier hosts may inject a floating badge at the bottom of the page; keep our
