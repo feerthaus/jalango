@@ -11,13 +11,20 @@ permissions:
 jobs:
   update:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: node scripts/fetch-speed-cameras.mjs
+      - name: Download OpenStreetMap extract (Malaysia, Singapore, Brunei) from Geofabrik
+        run: curl -sSfL --retry 3 -o region.osm.pbf https://download.geofabrik.de/asia/malaysia-singapore-brunei-latest.osm.pbf
+      - name: Keep only speed cameras
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq osmium-tool
+          osmium tags-filter region.osm.pbf n/highway=speed_camera -o cameras.osm.pbf --overwrite
+          osmium export cameras.osm.pbf -f geojsonseq --add-unique-id=type_id -o cameras.geojsonseq --overwrite
+      - run: node scripts/fetch-speed-cameras.mjs cameras.geojsonseq
       - name: Commit if changed
         run: |
           if git diff --quiet -- web/public/data/speed-cameras.json; then
