@@ -39,3 +39,18 @@ describe('normalizeFeature', () => {
     expect(normalizeFeature({ geometry: { coordinates: [1, 2] }, properties: {} })).toBeNull();
   });
 });
+
+describe('street search helpers', () => {
+  it('spaces Malaysian street codes', async () => {
+    const { spaceStreetCodes } = await import('./mapbox.js');
+    expect(spaceStreetCodes('jalan cj7 taman changgang jaya')).toBe('jalan cj 7 taman changgang jaya');
+    expect(spaceStreetCodes('SS2/24 Petaling Jaya')).toBe('SS 2/24 Petaling Jaya');
+    expect(spaceStreetCodes('jalan ampang')).toBe('jalan ampang');
+  });
+  it('merges without duplicates', async () => {
+    const { mergePlaces } = await import('./mapbox.js');
+    const mk = (id: string, name: string, lat: number) => ({ id, name, address: '', coordinates: { lat, lng: 101.5 }, kind: 'poi' as const, source: 'mapbox' as const });
+    const r = mergePlaces([mk('a', 'Jalan CJ 7', 2.8)], [mk('b', 'jalan cj 7', 2.9), mk('c', 'Near A', 2.8001), mk('d', 'Other', 2.95)], 8);
+    expect(r.map((p) => p.id)).toEqual(['a', 'd']);
+  });
+});

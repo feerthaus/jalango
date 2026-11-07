@@ -92,20 +92,78 @@ function toPlaces(features: MapboxFeature[]): Place[] {
 
 const POSTCODE_RE = /^\d{5}$/;
 
-export async function searchPlaces(query: string, near?: Coordinates, limit = 8): Promise<Place[]> {
-  const q = query.trim();
+/** "cj7" → "cj 7", "ss2" → "ss 2": Malaysian street codes are written both ways. */
+export function spaceStreetCodes(q: string): string {
+  return q.replace(/\b([a-z]{1,4})(\d{1,3}[a-z]?)\b/gi, '$1 $2');
+}
 
-  // Malaysian postcodes (5 digits) resolve best through the geocoding endpoint.
-  const url = POSTCODE_RE.test(q) ? new URL(`${GEOCODE}/forward`) : new URL(`${SEARCHBOX}/forward`);
+/** Same place from two sources: same name, or within ~60 m. */
+function isDuplicate(a: Place, b: Place): boolean {
+  const close = Math.abs(a.coordinates.lat - b.coordinates.lat) < 0.0006 && Math.abs(a.coordinates.lng - b.coordinates.lng) < 0.0006;
+  return close || a.name.toLowerCase() === b.name.toLowerCase();
+}
+
+export function mergePlaces(primary: Place[], extra: Place[], limit: number): Place[] {
+  const out = [...primary];
+  for (const p of extra) if (!out.some((q) => isDuplicate(p, q))) out.push(p);
+  return out.slice(0, limit);
+}
+
+async function searchBox(q: string, near: Coordinates | undefined, limit: number): Promise<Place[]> {
+  const url = new URL(`${SEARCHBOX}/forward`);
   url.searchParams.set('q', q);
   url.searchParams.set('country', 'my');
   url.searchParams.set('language', 'en');
   url.searchParams.set('limit', String(Math.min(limit, 10)));
-  if (POSTCODE_RE.test(q)) url.searchParams.set('types', 'postcode');
   if (near) url.searchParams.set('proximity', `${near.lng},${near.lat}`);
   else url.searchParams.set('bbox', MALAYSIA_BBOX);
-
   return toPlaces(await request(url));
+}
+
+/** Geocoding v6 knows many residential streets and addresses that the POI search doesn't. */
+async function geocodeStreets(q: string, near: Coordinates | undefined, limit: number): Promise<Place[]> {
+  const url = new URL(`${GEOCODE}/forward`);
+  url.searchParams.set('q', q);
+  url.searchParams.set('country', 'my');
+  url.searchParams.set('language', 'en');
+  url.searchParams.set('limit', String(Math.min(limit, 10)));
+  url.searchParams.set('types', 'address,street,neighborhood,locality,place');
+  if (near) url.searchParams.set('proximity', `${near.lng},${near.lat}`);
+  return toPlaces(await request(url));
+}
+
+export async function searchPlaces(query: string, near?: Coordinates, limit = 8): Promise<Place[]> {
+  const q = query.trim();
+
+  // Malaysian postcodes (5 digits) resolve best through the geocoding endpoint.
+  if (POSTCODE_RE.test(q)) {
+    const url = new URL(`${GEOCODE}/forward`);
+    url.searchParams.set('q', q);
+    url.searchParams.set('country', 'my');
+    url.searchParams.set('language', 'en');
+    url.searchParams.set('limit', String(Math.min(limit, 10)));
+    url.searchParams.set('types', 'postcode');
+    if (near) url.searchParams.set('proximity', `${near.lng},${near.lat}`);
+    return toPlaces(await request(url));
+  }
+
+  // Street-looking queries ask both sources at once; others only fall back when the POI search is thin
+  const streety = /\b(jalan|jln|lorong|lrg|persiaran|lebuh|street|road|jalan)\b/i.test(q) || /\b[a-z]{1,4}\s?\d{1,3}\b/i.test(q);
+  const [pois, streets] = await Promise.all([
+    searchBox(q, near, limit),
+    streety ? geocodeStreets(q, near, limit).catch(() => [] as Place[]) : Promise.resolve(null),
+  ]);
+  let results = streets ? mergePlaces(streets.filter((p) => p.kind === 'street' || p.kind === 'address').concat(pois), [], limit) : pois;
+  if (streets) results = mergePlaces(results, streets, limit);
+  if (results.length < 3 && !streets) results = mergePlaces(results, await geocodeStreets(q, near, limit).catch(() => []), limit);
+
+  // "cj7" vs "cj 7"
+  const spaced = spaceStreetCodes(q);
+  if (results.length === 0 && spaced !== q) {
+    const [p2, s2] = await Promise.all([searchBox(spaced, near, limit), geocodeStreets(spaced, near, limit).catch(() => [] as Place[])]);
+    results = mergePlaces(s2.filter((p) => p.kind === 'street' || p.kind === 'address').concat(p2), s2, limit);
+  }
+  return results;
 }
 
 export async function reverseGeocode(at: Coordinates): Promise<Place | null> {
