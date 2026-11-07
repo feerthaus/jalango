@@ -14,6 +14,7 @@ import { LiveShareProvider } from './LiveShareContext';
 import { ConvoyProvider } from './ConvoyContext';
 import { AlongProvider } from './AlongContext';
 import { CamerasProvider } from './CamerasContext';
+import { ItineraryProvider } from './ItineraryContext';
 
 export function AppProviders({ children }: { children: ReactNode }) {
   return (
@@ -31,7 +32,9 @@ export function AppProviders({ children }: { children: ReactNode }) {
                           <LiveShareProvider>
                             <ConvoyProvider>
                               <AlongProvider>
-                                <CamerasProvider>{children}</CamerasProvider>
+                                <CamerasProvider>
+                                  <ItineraryProvider>{children}</ItineraryProvider>
+                                </CamerasProvider>
                               </AlongProvider>
                             </ConvoyProvider>
                           </LiveShareProvider>

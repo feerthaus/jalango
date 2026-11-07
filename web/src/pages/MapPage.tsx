@@ -1,10 +1,13 @@
-import { Megaphone, Radio, Users, Utensils, WifiOff } from 'lucide-react';
+import { ListOrdered, Megaphone, Radio, Users, Utensils, WifiOff } from 'lucide-react';
 import { AlongRouteSheet } from '@/components/along/AlongRouteSheet';
 import { AlongLayerChip, AlongPlaceCard } from '@/components/along/AlongMarkers';
 import { ConvoyBanner } from '@/components/convoy/ConvoyBanner';
 import { ConvoySheet } from '@/components/convoy/ConvoySheet';
 import { normalizeConvoyCode } from '@/utils/convoy';
 import { useConvoy } from '@/contexts/ConvoyContext';
+import { useItinerary } from '@/contexts/ItineraryContext';
+import { ItinerarySheet } from '@/components/itinerary/ItinerarySheet';
+import { ItineraryChip } from '@/components/itinerary/ItineraryChip';
 import { LiveShareBanner } from '@/components/live/LiveShareBanner';
 import { ShareLiveSheet } from '@/components/live/ShareLiveSheet';
 import { useCallback, useEffect, useState } from 'react';
@@ -38,6 +41,7 @@ export function MapPage() {
   const [reportOpen, setReportOpen] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
   const [alongOpen, setAlongOpen] = useState(false);
+  const [itineraryOpen, setItineraryOpen] = useState(false);
   const [convoyOpen, setConvoyOpen] = useState<{ code: string | null } | null>(null);
   const [params, setParams] = useSearchParams();
   // Home-screen shortcut "Report" opens /?report=1
@@ -99,6 +103,7 @@ export function MapPage() {
           <div className="space-y-2 max-md:mr-14">
             <LiveShareBanner />
             <ConvoyBanner />
+            <ItineraryChip />
             <DemoModeBanner />
             {tileError && (
               <div role="status" className="pointer-events-auto inline-flex max-w-full items-center gap-2 rounded-full bg-ink-900/90 px-3 py-1.5 text-xs text-white shadow-float">
@@ -122,6 +127,7 @@ export function MapPage() {
           <div className="flex items-end justify-between gap-3">
             <SpeedIndicator />
             <div className="ml-auto flex flex-col items-end gap-3">
+              <ItineraryButton onOpen={() => setItineraryOpen(true)} />
               <ConvoyButton onOpen={() => setConvoyOpen({ code: null })} />
               <IconButton label="Share live location" onClick={() => setShareOpen(true)}>
                 <Radio className="size-5 text-jade-600 dark:text-jade-400" />
@@ -162,6 +168,7 @@ export function MapPage() {
       {reportOpen && <ReportSheet onClose={() => setReportOpen(false)} />}
       {shareOpen && <ShareLiveSheet onClose={() => setShareOpen(false)} />}
       {convoyOpen && <ConvoySheet joinCode={convoyOpen.code} onClose={() => setConvoyOpen(null)} />}
+      {itineraryOpen && <ItinerarySheet onClose={() => setItineraryOpen(false)} />}
     </>
   );
 }
@@ -177,6 +184,24 @@ function ConvoyButton({ onOpen }: { onOpen: () => void }) {
       {convoy && (
         <span className="pointer-events-none absolute -right-1 -top-1 grid min-w-5 place-items-center rounded-full bg-violet-600 px-1 text-[11px] font-bold text-white ring-2 ring-white dark:ring-ink-900">
           {members.length}
+        </span>
+      )}
+    </div>
+  );
+}
+
+/** Itinerary button; shows how many stops are left. */
+function ItineraryButton({ onOpen }: { onOpen: () => void }) {
+  const { stops } = useItinerary();
+  const left = stops.filter((s) => !s.done).length;
+  return (
+    <div className="relative">
+      <IconButton label="Itinerari (senarai hentian)" onClick={onOpen} active={left > 0}>
+        <ListOrdered className="size-5 text-violet-700 dark:text-violet-300" />
+      </IconButton>
+      {left > 0 && (
+        <span className="pointer-events-none absolute -right-1 -top-1 grid min-w-5 place-items-center rounded-full bg-violet-700 px-1 text-[11px] font-bold text-white ring-2 ring-white dark:ring-ink-900">
+          {left}
         </span>
       )}
     </div>

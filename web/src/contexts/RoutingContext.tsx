@@ -33,6 +33,8 @@ interface RoutingValue {
   resumedTo: string | null;
   dismissResumed: () => void;
   planRoute: (destination: Place) => void;
+  /** Plan a route to `place` and start turn-by-turn as soon as it's ready (e.g. next itinerary stop) */
+  navigateTo: (place: Place) => void;
   retry: () => void;
   selectRoute: (index: number) => void;
   setAvoidTolls: (on: boolean) => void;
@@ -422,6 +424,16 @@ export function RoutingProvider({ children }: { children: ReactNode }) {
     setDestination(null);
   }, [reset]);
 
+  const navigateTo = useCallback(
+    (place: Place) => {
+      reset(); // the previous leg was already recorded on arrival
+      setDestination(place);
+      resumeRef.current = 'navigate'; // auto-start once the route is ready
+      queueMicrotask(request);
+    },
+    [reset, request],
+  );
+
   const applyShortcut = useCallback(
     (s: Shortcut, dest?: Place | null) => {
       const end = s.path[s.path.length - 1];
@@ -502,6 +514,7 @@ export function RoutingProvider({ children }: { children: ReactNode }) {
       resumedTo,
       dismissResumed: () => setResumedTo(null),
       planRoute,
+      navigateTo,
       retry: request,
       selectRoute: setSelectedIndex,
       setAvoidTolls,
@@ -517,7 +530,7 @@ export function RoutingProvider({ children }: { children: ReactNode }) {
       clearShortcut,
       finishedTripId,
     }),
-    [status, destination, routes, selectedIndex, selectedRoute, mode, notice, error, avoidTolls, progress, rerouting, resumedTo, planRoute, request, setAvoidTolls, startNavigation, endNavigation, clearRoute, shortcut, shortcutTitle, applyShortcut, clearShortcut, stop, addStop, clearStop, finishedTripId],
+    [status, destination, routes, selectedIndex, selectedRoute, mode, notice, error, avoidTolls, progress, rerouting, resumedTo, planRoute, navigateTo, request, setAvoidTolls, startNavigation, endNavigation, clearRoute, shortcut, shortcutTitle, applyShortcut, clearShortcut, stop, addStop, clearStop, finishedTripId],
   );
 
   return <RoutingContext.Provider value={value}>{children}</RoutingContext.Provider>;

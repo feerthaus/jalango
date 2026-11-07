@@ -1,4 +1,4 @@
-import { Check, Copy, CornerUpRight, Heart, Share2, Star, ThumbsUp, Users, X } from 'lucide-react';
+import { Check, Copy, CornerUpRight, Heart, ListPlus, Share2, Star, ThumbsUp, Users, X } from 'lucide-react';
 import { RecommendPlaceSheet } from '@/components/community/RecommendPlaceSheet';
 import { FlagButton } from '@/components/moderation/FlagButton';
 import { useCommunityPlaces } from '@/contexts/CommunityPlacesContext';
@@ -7,6 +7,7 @@ import { categoryMeta } from '@/lib/communityCategories';
 import type { CommunityCategory } from '@/types';
 import { useRouting } from '@/contexts/RoutingContext';
 import { useConvoy } from '@/contexts/ConvoyContext';
+import { useItinerary } from '@/contexts/ItineraryContext';
 import { useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { DemoBadge } from '@/components/ui/DemoBadge';
@@ -26,6 +27,8 @@ export function PlaceCard({ place, onClose }: { place: Place; onClose: () => voi
   const [recommending, setRecommending] = useState(false);
   const { user } = useAuth();
   const convoy = useConvoy();
+  const itinerary = useItinerary();
+  const inItinerary = itinerary.has(place);
   const [convoyMsg, setConvoyMsg] = useState<string | null>(null);
   const setForConvoy = (which: 'meet' | 'destination') => {
     const p = { name: place.name, coordinates: place.coordinates };
@@ -131,6 +134,9 @@ export function PlaceCard({ place, onClose }: { place: Place; onClose: () => voi
           </Button>
         )}
       </div>
+      <Button variant="secondary" className="mt-2 w-full" onClick={() => !inItinerary && itinerary.add(place)} disabled={inItinerary} aria-pressed={inItinerary}>
+        {inItinerary ? <Check className="size-4" /> : <ListPlus className="size-4" />} {inItinerary ? 'Dalam itinerari' : '+ Itinerari'}
+      </Button>
       {place.source !== 'demo' && (
         <a
           href={googleMapsReviewsUrl(place)}

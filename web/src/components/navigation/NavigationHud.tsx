@@ -14,6 +14,8 @@ import { LiveShareBanner } from '@/components/live/LiveShareBanner';
 import { ConvoyBanner } from '@/components/convoy/ConvoyBanner';
 import { StopBanner } from '@/components/along/StopMarker';
 import { OfflineBanner } from './OfflineBanner';
+import { ItineraryChip } from '@/components/itinerary/ItineraryChip';
+import { useItinerary } from '@/contexts/ItineraryContext';
 import { ShareLiveSheet } from '@/components/live/ShareLiveSheet';
 import { Radio } from 'lucide-react';
 import { RateTrip } from '@/components/trips/RateTrip';
@@ -34,6 +36,8 @@ import { ManeuverIcon } from './ManeuverIcon';
 export function NavigationHud() {
   const { status, selectedRoute: route, progress, destination, endNavigation, rerouting, finishedTripId } = useRouting();
   const { getTrip } = useTrips();
+  const itinerary = useItinerary();
+  const nextStop = itinerary.nextIndex !== -1 ? itinerary.stops[itinerary.nextIndex] : null;
   const finishedTrip = finishedTripId ? getTrip(finishedTripId) : undefined;
   const { following, setFollowing } = useMapContext();
   const [showSteps, setShowSteps] = useState(false);
@@ -62,8 +66,13 @@ export function NavigationHud() {
               <RateTrip trip={finishedTrip} compact />
             </div>
           )}
-          <Button variant={finishedTrip?.rating ? 'primary' : 'secondary'} className="mt-4 w-full py-3" onClick={endNavigation}>
-            Done
+          {nextStop && (
+            <Button className="mt-4 w-full py-3" onClick={itinerary.goNext}>
+              Seterusnya: {nextStop.place.name.slice(0, 26)}
+            </Button>
+          )}
+          <Button variant={nextStop ? 'ghost' : finishedTrip?.rating ? 'primary' : 'secondary'} className={nextStop ? 'mt-2 w-full' : 'mt-4 w-full py-3'} onClick={endNavigation}>
+            {nextStop ? 'Berhenti di sini' : 'Done'}
           </Button>
         </div>
       </div>
@@ -131,6 +140,7 @@ export function NavigationHud() {
         {!showSteps && <LiveShareBanner />}
         {!showSteps && <ConvoyBanner />}
         {!showSteps && <StopBanner />}
+        {!showSteps && <ItineraryChip />}
         {!showSteps && <ResumeToast />}
         {!showSteps && <RouteAlerts alerts={alerts} />}
       </div>
