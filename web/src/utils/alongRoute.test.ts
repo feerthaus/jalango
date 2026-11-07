@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Route } from '@/types';
-import { pointAt, rankAlong, samplePointsAhead } from './alongRoute';
+import { aheadPhrase, pointAt, rankAlong, samplePointsAhead } from './alongRoute';
 import { buildRouteIndex } from './routeProgress';
 
 // Straight line due south ~222 km (2 degrees of latitude)
@@ -45,5 +45,18 @@ describe('rankAlong', () => {
     expect(r.map((x) => x.item.id)).toEqual(['soon', 'later']);
     expect(r[0].ahead).toBeGreaterThan(30_000);
     expect(r[0].offset).toBeLessThan(2000);
+  });
+});
+
+describe('sides and phrases', () => {
+  it('knows left from right when driving south', () => {
+    // heading south: east (larger lng) is on the driver's left
+    const r = rankAlong([{ id: 'east', c: { lat: 3.0, lng: 101.51 } }, { id: 'west', c: { lat: 2.9, lng: 101.49 } }], (p) => p.c, index, 0, 3000);
+    expect(r.map((x) => [x.item.id, x.side])).toEqual([['east', 'left'], ['west', 'right']]);
+  });
+  it('builds Malay and English phrases', () => {
+    const sp = (m: number) => `${m} meter`;
+    expect(aheadPhrase('Warung Sham', 800, 'right', 'ms', sp)).toBe('Warung Sham, 800 meter di depan, sebelah kanan.');
+    expect(aheadPhrase('Shell', 500, null, 'en', (m) => `${m} metres`)).toBe('Shell, 500 metres ahead.');
   });
 });

@@ -1,5 +1,5 @@
 import type { Coordinates } from '@/types';
-import { projectOnRoute, type RouteIndex } from './routeProgress';
+import { bearingDeg, projectOnRoute, type RouteIndex } from './routeProgress';
 
 /** Point at `distance` metres along the route line. */
 export function pointAt(index: RouteIndex, distance: number): Coordinates {
@@ -35,6 +35,17 @@ export interface AlongItem<T> {
   ahead: number;
   /** metres off the route line (straight line) */
   offset: number;
+  /** which side of the road, seen in the direction of travel */
+  side: 'left' | 'right' | null;
+}
+
+/** Left/right of the route at `along`, or null when it's practically on the road. */
+export function sideOfRoute(index: RouteIndex, along: number, routeBearing: number, p: Coordinates, offset: number): 'left' | 'right' | null {
+  if (offset < 30) return null;
+  const on = pointAt(index, along);
+  const toPlace = bearingDeg([on.lng, on.lat], [p.lng, p.lat]);
+  const diff = ((toPlace - routeBearing + 540) % 360) - 180;
+  return diff >= 0 ? 'right' : 'left';
 }
 
 /**
@@ -44,10 +55,18 @@ export interface AlongItem<T> {
 export function rankAlong<T>(items: T[], at: (t: T) => Coordinates, index: RouteIndex, along: number, maxOffsetM: number, behindM = 300): AlongItem<T>[] {
   const out: AlongItem<T>[] = [];
   for (const item of items) {
-    const p = projectOnRoute(index, at(item));
+    const c = at(item);
+    const p = projectOnRoute(index, c);
     const ahead = p.along - along;
     if (ahead < -behindM || p.offset > maxOffsetM) continue;
-    out.push({ item, ahead, offset: p.offset });
+    out.push({ item, ahead, offset: p.offset, side: sideOfRoute(index, p.along, p.bearing, c, p.offset) });
   }
   return out.sort((a, b) => a.ahead - b.ahead);
+}
+
+/** "Warung Sham, 800 meter di depan, sebelah kanan." */
+export function aheadPhrase(name: string, aheadM: number, side: 'left' | 'right' | null, lang: 'ms' | 'en', spoken: (m: number) => string): string {
+  const d = spoken(aheadM);
+  if (lang === 'en') return `${name}, ${d} ahead${side ? ` on the ${side}` : ''}.`;
+  return `${name}, ${d} di depan${side ? `, sebelah ${side === 'left' ? 'kiri' : 'kanan'}` : ''}.`;
 }

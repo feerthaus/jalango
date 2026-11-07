@@ -1,5 +1,6 @@
 import { Megaphone, Radio, Users, Utensils, WifiOff } from 'lucide-react';
 import { AlongRouteSheet } from '@/components/along/AlongRouteSheet';
+import { AlongLayerChip, AlongPlaceCard } from '@/components/along/AlongMarkers';
 import { ConvoyBanner } from '@/components/convoy/ConvoyBanner';
 import { ConvoySheet } from '@/components/convoy/ConvoySheet';
 import { normalizeConvoyCode } from '@/utils/convoy';
@@ -76,6 +77,8 @@ export function MapPage() {
                 {reportButton}
               </div>
             </div>
+            <AlongLayerChip onOpen={() => setAlongOpen(true)} />
+            <AlongPlaceCard />
             {selectedReport && <ReportDetailCard report={selectedReport} onClose={() => selectReport(null)} />}
           </div>
         )}
@@ -126,6 +129,12 @@ export function MapPage() {
               {reportButton}
               <LocateButton />
             </div>
+          </div>
+        )}
+        {planning && (
+          <div className="flex flex-col gap-2 md:max-w-[400px]">
+            <AlongLayerChip onOpen={() => {}} />
+            <AlongPlaceCard />
           </div>
         )}
         {planning && (

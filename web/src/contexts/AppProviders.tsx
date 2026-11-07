@@ -12,6 +12,7 @@ import { ShortcutsProvider } from './ShortcutsContext';
 import { CommunityPlacesProvider } from './CommunityPlacesContext';
 import { LiveShareProvider } from './LiveShareContext';
 import { ConvoyProvider } from './ConvoyContext';
+import { AlongProvider } from './AlongContext';
 
 export function AppProviders({ children }: { children: ReactNode }) {
   return (
@@ -27,7 +28,9 @@ export function AppProviders({ children }: { children: ReactNode }) {
                       <RoutingProvider>
                         <ReportsProvider>
                           <LiveShareProvider>
-                            <ConvoyProvider>{children}</ConvoyProvider>
+                            <ConvoyProvider>
+                              <AlongProvider>{children}</AlongProvider>
+                            </ConvoyProvider>
                           </LiveShareProvider>
                         </ReportsProvider>
                       </RoutingProvider>
