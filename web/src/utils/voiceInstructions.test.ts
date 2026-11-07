@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { RouteStep } from '@/types';
-import { maneuverPhrase, malayAction, spokenDistance, stageThresholds } from './voiceInstructions';
+import { displayInstruction, maneuverPhrase, malayAction, spokenDistance, stageThresholds } from './voiceInstructions';
 
 const step = (maneuver: RouteStep['maneuver'], roadName?: string, instruction = ''): RouteStep => ({ instruction, distanceMeters: 0, durationSeconds: 0, maneuver, roadName });
 const at = { lng: 101.7, lat: 3.1 };
@@ -34,5 +34,17 @@ describe('voice instructions', () => {
 
   it('announces earlier at highway speed', () => {
     expect(stageThresholds(30).near).toBeGreaterThan(stageThresholds(10).near);
+  });
+});
+
+describe('displayInstruction', () => {
+  const step = (over: Partial<RouteStep>): RouteStep => ({ instruction: 'Take the ramp on the left towards Johor Bahru', distanceMeters: 100, durationSeconds: 10, maneuver: { type: 'off ramp', modifier: 'slight left', location: { lat: 0, lng: 0 } }, ...over });
+  it('writes Malay with ramp destinations', () => {
+    expect(displayInstruction(step({ roadRef: 'E2', destinations: 'Johor Bahru, Kuala Lumpur, Seremban' }), 'ms')).toBe('Ambil susur keluar di sebelah kiri ke E2 menghala Johor Bahru / Kuala Lumpur');
+    expect(displayInstruction(step({ maneuver: { type: 'turn', modifier: 'left', location: { lat: 0, lng: 0 } }, roadName: "Jalan Dato' Haji Kosai" }), 'ms')).toBe("Belok kiri ke Jalan Dato' Haji Kosai");
+    expect(displayInstruction(step({ maneuver: { type: 'arrive', location: { lat: 0, lng: 0 } } }), 'ms')).toBe('Sampai di destinasi');
+  });
+  it('keeps the provider English text', () => {
+    expect(displayInstruction(step({}), 'en')).toBe('Take the ramp on the left towards Johor Bahru');
   });
 });

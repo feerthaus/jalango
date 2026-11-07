@@ -88,6 +88,10 @@ export interface RouteStep {
   roadRef?: string;
   /** step is on a motorway / divided highway */
   motorway?: boolean;
+  /** signposted destinations of a ramp, e.g. "Johor Bahru, Kuala Lumpur" */
+  destinations?: string;
+  /** lanes at this maneuver, left to right; `valid` = lanes you can use */
+  lanes?: { indications: string[]; valid: boolean }[];
 }
 
 export interface Route {
@@ -101,6 +105,8 @@ export interface Route {
   hasTolls: boolean;
   hasMotorway: boolean;
   congestion?: Congestion[];
+  /** speed limit (km/h) per geometry segment, null where unknown */
+  maxspeeds?: (number | null)[];
   /** `demo` = straight-line preview, not a road route */
   source: DataSource;
 }

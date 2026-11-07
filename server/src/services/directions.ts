@@ -10,19 +10,27 @@ const TIMEOUT_MS = 8000;
 
 interface MbIntersection {
   classes?: string[];
+  lanes?: { indications?: string[]; valid?: boolean }[];
+}
+interface MbMaxspeed {
+  speed?: number;
+  unit?: string;
+  unknown?: boolean;
+  none?: boolean;
 }
 interface MbStep {
   distance: number;
   duration: number;
   name?: string;
   ref?: string;
+  destinations?: string;
   maneuver: { type: string; modifier?: string; instruction?: string; location: [number, number]; bearing_after?: number; exit?: number };
   intersections?: MbIntersection[];
 }
 interface MbLeg {
   summary?: string;
   steps?: MbStep[];
-  annotation?: { congestion?: string[] };
+  annotation?: { congestion?: string[]; maxspeed?: MbMaxspeed[] };
 }
 interface MbRoute {
   distance: number;
@@ -34,15 +42,24 @@ interface MbRoute {
 
 const CONGESTION: Congestion[] = ['low', 'moderate', 'heavy', 'severe', 'unknown'];
 
+function lanesOf(i: MbIntersection | undefined): RouteStep['lanes'] {
+  if (!i?.lanes?.length || i.lanes.length < 2) return undefined;
+  return i.lanes.map((l) => ({ indications: l.indications ?? [], valid: Boolean(l.valid) }));
+}
+
 export function normalizeRoute(r: MbRoute, index: number): Route {
   const steps: RouteStep[] = [];
   let hasTolls = false;
   let hasMotorway = false;
   const congestion: Congestion[] = [];
   const summaries: string[] = [];
+  const maxspeeds: (number | null)[] = [];
 
   for (const leg of r.legs ?? []) {
     if (leg.summary) summaries.push(leg.summary);
+    for (const m of leg.annotation?.maxspeed ?? []) {
+      maxspeeds.push(m.speed && !m.unknown && !m.none ? (m.unit === 'mph' ? Math.round(m.speed * 1.609) : m.speed) : null);
+    }
     for (const c of leg.annotation?.congestion ?? []) {
       congestion.push((CONGESTION as string[]).includes(c) ? (c as Congestion) : 'unknown');
     }
@@ -69,6 +86,8 @@ export function normalizeRoute(r: MbRoute, index: number): Route {
         roadName: s.name || undefined,
         roadRef: s.ref || undefined,
         motorway: stepMotorway || undefined,
+        destinations: s.destinations || undefined,
+        lanes: lanesOf(s.intersections?.[0]),
       });
     }
   }
@@ -84,6 +103,7 @@ export function normalizeRoute(r: MbRoute, index: number): Route {
     hasTolls,
     hasMotorway,
     congestion: congestion.length === r.geometry.coordinates.length - 1 ? congestion : undefined,
+    maxspeeds: maxspeeds.length === r.geometry.coordinates.length - 1 && maxspeeds.some((v) => v !== null) ? maxspeeds : undefined,
     source: 'mapbox',
   };
 }
@@ -98,7 +118,7 @@ export function buildDirectionsUrl(from: Coordinates, to: Coordinates, opts: { a
   url.searchParams.set('geometries', 'geojson');
   url.searchParams.set('overview', 'full');
   url.searchParams.set('steps', 'true');
-  if (useTraffic) url.searchParams.set('annotations', 'congestion');
+  url.searchParams.set('annotations', useTraffic ? 'congestion,maxspeed' : 'maxspeed');
   url.searchParams.set('language', 'en');
   // Via points are silent: no "you have arrived" at each one
   if (via.length > 0) url.searchParams.set('waypoints', `0;${points.length - 1}`);

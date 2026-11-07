@@ -1,6 +1,9 @@
 import { ChevronDown, ChevronUp, Flag, ListOrdered, LocateFixed, Loader2, Volume2, VolumeX, X } from 'lucide-react';
 import { useRouteAlerts } from '@/hooks/useRouteAlerts';
-import { useVoiceAlerts } from '@/hooks/useVoiceAlerts';
+import { useVoiceAlerts, useVoiceLang } from '@/hooks/useVoiceAlerts';
+import { useSpeedAlert } from '@/hooks/useSpeedLimit';
+import { displayInstruction } from '@/utils/voiceInstructions';
+import { LaneGuide } from './LaneGuide';
 import { useWakeLock } from '@/hooks/useWakeLock';
 import { useVoiceGuidance } from '@/hooks/useVoiceGuidance';
 import { ResumeToast } from './ResumeToast';
@@ -39,6 +42,8 @@ export function NavigationHud() {
   useVoiceGuidance();
   const oncoming = useOncomingAlerts();
   const [voiceOn, setVoiceOn] = useVoiceAlerts();
+  const [lang] = useVoiceLang();
+  useSpeedAlert();
   if (!route || !destination) return null;
 
   if (status === 'arrived') {
@@ -83,20 +88,21 @@ export function NavigationHud() {
             </span>
             <span className="min-w-0 flex-1">
               <span className="block text-3xl font-black tabular-nums leading-none">{progress ? formatDistance(progress.distanceToManeuver) : '–'}</span>
-              <span className="mt-1 block truncate text-base font-semibold">{next.instruction}</span>
+              <span className="mt-1 line-clamp-2 block text-base font-semibold leading-snug">{displayInstruction(next, lang)}</span>
               {road && <span className="mt-0.5 block truncate text-sm text-ink-300">{road}</span>}
             </span>
             {showSteps ? <ChevronUp className="size-5 text-ink-300" /> : <ChevronDown className="size-5 text-ink-300" />}
           </button>
+          {!showSteps && progress && progress.distanceToManeuver < 2000 && <LaneGuide step={next} />}
           {after && !showSteps && (
             <div className="flex items-center gap-2 border-t border-white/10 px-4 py-2 text-sm text-ink-300">
-              Then <ManeuverIcon step={after} className="size-4 text-white" />
-              <span className="truncate">{after.instruction}</span>
+              {lang === 'ms' ? 'Kemudian' : 'Then'} <ManeuverIcon step={after} className="size-4 text-white" />
+              <span className="truncate">{displayInstruction(after, lang)}</span>
             </div>
           )}
           {rerouting && (
             <div className="flex items-center gap-2 border-t border-white/10 px-4 py-2 text-sm text-amber-300">
-              <Loader2 className="size-4 animate-spin" /> Finding a new route…
+              <Loader2 className="size-4 animate-spin" /> {lang === 'ms' ? 'Mencari laluan baharu…' : 'Finding a new route…'}
             </div>
           )}
           {demo && (
@@ -110,7 +116,7 @@ export function NavigationHud() {
                 <li key={i} className={cn('flex items-center gap-3 px-4 py-2.5 text-sm', i <= stepIndex ? 'opacity-40' : i === stepIndex + 1 && 'bg-white/5')}>
                   <ManeuverIcon step={s} className="size-5 shrink-0" />
                   <span className="min-w-0 flex-1">
-                    <span className="block">{s.instruction}</span>
+                    <span className="block">{displayInstruction(s, lang)}</span>
                     {(s.roadRef || s.roadName) && <span className="block truncate text-xs text-ink-400">{s.roadRef ? `${s.roadRef} ${s.roadName ?? ''}` : s.roadName}</span>}
                   </span>
                   {s.distanceMeters > 0 && <span className="shrink-0 text-xs tabular-nums text-ink-400">{formatDistance(s.distanceMeters)}</span>}

@@ -56,6 +56,34 @@ describe('normalizeRoute', () => {
     expect(r.congestion).toBeUndefined();
     expect(r.id).toBe('mapbox-1');
   });
+
+  it('keeps speed limits, lanes and ramp destinations', () => {
+    const leg = fixture.legs[0];
+    const r = normalizeRoute(
+      {
+        ...fixture,
+        legs: [
+          {
+            ...leg,
+            annotation: { ...leg.annotation, maxspeed: [{ speed: 110, unit: 'km/h' }, { unknown: true }] },
+            steps: [
+              {
+                ...leg.steps![0],
+                destinations: 'Johor Bahru, Kuala Lumpur',
+                intersections: [{ lanes: [{ indications: ['left'], valid: true }, { indications: ['straight'], valid: false }] }],
+              },
+              leg.steps![1],
+            ],
+          },
+        ],
+      },
+      0,
+    );
+    expect(r.maxspeeds).toEqual([110, null]);
+    expect(r.steps[0].destinations).toBe('Johor Bahru, Kuala Lumpur');
+    expect(r.steps[0].lanes).toEqual([{ indications: ['left'], valid: true }, { indications: ['straight'], valid: false }]);
+    expect(r.steps[1].lanes).toBeUndefined();
+  });
 });
 
 describe('buildDirectionsUrl', () => {
@@ -71,7 +99,7 @@ describe('buildDirectionsUrl', () => {
     const u = buildDirectionsUrl(a, b);
     expect(u.pathname).toContain('/driving-traffic/101.68,3.13;101.7,3.15');
     expect(u.searchParams.get('alternatives')).toBe('true');
-    expect(u.searchParams.get('annotations')).toBe('congestion');
+    expect(u.searchParams.get('annotations')).toBe('congestion,maxspeed');
     expect(u.searchParams.has('waypoints')).toBe(false);
   });
   it('routes through silent via points on the plain driving profile', () => {
@@ -81,6 +109,6 @@ describe('buildDirectionsUrl', () => {
     expect(u.searchParams.get('alternatives')).toBe('false');
     expect(u.searchParams.get('waypoints')).toBe('0;3');
     expect(u.searchParams.get('exclude')).toBe('toll');
-    expect(u.searchParams.has('annotations')).toBe(false);
+    expect(u.searchParams.get('annotations')).toBe('maxspeed');
   });
 });

@@ -17,6 +17,13 @@ export function spokenDistance(m: number, lang: VoiceLang): string {
 const ORDINAL_MS = ['pertama', 'kedua', 'ketiga', 'keempat', 'kelima', 'keenam'];
 const ORDINAL_EN = ['first', 'second', 'third', 'fourth', 'fifth', 'sixth'];
 
+/** First two signposted destinations of a ramp ("Johor Bahru, Kuala Lumpur"). */
+function towards(step: RouteStep): string | null {
+  if (!step.destinations) return null;
+  const t = step.destinations.split(/[,;]/).map((s) => s.trim()).filter(Boolean).slice(0, 2);
+  return t.length ? t.join(' / ') : null;
+}
+
 function road(step: RouteStep): string | null {
   if (step.roadRef && step.roadName) return `${step.roadName}`;
   return step.roadName ?? step.roadRef ?? null;
@@ -27,7 +34,8 @@ export function malayAction(step: RouteStep): string {
   const { type, modifier, exit } = step.maneuver;
   const side = modifier?.includes('left') ? 'kiri' : modifier?.includes('right') ? 'kanan' : null;
   const name = road(step);
-  const onto = name ? ` ke ${name}` : '';
+  const toward = towards(step);
+  const onto = (name ? ` ke ${name}` : '') + (toward ? ` menghala ${toward}` : '');
 
   if (type === 'arrive') return 'anda akan sampai ke destinasi';
   if (type === 'roundabout' || type === 'rotary' || type === 'roundabout turn') {
@@ -92,6 +100,14 @@ export const PHRASES = {
 export function stageThresholds(speedMps: number | null): Record<VoiceStage, number> {
   const fast = (speedMps ?? 0) > 20; // ~72 km/h
   return fast ? { far: 2000, near: 600, now: 120 } : { far: 1000, near: 300, now: 60 };
+}
+
+/** Instruction text for the screen: Malay generated from the maneuver, or the provider's English. */
+export function displayInstruction(step: RouteStep, lang: VoiceLang): string {
+  if (lang === 'en') return step.instruction || capitalise(englishAction(step));
+  if (step.maneuver.type === 'arrive') return 'Sampai di destinasi';
+  if (step.maneuver.type === 'depart') return road(step) ? `Mula di ${road(step)}` : 'Mula perjalanan';
+  return capitalise(malayAction(step));
 }
 
 function capitalise(s: string) {
