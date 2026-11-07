@@ -73,3 +73,15 @@ export async function searchNearbyCategory(category: ExploreCategory, near: Coor
 }
 
 export { ApiError };
+
+export type AlongCategory = 'food' | 'cafe' | 'attraction' | 'rnr' | 'petrol' | 'ev';
+
+/** Places of a category around sample points ahead on the route (live only — never sample data). */
+export async function searchAlongRoute(category: AlongCategory, points: Coordinates[], signal?: AbortSignal): Promise<Place[]> {
+  const { results } = await apiGet<{ results: Place[] }>(
+    '/geo/along',
+    { category, points: points.map((p) => `${p.lng.toFixed(4)},${p.lat.toFixed(4)}`).join(';') },
+    signal,
+  );
+  return results;
+}

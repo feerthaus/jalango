@@ -5,6 +5,7 @@ import { fetchRoutes } from '@/services/routingService';
 import { clearActiveTrace, clearTrip, loadActiveTrace, loadTrip, saveActiveTrace, saveTrip } from '@/services/tripStore';
 import type { Shortcut } from '@/types';
 import { haversineMeters } from '@/utils/geo';
+import { speak, useVoiceAlerts, useVoiceLang } from '@/hooks/useVoiceAlerts';
 import { pathLength, roundPath, sampleWaypoints, simplify } from '@/utils/trace';
 import { useTrips } from './TripsContext';
 import type { Coordinates, Place, Route } from '@/types';
@@ -43,6 +44,10 @@ interface RoutingValue {
   shortcutTitle: string | null;
   applyShortcut: (s: Shortcut, destination?: Place | null) => void;
   clearShortcut: () => void;
+  /** A stop on the way (e.g. lunch); the route goes through it, then on to the destination */
+  stop: Place | null;
+  addStop: (place: Place) => void;
+  clearStop: () => void;
   /** Trip just recorded on arrival (for the rating prompt) */
   finishedTripId: string | null;
 }
@@ -86,6 +91,9 @@ export function RoutingProvider({ children }: { children: ReactNode }) {
   const { recordTrip } = useTrips();
   const [shortcut, setShortcut] = useState<Shortcut | null>(null);
   const [shortcutTitle, setShortcutTitle] = useState<string | null>(null);
+  const [stop, setStop] = useState<Place | null>(null);
+  const [voiceOn] = useVoiceAlerts();
+  const [voiceLang] = useVoiceLang();
   const viaRef = useRef<Coordinates[]>([]);
   const traceRef = useRef<[number, number][]>([]);
   const startedAtRef = useRef<string | null>(null);
@@ -161,6 +169,7 @@ export function RoutingProvider({ children }: { children: ReactNode }) {
       viaRef.current = [];
       setShortcut(null);
       setShortcutTitle(null);
+      setStop(null);
       setDestination(place);
       setRoutes([]);
       setProgress(null);
@@ -294,6 +303,10 @@ export function RoutingProvider({ children }: { children: ReactNode }) {
       viaRef.current = trip.via;
       setShortcutTitle(trip.shortcutTitle ?? 'Community shortcut');
     }
+    if (trip.stop) {
+      setStop(trip.stop);
+      viaRef.current = [trip.stop.coordinates];
+    }
     setDestination(trip.destination);
     setAvoidTollsState(trip.avoidTolls);
     setResumedTo(trip.destination.name);
@@ -327,8 +340,9 @@ export function RoutingProvider({ children }: { children: ReactNode }) {
       navigating: status === 'navigating' || resumeRef.current === 'navigate',
       via: viaRef.current.length ? viaRef.current : undefined,
       shortcutTitle: shortcutTitle ?? undefined,
+      stop: stop ?? undefined,
     });
-  }, [destination, status, avoidTolls, shortcutTitle]);
+  }, [destination, status, avoidTolls, shortcutTitle, stop]);
 
   useEffect(() => {
     if (!resumedTo) return;
@@ -356,6 +370,7 @@ export function RoutingProvider({ children }: { children: ReactNode }) {
     viaRef.current = [];
     setShortcut(null);
     setShortcutTitle(null);
+    setStop(null);
     traceRef.current = [];
     startedAtRef.current = null;
     clearActiveTrace();
@@ -403,6 +418,34 @@ export function RoutingProvider({ children }: { children: ReactNode }) {
     queueMicrotask(request);
   }, [request]);
 
+  const addStop = useCallback(
+    (place: Place) => {
+      // A stop replaces any shortcut: route here → stop → destination
+      viaRef.current = [place.coordinates];
+      setShortcut(null);
+      setShortcutTitle(null);
+      setStop(place);
+      lastReroute.current = Date.now();
+      queueMicrotask(request);
+    },
+    [request],
+  );
+
+  const clearStop = useCallback(() => {
+    viaRef.current = [];
+    setStop(null);
+    queueMicrotask(request);
+  }, [request]);
+
+  // Reached the stop: drop it (the current route already continues to the destination)
+  useEffect(() => {
+    if (!stop || !fix || status !== 'navigating') return;
+    if (haversineMeters(fix.coordinates, stop.coordinates) > 120) return;
+    viaRef.current = [];
+    setStop(null);
+    if (voiceOn) speak(voiceLang === 'ms' ? `Anda telah sampai di ${stop.name}.` : `You have reached ${stop.name}.`, voiceLang);
+  }, [fix, stop, status, voiceOn, voiceLang]);
+
   const clearRoute = useCallback(() => {
     reset();
     setDestination(null);
@@ -434,11 +477,14 @@ export function RoutingProvider({ children }: { children: ReactNode }) {
       clearRoute,
       shortcut,
       shortcutTitle,
+      stop,
+      addStop,
+      clearStop,
       applyShortcut,
       clearShortcut,
       finishedTripId,
     }),
-    [status, destination, routes, selectedIndex, selectedRoute, mode, notice, error, avoidTolls, progress, rerouting, resumedTo, planRoute, request, setAvoidTolls, startNavigation, endNavigation, clearRoute, shortcut, shortcutTitle, applyShortcut, clearShortcut, finishedTripId],
+    [status, destination, routes, selectedIndex, selectedRoute, mode, notice, error, avoidTolls, progress, rerouting, resumedTo, planRoute, request, setAvoidTolls, startNavigation, endNavigation, clearRoute, shortcut, shortcutTitle, applyShortcut, clearShortcut, stop, addStop, clearStop, finishedTripId],
   );
 
   return <RoutingContext.Provider value={value}>{children}</RoutingContext.Provider>;

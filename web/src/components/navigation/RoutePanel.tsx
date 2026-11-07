@@ -1,4 +1,4 @@
-import { AlertTriangle, ArrowLeft, Coins, Megaphone, Gauge, LocateFixed, Navigation, RefreshCw, Route as RouteIcon, ShieldCheck } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, Coins, Megaphone, Gauge, LocateFixed, Navigation, RefreshCw, Route as RouteIcon, ShieldCheck, Utensils } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { DemoBadge } from '@/components/ui/DemoBadge';
 import { useReports } from '@/contexts/ReportsContext';
@@ -7,7 +7,8 @@ import { ResumeToast } from './ResumeToast';
 import { ShortcutSuggestions } from '@/components/shortcuts/ShortcutSuggestions';
 import { reportsOnRoute } from '@/utils/routeAlerts';
 import { buildRouteIndex } from '@/utils/routeProgress';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
+import { AlongRouteSheet } from '@/components/along/AlongRouteSheet';
 import { useProbeConsent } from '@/hooks/useProbeConsent';
 import { primeSpeech } from '@/hooks/useVoiceAlerts';
 import { cn } from '@/lib/cn';
@@ -18,6 +19,7 @@ import { arrivalClock } from '@/utils/time';
 
 /** Route preview: alternatives, ETA, tolls, avoid-tolls and Start. */
 export function RoutePanel() {
+  const [alongOpen, setAlongOpen] = useState(false);
   const { status, destination, routes, selectedIndex, selectRoute, mode, notice, error, avoidTolls, setAvoidTolls, startNavigation, clearRoute, retry } = useRouting();
   if (!destination) return null;
 
@@ -97,6 +99,9 @@ export function RoutePanel() {
       {status === 'ready' && (
         <footer className="space-y-2 p-3 pt-1">
           <ProbeConsentPrompt />
+          <Button variant="secondary" className="w-full" onClick={() => setAlongOpen(true)}>
+            <Utensils className="size-4" /> Tempat makan & menarik sepanjang laluan
+          </Button>
           <Button
             className="w-full py-3 text-base"
             onClick={() => {
@@ -108,6 +113,7 @@ export function RoutePanel() {
           </Button>
         </footer>
       )}
+      {alongOpen && <AlongRouteSheet onClose={() => setAlongOpen(false)} />}
     </section>
   );
 }

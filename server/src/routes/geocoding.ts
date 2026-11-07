@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { z } from 'zod';
-import { CATEGORY_MAP, reverseGeocode, searchCategory, searchPlaces } from '../services/mapbox.js';
+import { CATEGORY_MAP, reverseGeocode, searchAlong, searchCategory, searchPlaces } from '../services/mapbox.js';
 
 const lng = z.coerce.number().min(-180).max(180);
 const lat = z.coerce.number().min(-90).max(90);
@@ -21,6 +21,23 @@ const categoryQuery = z.object({
   limit: z.coerce.number().int().min(1).max(25).optional(),
 });
 
+/** "lng,lat;lng,lat;…" — at most 8 points, all inside Malaysia's bounding box. */
+export const alongQuery = z.object({
+  category: categoryQuery.shape.category,
+  points: z
+    .string()
+    .max(400)
+    .transform((s, ctx) => {
+      const pts = s.split(';').map((pair) => pair.split(',').map(Number));
+      const valid = pts.length >= 1 && pts.length <= 8 && pts.every(([x, y]) => Number.isFinite(x) && Number.isFinite(y) && x >= 99 && x <= 120 && y >= 0 && y <= 8);
+      if (!valid) {
+        ctx.addIssue({ code: 'custom', message: 'points must be 1–8 "lng,lat" pairs in Malaysia' });
+        return z.NEVER;
+      }
+      return pts.map(([x, y]) => ({ lng: x, lat: y }));
+    }),
+});
+
 export const geocodingRouter = Router();
 
 geocodingRouter.get('/search', async (req, res) => {
@@ -32,6 +49,11 @@ geocodingRouter.get('/search', async (req, res) => {
 geocodingRouter.get('/reverse', async (req, res) => {
   const { lng, lat } = reverseQuery.parse(req.query);
   res.json({ result: await reverseGeocode({ lng, lat }) });
+});
+
+geocodingRouter.get('/along', async (req, res) => {
+  const { category, points } = alongQuery.parse(req.query);
+  res.json({ results: await searchAlong(category, points) });
 });
 
 geocodingRouter.get('/category', async (req, res) => {

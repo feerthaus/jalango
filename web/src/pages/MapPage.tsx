@@ -1,4 +1,5 @@
-import { Megaphone, Radio, Users, WifiOff } from 'lucide-react';
+import { Megaphone, Radio, Users, Utensils, WifiOff } from 'lucide-react';
+import { AlongRouteSheet } from '@/components/along/AlongRouteSheet';
 import { ConvoyBanner } from '@/components/convoy/ConvoyBanner';
 import { ConvoySheet } from '@/components/convoy/ConvoySheet';
 import { normalizeConvoyCode } from '@/utils/convoy';
@@ -34,6 +35,7 @@ export function MapPage() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
+  const [alongOpen, setAlongOpen] = useState(false);
   const [convoyOpen, setConvoyOpen] = useState<{ code: string | null } | null>(null);
   const [params, setParams] = useSearchParams();
   // Home-screen shortcut "Report" opens /?report=1
@@ -65,12 +67,18 @@ export function MapPage() {
           <div className="absolute inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+6.5rem+var(--host-badge-h))] z-20 space-y-3 p-3 md:bottom-28 md:w-[420px] md:p-4">
             <div className="flex items-end justify-between">
               <SpeedIndicator />
-              <div className="ml-auto">{reportButton}</div>
+              <div className="ml-auto flex flex-col items-end gap-3">
+                <IconButton label="Tempat makan & menarik sepanjang laluan" onClick={() => setAlongOpen(true)}>
+                  <Utensils className="size-5 text-violet-600 dark:text-violet-400" />
+                </IconButton>
+                {reportButton}
+              </div>
             </div>
             {selectedReport && <ReportDetailCard report={selectedReport} onClose={() => selectReport(null)} />}
           </div>
         )}
         {reportOpen && <ReportSheet onClose={() => setReportOpen(false)} />}
+        {alongOpen && <AlongRouteSheet onClose={() => setAlongOpen(false)} />}
       </>
     );
   }

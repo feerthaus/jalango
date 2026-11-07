@@ -13,6 +13,8 @@ export interface SavedTrip {
   /** route was going through a community shortcut */
   via?: Coordinates[];
   shortcutTitle?: string;
+  /** a stop (e.g. a restaurant) on the way to the destination */
+  stop?: Place;
   savedAt: number;
 }
 

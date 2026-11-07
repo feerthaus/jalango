@@ -16,6 +16,8 @@ export const CATEGORY_MAP = {
   parking: 'parking_lot',
   hospital: 'hospital',
   food: 'restaurant',
+  cafe: 'cafe',
+  attraction: 'tourist_attraction',
 } as const;
 export type CategoryId = keyof typeof CATEGORY_MAP | 'rnr';
 
@@ -113,6 +115,20 @@ export async function reverseGeocode(at: Coordinates): Promise<Place | null> {
   url.searchParams.set('language', 'en');
   url.searchParams.set('limit', '1');
   return toPlaces(await request(url))[0] ?? null;
+}
+
+/**
+ * Places of one category along a route: a category search around each sample
+ * point ahead of the driver, merged and de-duplicated. The client then keeps
+ * only those close to the route line and orders them by distance along it.
+ */
+export async function searchAlong(category: CategoryId, points: Coordinates[], perPoint = 8): Promise<Place[]> {
+  const settled = await Promise.allSettled(points.map((p) => searchCategory(category, p, perPoint)));
+  const ok = settled.filter((s): s is PromiseFulfilledResult<Place[]> => s.status === 'fulfilled');
+  if (ok.length === 0 && settled.length > 0) throw (settled[0] as PromiseRejectedResult).reason;
+  const seen = new Map<string, Place>();
+  for (const s of ok) for (const p of s.value) if (!seen.has(p.id)) seen.set(p.id, p);
+  return [...seen.values()];
 }
 
 export async function searchCategory(category: CategoryId, near: Coordinates, limit = 10): Promise<Place[]> {
