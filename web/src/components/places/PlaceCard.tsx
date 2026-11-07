@@ -15,6 +15,7 @@ import { useSavedPlaces } from '@/contexts/SavedPlacesContext';
 import type { Place } from '@/types';
 import { formatCoordinates, formatDistance, haversineMeters } from '@/utils/geo';
 import { placeIcon } from './placeIcon';
+import { googleMapsReviewsUrl } from '@/utils/googleMapsLink';
 
 /** Bottom card for the selected destination. */
 export function PlaceCard({ place, onClose }: { place: Place; onClose: () => void }) {
@@ -130,6 +131,16 @@ export function PlaceCard({ place, onClose }: { place: Place; onClose: () => voi
           </Button>
         )}
       </div>
+      {place.source !== 'demo' && (
+        <a
+          href={googleMapsReviewsUrl(place)}
+          target="_blank"
+          rel="noreferrer"
+          className="mt-2 flex items-center justify-center gap-1.5 rounded-xl py-2 text-sm font-semibold text-ink-600 hover:bg-ink-100 dark:text-ink-300 dark:hover:bg-ink-800"
+        >
+          <Star className="size-4 text-amber-500" fill="currentColor" /> Baca review di Google Maps
+        </a>
+      )}
       {convoy.isLeader && (
         <div className="mt-2 grid grid-cols-2 gap-2">
           <Button variant="secondary" className="text-xs text-violet-700 dark:text-violet-300" onClick={() => setForConvoy('meet')}>

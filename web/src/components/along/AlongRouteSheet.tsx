@@ -1,4 +1,4 @@
-import { Camera, Coffee, Fuel, Loader2, MapPinPlus, ParkingSquare, ThumbsUp, Utensils, X, Zap, type LucideIcon } from 'lucide-react';
+import { Camera, Coffee, Fuel, Loader2, MapPinPlus, ParkingSquare, Star, ThumbsUp, Utensils, X, Zap, type LucideIcon } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Sheet } from '@/components/ui/Sheet';
 import { useRouting } from '@/contexts/RoutingContext';
@@ -11,6 +11,7 @@ import type { CommunityCategory, CommunityPlace, Place } from '@/types';
 import { rankAlong, samplePointsAhead, type AlongItem } from '@/utils/alongRoute';
 import { formatDistance } from '@/utils/geo';
 import { buildRouteIndex } from '@/utils/routeProgress';
+import { googleMapsReviewsUrl } from '@/utils/googleMapsLink';
 
 const CATEGORIES: { id: AlongCategory; label: string; icon: LucideIcon; maxOffsetM: number; community: CommunityCategory[] }[] = [
   { id: 'food', label: 'Makan', icon: Utensils, maxOffsetM: 2500, community: ['food'] },
@@ -157,7 +158,7 @@ export function AlongRouteSheet({ onClose }: { onClose: () => void }) {
             </>
           )}
           <p className="mt-3 text-xs text-ink-400">
-            Senarai tempat daripada Mapbox, tanpa rating. 👍 = disyorkan pengguna JalanGo.{category === 'rnr' && ' Pastikan R&R berada di arah perjalanan anda.'}
+            Senarai tempat daripada Mapbox. Tekan ⭐ Review untuk baca review di Google Maps. 👍 = disyorkan pengguna JalanGo.{category === 'rnr' && ' Pastikan R&R berada di arah perjalanan anda.'}
           </p>
         </>
       )}
@@ -188,6 +189,7 @@ function PlaceItem({ r, icon: Icon, current, onStop }: { r: Row; icon: LucideIco
           )}
         </p>
       </div>
+      <div className="flex shrink-0 flex-col items-stretch gap-1.5">
       <button
         type="button"
         onClick={onStop}
@@ -197,6 +199,16 @@ function PlaceItem({ r, icon: Icon, current, onStop }: { r: Row; icon: LucideIco
       >
         {current ? 'Dipilih' : 'Singgah'}
       </button>
+      <a
+        href={googleMapsReviewsUrl(r.place)}
+        target="_blank"
+        rel="noreferrer"
+        className="flex items-center justify-center gap-1 rounded-xl bg-ink-100 px-2 py-1.5 text-[11px] font-semibold text-ink-700 dark:bg-ink-800 dark:text-ink-200"
+        aria-label={`Review Google untuk ${r.place.name}`}
+      >
+        <Star className="size-3 text-amber-500" fill="currentColor" /> Review
+      </a>
+      </div>
     </li>
   );
 }
