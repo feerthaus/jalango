@@ -131,23 +131,43 @@ export async function searchAlong(category: CategoryId, points: Coordinates[], p
   return [...seen.values()];
 }
 
-export async function searchCategory(category: CategoryId, near: Coordinates, limit = 10): Promise<Place[]> {
-  if (category === 'rnr') {
-    // Malaysian highway rest areas are listed as "R&R" / "Hentian Sebelah".
-    const url = new URL(`${SEARCHBOX}/forward`);
-    url.searchParams.set('q', 'R&R');
-    url.searchParams.set('types', 'poi');
-    url.searchParams.set('country', 'my');
-    url.searchParams.set('language', 'en');
-    url.searchParams.set('limit', String(limit));
-    url.searchParams.set('proximity', `${near.lng},${near.lat}`);
-    return toPlaces(await request(url));
-  }
+/** Free-text fallbacks for categories whose canonical id may return nothing in Malaysia. */
+const FALLBACK_QUERY: Partial<Record<CategoryId, string>> = {
+  rnr: 'rest area',
+  ev: 'EV charging station',
+};
 
-  const url = new URL(`${SEARCHBOX}/category/${CATEGORY_MAP[category]}`);
+/** Canonical ids tried first (Search Box category endpoint). */
+const CANONICAL: Partial<Record<CategoryId, string>> = {
+  rnr: 'rest_area',
+  ev: 'charging_station',
+};
+
+async function forwardPoi(q: string, near: Coordinates, limit: number): Promise<Place[]> {
+  const url = new URL(`${SEARCHBOX}/forward`);
+  url.searchParams.set('q', q);
+  url.searchParams.set('types', 'poi');
+  url.searchParams.set('country', 'my');
+  url.searchParams.set('language', 'en');
+  url.searchParams.set('limit', String(Math.min(limit, 10)));
+  url.searchParams.set('proximity', `${near.lng},${near.lat}`);
+  return toPlaces(await request(url));
+}
+
+export async function searchCategory(category: CategoryId, near: Coordinates, limit = 10): Promise<Place[]> {
+  const id = CANONICAL[category] ?? CATEGORY_MAP[category as keyof typeof CATEGORY_MAP];
+  const url = new URL(`${SEARCHBOX}/category/${id}`);
   url.searchParams.set('proximity', `${near.lng},${near.lat}`);
   url.searchParams.set('country', 'my');
   url.searchParams.set('language', 'en');
   url.searchParams.set('limit', String(Math.min(limit, 25)));
-  return toPlaces(await request(url));
+  let results: Place[] = [];
+  try {
+    results = toPlaces(await request(url));
+  } catch (err) {
+    if (!FALLBACK_QUERY[category]) throw err; // unknown canonical id → use the text fallback
+  }
+  const fallback = FALLBACK_QUERY[category];
+  if (results.length === 0 && fallback) results = await forwardPoi(fallback, near, limit);
+  return results;
 }
