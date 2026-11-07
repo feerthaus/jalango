@@ -9,7 +9,7 @@ import { speak, useVoiceAlerts, useVoiceLang } from '@/hooks/useVoiceAlerts';
 import { pathLength, roundPath, sampleWaypoints, simplify } from '@/utils/trace';
 import { useTrips } from './TripsContext';
 import type { Coordinates, Place, Route } from '@/types';
-import { buildRouteIndex, computeProgress, projectOnRoute, type RouteIndex, type RouteProgress } from '@/utils/routeProgress';
+import { buildRouteIndex, computeProgress, pickRerouteIndex, projectOnRoute, type RouteIndex, type RouteProgress } from '@/utils/routeProgress';
 
 const computeAlongSafe = (index: RouteIndex, p: Coordinates, hint?: number) => projectOnRoute(index, p, hint).along;
 import { useLocation } from './LocationContext';
@@ -57,6 +57,9 @@ const RoutingContext = createContext<RoutingValue | null>(null);
 const OFF_ROUTE_METERS = 60;
 const OFF_ROUTE_FIXES = 3;
 const DEMO_RETRY_MS = 20_000;
+const POOR_ACCURACY_M = 75;
+/** a fix after this long without GPS may be a jump, not a real position change */
+const GPS_GAP_MS = 15_000;
 const REROUTE_COOLDOWN_MS = 15_000;
 
 export function RoutingProvider({ children }: { children: ReactNode }) {
@@ -73,16 +76,21 @@ export function RoutingProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState<string | null>(null);
   const [avoidTolls, setAvoidTollsState] = useState(false);
   const [progress, setProgress] = useState<RouteProgress | null>(null);
+  const progressRef = useRef<RouteProgress | null>(null);
+  progressRef.current = progress;
   const [rerouting, setRerouting] = useState(false);
   const [requestId, setRequestId] = useState(0);
 
   const fixRef = useRef(fix);
   fixRef.current = fix;
   const originRef = useRef<Coordinates | null>(null);
+  /** direction of travel when the route was requested (null = unknown / standing still) */
+  const headingRef = useRef<number | null>(null);
   const navigatingRef = useRef(false);
   const indexRef = useRef<RouteIndex | null>(null);
   const segmentHint = useRef<number | undefined>(undefined);
   const offRouteCount = useRef(0);
+  const lastFixAt = useRef<number | null>(null);
   const lastReroute = useRef(0);
   const collector = useRef<ProbeCollector | null>(null);
   /** What to do once a restored trip's routes are loaded */
@@ -121,13 +129,15 @@ export function RoutingProvider({ children }: { children: ReactNode }) {
       avoidTolls,
       destinationName: destination.name,
       via: viaRef.current,
+      heading: headingRef.current,
       signal: controller.signal,
     })
       .then((res) => {
         // A reroute that hit a network blip must not swap a real road route for a straight line
         if (isReroute && res.mode === 'demo' && selectedRouteRef.current && selectedRouteRef.current.source !== 'demo') return;
         setRoutes(res.routes);
-        setSelectedIndex(0);
+        // After a reroute, don't follow a route that starts with a U-turn if an alternative doesn't
+        setSelectedIndex(isReroute ? pickRerouteIndex(res.routes) : 0);
         setMode(res.mode);
         setNotice(res.notice ?? null);
         segmentHint.current = undefined;
@@ -152,6 +162,10 @@ export function RoutingProvider({ children }: { children: ReactNode }) {
       return;
     }
     originRef.current = here;
+    // GPS heading is only trustworthy while moving; when stopped mid-trip use the route's direction
+    const f = fixRef.current;
+    headingRef.current =
+      f && f.heading !== null && (f.speed ?? 0) >= 3 ? f.heading : navigatingRef.current && progressRef.current ? progressRef.current.bearing : null;
     // When rerouting mid-trip, skip shortcut points we've already driven past
     if (navigatingRef.current && viaRef.current.length && indexRef.current && segmentHint.current !== undefined) {
       const index = indexRef.current;
@@ -214,6 +228,13 @@ export function RoutingProvider({ children }: { children: ReactNode }) {
       return;
     }
     if (selectedRoute.source === 'demo') return; // straight line: no rerouting
+    // Weak GPS (tunnels, flyovers, tall buildings) jumps around: don't let those fixes trigger a reroute
+    const gap = lastFixAt.current ? fix.timestamp - lastFixAt.current : 0;
+    lastFixAt.current = fix.timestamp;
+    if (fix.accuracy > POOR_ACCURACY_M || gap > GPS_GAP_MS) {
+      offRouteCount.current = 0;
+      return;
+    }
     const tolerance = Math.max(OFF_ROUTE_METERS, fix.accuracy * 1.5);
     offRouteCount.current = p.offset > tolerance ? offRouteCount.current + 1 : 0;
     if (offRouteCount.current >= OFF_ROUTE_FIXES && Date.now() - lastReroute.current > REROUTE_COOLDOWN_MS) {

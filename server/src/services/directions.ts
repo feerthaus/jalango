@@ -88,7 +88,7 @@ export function normalizeRoute(r: MbRoute, index: number): Route {
   };
 }
 
-export function buildDirectionsUrl(from: Coordinates, to: Coordinates, opts: { avoidTolls?: boolean; via?: Coordinates[] } = {}): URL {
+export function buildDirectionsUrl(from: Coordinates, to: Coordinates, opts: { avoidTolls?: boolean; via?: Coordinates[]; heading?: number } = {}): URL {
   const via = (opts.via ?? []).slice(0, MAX_VIA);
   const points = [from, ...via, to];
   const useTraffic = via.length <= 1;
@@ -103,19 +103,40 @@ export function buildDirectionsUrl(from: Coordinates, to: Coordinates, opts: { a
   // Via points are silent: no "you have arrived" at each one
   if (via.length > 0) url.searchParams.set('waypoints', `0;${points.length - 1}`);
   if (opts.avoidTolls) url.searchParams.set('exclude', 'toll');
+  // Start on the road segment that points the way we're driving (±45°), like Waze/Google do
+  if (opts.heading !== undefined && Number.isFinite(opts.heading)) {
+    url.searchParams.set('bearings', `${Math.round(opts.heading) % 360},45${';'.repeat(points.length - 1)}`);
+  }
   return url;
 }
 
 export async function getDirections(
   from: Coordinates,
   to: Coordinates,
-  opts: { avoidTolls?: boolean; via?: Coordinates[] } = {},
+  opts: { avoidTolls?: boolean; via?: Coordinates[]; heading?: number } = {},
 ): Promise<Route[]> {
   if (!config.mapboxToken) {
     throw new HttpError(503, 'mapbox_not_configured', 'Mapbox is not configured on the server');
   }
+  if (opts.heading !== undefined) {
+    try {
+      return await fetchDirections(from, to, opts);
+    } catch (err) {
+      // No road matches our heading near the start (e.g. car park): try again without it
+      if (err instanceof HttpError && err.status === 422) return fetchDirections(from, to, { ...opts, heading: undefined });
+      throw err;
+    }
+  }
+  return fetchDirections(from, to, opts);
+}
+
+async function fetchDirections(
+  from: Coordinates,
+  to: Coordinates,
+  opts: { avoidTolls?: boolean; via?: Coordinates[]; heading?: number },
+): Promise<Route[]> {
   const url = buildDirectionsUrl(from, to, opts);
-  url.searchParams.set('access_token', config.mapboxToken);
+  url.searchParams.set('access_token', config.mapboxToken ?? '');
 
   let res: Response;
   try {

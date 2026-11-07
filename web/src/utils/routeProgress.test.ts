@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Route } from '@/types';
-import { bearingDeg, buildRouteIndex, computeProgress, sliceRoute } from './routeProgress';
+import { bearingDeg, buildRouteIndex, computeProgress, hasEarlyUturn, pickRerouteIndex, sliceRoute } from './routeProgress';
 
 // An L-shaped route: ~1.1 km north, then ~1.1 km east
 const route: Route = {
@@ -66,5 +66,18 @@ describe('sliceRoute', () => {
     expect(part[1][1]).toBeCloseTo(3.105, 3);
     expect(sliceRoute(index, 0)).toEqual([]);
     expect(sliceRoute(index, index.total + 10)).toHaveLength(3);
+  });
+});
+
+describe('U-turn avoidance', () => {
+  const mk = (id: string, mods: (string | undefined)[], dist = 400) =>
+    ({ id, steps: mods.map((m) => ({ instruction: '', distanceMeters: dist, durationSeconds: 30, maneuver: { type: 'turn', modifier: m, location: { lat: 0, lng: 0 } } })) }) as unknown as Route;
+  it('spots an early U-turn and ignores a late one', () => {
+    expect(hasEarlyUturn(mk('a', [undefined, 'left', 'uturn']))).toBe(true);
+    expect(hasEarlyUturn(mk('b', [undefined, 'left', 'left', 'left', 'left', 'uturn']))).toBe(false); // starts at 2 km
+  });
+  it('prefers the first alternative without one', () => {
+    expect(pickRerouteIndex([mk('a', [undefined, 'uturn']), mk('b', [undefined, 'right'])])).toBe(1);
+    expect(pickRerouteIndex([mk('a', [undefined, 'uturn'])])).toBe(0);
   });
 });

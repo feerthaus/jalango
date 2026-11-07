@@ -24,6 +24,8 @@ const query = z.object({
   from: point,
   to: point,
   via: viaList.optional(),
+  /** Driver's current heading (degrees). Stops the router snapping us onto the opposite carriageway. */
+  heading: z.coerce.number().min(0).max(360).optional(),
   avoidTolls: z
     .enum(['0', '1', 'true', 'false'])
     .optional()
@@ -33,6 +35,6 @@ const query = z.object({
 export const directionsRouter = Router();
 
 directionsRouter.get('/', async (req, res) => {
-  const { from, to, avoidTolls, via } = query.parse(req.query);
-  res.json({ routes: await getDirections(from, to, { avoidTolls, via }) });
+  const { from, to, avoidTolls, via, heading } = query.parse(req.query);
+  res.json({ routes: await getDirections(from, to, { avoidTolls, via, heading }) });
 });

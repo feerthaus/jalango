@@ -163,3 +163,20 @@ export function sliceRoute(index: RouteIndex, along: number): [number, number][]
   }
   return out.length >= 2 ? out : [];
 }
+
+/** True when the route asks for a U-turn within the first `withinM` metres (typical of a bad reroute). */
+export function hasEarlyUturn(route: Route, withinM = 1500): boolean {
+  let start = 0;
+  for (let i = 0; i < route.steps.length && start <= withinM; i++) {
+    const s = route.steps[i];
+    if (i > 0 && s.maneuver.modifier === 'uturn') return true;
+    start += s.distanceMeters;
+  }
+  return false;
+}
+
+/** Index of the route to follow after a reroute: the first one that doesn't start with a U-turn. */
+export function pickRerouteIndex(routes: Route[]): number {
+  const i = routes.findIndex((r) => !hasEarlyUturn(r));
+  return i === -1 ? 0 : i;
+}

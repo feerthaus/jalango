@@ -59,6 +59,12 @@ describe('normalizeRoute', () => {
 });
 
 describe('buildDirectionsUrl', () => {
+  it('sends the driver heading as the start bearing only', () => {
+    const u = buildDirectionsUrl({ lng: 101.7, lat: 3.1 }, { lng: 102.9, lat: 1.85 }, { heading: 183.6, via: [{ lng: 102, lat: 2.5 }] });
+    expect(u.searchParams.get('bearings')).toBe('184,45;;');
+    expect(buildDirectionsUrl({ lng: 101.7, lat: 3.1 }, { lng: 102.9, lat: 1.85 }).searchParams.has('bearings')).toBe(false);
+  });
+
   const a = { lng: 101.68, lat: 3.13 };
   const b = { lng: 101.7, lat: 3.15 };
   it('uses live traffic with alternatives for a plain A→B route', () => {
