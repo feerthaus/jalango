@@ -20,7 +20,9 @@ const ORDINAL_EN = ['first', 'second', 'third', 'fourth', 'fifth', 'sixth'];
 /** First two signposted destinations of a ramp ("Johor Bahru, Kuala Lumpur"). */
 function towards(step: RouteStep): string | null {
   if (!step.destinations) return null;
-  const t = step.destinations.split(/[,;]/).map((s) => s.trim()).filter(Boolean).slice(0, 2);
+  // Mapbox format: "E37, E2: KLIA, Puchong, Putrajaya" — road numbers before the colon, places after it
+  const places = step.destinations.includes(':') ? step.destinations.slice(step.destinations.indexOf(':') + 1) : step.destinations;
+  const t = places.split(/[,;]/).map((s) => s.trim()).filter(Boolean).slice(0, 2);
   return t.length ? t.join(' / ') : null;
 }
 

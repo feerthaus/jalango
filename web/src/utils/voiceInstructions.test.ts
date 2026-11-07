@@ -44,6 +44,9 @@ describe('displayInstruction', () => {
     expect(displayInstruction(step({ maneuver: { type: 'turn', modifier: 'left', location: { lat: 0, lng: 0 } }, roadName: "Jalan Dato' Haji Kosai" }), 'ms')).toBe("Belok kiri ke Jalan Dato' Haji Kosai");
     expect(displayInstruction(step({ maneuver: { type: 'arrive', location: { lat: 0, lng: 0 } } }), 'ms')).toBe('Sampai di destinasi');
   });
+  it('names places, not road numbers, from Mapbox signposts', () => {
+    expect(displayInstruction(step({ maneuver: { type: 'fork', modifier: 'slight left', location: { lat: 0, lng: 0 } }, roadRef: 'E37', destinations: 'E37, E2, E26: KLIA, Puchong, Putrajaya' }), 'ms')).toBe('Di simpang, ikut sebelah kiri ke E37 menghala KLIA / Puchong');
+  });
   it('keeps the provider English text', () => {
     expect(displayInstruction(step({}), 'en')).toBe('Take the ramp on the left towards Johor Bahru');
   });
