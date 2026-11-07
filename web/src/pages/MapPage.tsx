@@ -3,6 +3,7 @@ import { AlongRouteSheet } from '@/components/along/AlongRouteSheet';
 import { ConvoyBanner } from '@/components/convoy/ConvoyBanner';
 import { ConvoySheet } from '@/components/convoy/ConvoySheet';
 import { normalizeConvoyCode } from '@/utils/convoy';
+import { useConvoy } from '@/contexts/ConvoyContext';
 import { LiveShareBanner } from '@/components/live/LiveShareBanner';
 import { ShareLiveSheet } from '@/components/live/ShareLiveSheet';
 import { useCallback, useEffect, useState } from 'react';
@@ -68,6 +69,7 @@ export function MapPage() {
             <div className="flex items-end justify-between">
               <SpeedIndicator />
               <div className="ml-auto flex flex-col items-end gap-3">
+                <ConvoyButton onOpen={() => setConvoyOpen({ code: null })} />
                 <IconButton label="Tempat makan & menarik sepanjang laluan" onClick={() => setAlongOpen(true)}>
                   <Utensils className="size-5 text-violet-600 dark:text-violet-400" />
                 </IconButton>
@@ -79,6 +81,7 @@ export function MapPage() {
         )}
         {reportOpen && <ReportSheet onClose={() => setReportOpen(false)} />}
         {alongOpen && <AlongRouteSheet onClose={() => setAlongOpen(false)} />}
+        {convoyOpen && <ConvoySheet joinCode={convoyOpen.code} onClose={() => setConvoyOpen(null)} />}
       </>
     );
   }
@@ -116,9 +119,7 @@ export function MapPage() {
           <div className="flex items-end justify-between gap-3">
             <SpeedIndicator />
             <div className="ml-auto flex flex-col items-end gap-3">
-              <IconButton label="Konvoi (group travel)" onClick={() => setConvoyOpen({ code: null })}>
-                <Users className="size-5 text-violet-600 dark:text-violet-400" />
-              </IconButton>
+              <ConvoyButton onOpen={() => setConvoyOpen({ code: null })} />
               <IconButton label="Share live location" onClick={() => setShareOpen(true)}>
                 <Radio className="size-5 text-jade-600 dark:text-jade-400" />
               </IconButton>
@@ -153,5 +154,22 @@ export function MapPage() {
       {shareOpen && <ShareLiveSheet onClose={() => setShareOpen(false)} />}
       {convoyOpen && <ConvoySheet joinCode={convoyOpen.code} onClose={() => setConvoyOpen(null)} />}
     </>
+  );
+}
+
+/** Konvoi button; shows how many cars are in your convoy. */
+function ConvoyButton({ onOpen }: { onOpen: () => void }) {
+  const { convoy, members } = useConvoy();
+  return (
+    <div className="relative">
+      <IconButton label="Konvoi (group travel)" onClick={onOpen} active={Boolean(convoy)}>
+        <Users className="size-5 text-violet-600 dark:text-violet-400" />
+      </IconButton>
+      {convoy && (
+        <span className="pointer-events-none absolute -right-1 -top-1 grid min-w-5 place-items-center rounded-full bg-violet-600 px-1 text-[11px] font-bold text-white ring-2 ring-white dark:ring-ink-900">
+          {members.length}
+        </span>
+      )}
+    </div>
   );
 }

@@ -137,13 +137,13 @@ export function NavigationHud() {
             </IconButton>
           </div>
         )}
-        <div className="glass pointer-events-auto flex items-center gap-3 rounded-3xl p-3 pl-5 shadow-float ring-1 ring-ink-900/5 dark:ring-white/10">
-          <div className="min-w-0 flex-1">
-            <p className="text-2xl font-black tabular-nums leading-tight text-jade-600 dark:text-jade-400">
+        <div className="glass pointer-events-auto flex items-center gap-2 rounded-3xl p-3 pl-4 shadow-float ring-1 ring-ink-900/5 dark:ring-white/10">
+          <div className="min-w-0 flex-1 overflow-hidden">
+            <p className="whitespace-nowrap text-xl font-black tabular-nums leading-tight text-jade-600 min-[400px]:text-2xl dark:text-jade-400">
               {demo && '~'}
               {formatDuration(remainingSeconds)}
             </p>
-            <p className="text-sm text-ink-500 dark:text-ink-300">
+            <p className="whitespace-nowrap text-sm text-ink-500 dark:text-ink-300">
               {formatDistance(remainingMeters)} · {arrivalClock(remainingSeconds)}
             </p>
           </div>
@@ -156,8 +156,8 @@ export function NavigationHud() {
           <IconButton label={showSteps ? 'Hide directions list' : 'Show directions list'} active={showSteps} onClick={() => setShowSteps((s) => !s)}>
             <ListOrdered className="size-5" />
           </IconButton>
-          <Button variant="danger" className="h-11 px-4" onClick={endNavigation} aria-label="End navigation">
-            <X className="size-4" /> End
+          <Button variant="danger" className="h-11 shrink-0 px-3" onClick={endNavigation} aria-label="End navigation">
+            <X className="size-5 min-[420px]:size-4" /> <span className="hidden min-[420px]:inline">End</span>
           </Button>
         </div>
       </div>
