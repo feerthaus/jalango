@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { getDirections, MAX_VIA } from '../services/directions.js';
+import { guardUsage } from '../lib/usageGuard.js';
 
 const point = z
   .string()
@@ -36,5 +37,6 @@ export const directionsRouter = Router();
 
 directionsRouter.get('/', async (req, res) => {
   const { from, to, avoidTolls, via, heading } = query.parse(req.query);
+  await guardUsage('directions');
   res.json({ routes: await getDirections(from, to, { avoidTolls, via, heading }) });
 });

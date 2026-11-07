@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { z } from 'zod';
+import { guardUsage } from '../lib/usageGuard.js';
 import { CATEGORY_MAP, reverseGeocode, searchAlong, searchCategory, searchPlaces } from '../services/mapbox.js';
 
 const lng = z.coerce.number().min(-180).max(180);
@@ -43,20 +44,24 @@ export const geocodingRouter = Router();
 geocodingRouter.get('/search', async (req, res) => {
   const { q, lng, lat, limit } = searchQuery.parse(req.query);
   const near = lng !== undefined && lat !== undefined ? { lng, lat } : undefined;
+  await guardUsage('geo');
   res.json({ results: await searchPlaces(q, near, limit) });
 });
 
 geocodingRouter.get('/reverse', async (req, res) => {
   const { lng, lat } = reverseQuery.parse(req.query);
+  await guardUsage('geo');
   res.json({ result: await reverseGeocode({ lng, lat }) });
 });
 
 geocodingRouter.get('/along', async (req, res) => {
   const { category, points } = alongQuery.parse(req.query);
+  await guardUsage('geo', points.length);
   res.json({ results: await searchAlong(category, points) });
 });
 
 geocodingRouter.get('/category', async (req, res) => {
   const { category, lng, lat, limit } = categoryQuery.parse(req.query);
+  await guardUsage('geo');
   res.json({ results: await searchCategory(category, { lng, lat }, limit) });
 });

@@ -34,7 +34,11 @@ interface AlongValue {
 }
 
 const AlongContext = createContext<AlongValue | null>(null);
-const BUCKET_M = 5000;
+/**
+ * Re-search only every 40 km: one search already covers ~175 km ahead and the
+ * distances are recomputed locally as we drive (each search = up to 8 Mapbox calls).
+ */
+const BUCKET_M = 40_000;
 const ANNOUNCE_KEY = 'jalango:along-announce';
 const ANNOUNCE_GAP_MS = 45_000;
 
@@ -75,7 +79,7 @@ export function AlongProvider({ children }: { children: ReactNode }) {
 
   const index = useMemo(() => (selectedRoute ? buildRouteIndex(selectedRoute) : null), [selectedRoute]);
   const along = progress?.along ?? 0;
-  const bucket = Math.floor(along / BUCKET_M);
+  const bucket = Math.floor(Math.max(0, along) / BUCKET_M);
   const live = searchMode !== 'demo' && Boolean(selectedRoute) && selectedRoute?.source !== 'demo';
 
   const setCategory = useCallback((c: AlongCategory | null) => {

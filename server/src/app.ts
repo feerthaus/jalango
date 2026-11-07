@@ -30,6 +30,8 @@ export function createApp() {
     res.json({ ok: true, integrations });
   });
 
+  // Each along-route search fans out to up to 8 Mapbox calls
+  app.use('/api/geo/along', rateLimit({ windowMs: 60_000, max: 15 }));
   app.use('/api/geo', rateLimit({ windowMs: 60_000, max: 120 }), geocodingRouter);
   app.use('/api/directions', rateLimit({ windowMs: 60_000, max: 60 }), directionsRouter);
   app.use('/api/probes', rateLimit({ windowMs: 60_000, max: 12 }), probesRouter);
