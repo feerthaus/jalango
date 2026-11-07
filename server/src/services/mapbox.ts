@@ -225,7 +225,8 @@ export async function searchPlaces(query: string, near?: Coordinates, limit = 8)
     let osm = await searchOsm(q, near, limit);
     if (!osm.some(isStreetLike) && spaceStreetCodes(q) !== q) osm = osm.concat(await searchOsm(spaceStreetCodes(q), near, limit));
     const osmStreets = osm.filter(isStreetLike);
-    if (osmStreets.length) results = mergePlaces(osmStreets, results, limit);
+    // OSM splits one street into several ways: keep the first of each name nearby
+    if (osmStreets.length) results = mergePlaces([], osmStreets.concat(results), limit);
   }
 
   // "cj7" vs "cj 7"

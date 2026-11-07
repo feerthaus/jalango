@@ -52,6 +52,7 @@ describe('street search helpers', () => {
     const mk = (id: string, name: string, lat: number) => ({ id, name, address: '', coordinates: { lat, lng: 101.5 }, kind: 'poi' as const, source: 'mapbox' as const });
     const r = mergePlaces([mk('a', 'Jalan CJ 7', 2.8)], [mk('b', 'jalan cj 7', 2.9), mk('c', 'Near A', 2.8001), mk('d', 'Other', 2.95)], 8);
     expect(r.map((p) => p.id)).toEqual(['a', 'd']);
+    expect(mergePlaces([], [mk('w1', 'Jalan Sultan Abdul Samad', 2.8), mk('w2', 'Jalan Sultan Abdul Samad', 2.81)], 8).map((p) => p.id)).toEqual(['w1']);
   });
 });
 
