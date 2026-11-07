@@ -6,6 +6,8 @@
 
 [build.environment]
   NODE_VERSION = "22"
+  # Sentry crash reporting. A DSN only allows sending events, so it is public by design.
+  VITE_SENTRY_DSN = "https://f0c8dfaefbe454fa49cf56e2a00cecae@o4512388559536128.ingest.us.sentry.io/4512388594991104"
 
 [functions]
   node_bundler = "esbuild"
