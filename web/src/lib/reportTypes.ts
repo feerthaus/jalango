@@ -1,4 +1,4 @@
-import { Ban, Car, CarFront, Construction, TrafficCone, TriangleAlert, Waves, type LucideIcon } from 'lucide-react';
+import { Ban, Car, CarFront, Cctv, Construction, Siren, TrafficCone, TriangleAlert, Waves, type LucideIcon } from 'lucide-react';
 import type { ReportType } from '@/types';
 
 export interface ReportTypeMeta {
@@ -23,4 +23,6 @@ export const REPORT_TYPES: ReportTypeMeta[] = [
   { type: 'flood', label: 'Flood', labelMs: 'Banjir', icon: Waves, tone: 'bg-sky-500 text-white' },
   { type: 'breakdown', label: 'Broken-down vehicle', labelMs: 'Kenderaan rosak', icon: TrafficCone, tone: 'bg-violet-500 text-white' },
   { type: 'construction', label: 'Roadworks', labelMs: 'Kerja jalan', icon: Construction, tone: 'bg-yellow-500 text-ink-950' },
+  { type: 'police', label: 'Speed trap / police', labelMs: 'Speed trap polis', icon: Siren, tone: 'bg-blue-600 text-white' },
+  { type: 'speed_camera', label: 'Speed camera (AES/AWAS)', labelMs: 'Kamera AWAS', icon: Cctv, tone: 'bg-slate-700 text-white' },
 ];

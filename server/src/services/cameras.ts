@@ -1,4 +1,3 @@
-import { HttpError } from '../lib/errors.js';
 
 /**
  * Fixed speed cameras (AES / AWAS) from OpenStreetMap (highway=speed_camera),
@@ -18,6 +17,11 @@ const ENDPOINTS = ['https://overpass-api.de/api/interpreter', 'https://overpass.
 const TIMEOUT_MS = 7000;
 const cache = new Map<string, { at: number; cameras: SpeedCamera[] }>();
 const CACHE_MS = 6 * 3600_000;
+/** after a failure, skip Overpass for a while instead of burning function time */
+const BACKOFF_MS = 15 * 60_000;
+let failedAt = 0;
+
+export class CamerasUnavailable extends Error {}
 
 export function tileBounds(x: number, y: number) {
   const minLng = x * TILE_DEG;
@@ -51,6 +55,10 @@ export async function camerasInTile(x: number, y: number): Promise<SpeedCamera[]
   const key = `${x}:${y}`;
   const hit = cache.get(key);
   if (hit && Date.now() - hit.at < CACHE_MS) return hit.cameras;
+  if (Date.now() - failedAt < BACKOFF_MS) {
+    if (hit) return hit.cameras;
+    throw new CamerasUnavailable('Camera data temporarily unavailable');
+  }
   const b = tileBounds(x, y);
   const query = `[out:json][timeout:7];node["highway"="speed_camera"](${b.minLat},${b.minLng},${b.maxLat},${b.maxLng});out body;`;
   // Netlify functions have ~10 s: ask the mirrors in parallel and take the first good answer
@@ -73,6 +81,8 @@ export async function camerasInTile(x: number, y: number): Promise<SpeedCamera[]
   } catch (err) {
     lastErr = err instanceof AggregateError ? err.errors[0] : err;
   }
+  failedAt = Date.now();
+  console.warn('[cameras] Overpass unavailable', lastErr instanceof Error ? lastErr.message : lastErr);
   if (hit) return hit.cameras; // stale is better than nothing
-  throw new HttpError(502, 'upstream_unreachable', `Camera data unavailable (${lastErr instanceof Error ? lastErr.message : 'error'})`);
+  throw new CamerasUnavailable('Camera data unavailable');
 }

@@ -13,6 +13,7 @@ import { CommunityPlacesProvider } from './CommunityPlacesContext';
 import { LiveShareProvider } from './LiveShareContext';
 import { ConvoyProvider } from './ConvoyContext';
 import { AlongProvider } from './AlongContext';
+import { CamerasProvider } from './CamerasContext';
 
 export function AppProviders({ children }: { children: ReactNode }) {
   return (
@@ -29,7 +30,9 @@ export function AppProviders({ children }: { children: ReactNode }) {
                         <ReportsProvider>
                           <LiveShareProvider>
                             <ConvoyProvider>
-                              <AlongProvider>{children}</AlongProvider>
+                              <AlongProvider>
+                                <CamerasProvider>{children}</CamerasProvider>
+                              </AlongProvider>
                             </ConvoyProvider>
                           </LiveShareProvider>
                         </ReportsProvider>

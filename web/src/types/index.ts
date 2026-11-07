@@ -120,7 +120,9 @@ export type ReportType =
   | 'hazard'
   | 'flood'
   | 'breakdown'
-  | 'construction';
+  | 'construction'
+  | 'police'
+  | 'speed_camera';
 
 export type ReportStatus = 'active' | 'resolved' | 'expired' | 'removed';
 
