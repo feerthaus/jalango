@@ -6,6 +6,7 @@ import { errorHandler, notFound } from './middleware/errorHandler.js';
 import { rateLimit } from './middleware/rateLimit.js';
 import { directionsRouter } from './routes/directions.js';
 import { geocodingRouter } from './routes/geocoding.js';
+import { camerasRouter } from './routes/cameras.js';
 import { probesRouter } from './routes/probes.js';
 import { accountRouter, feedbackRouter } from './routes/account.js';
 
@@ -33,6 +34,7 @@ export function createApp() {
   // Each along-route search fans out to up to 8 Mapbox calls
   app.use('/api/geo/along', rateLimit({ windowMs: 60_000, max: 15 }));
   app.use('/api/geo', rateLimit({ windowMs: 60_000, max: 120 }), geocodingRouter);
+  app.use('/api/cameras', rateLimit({ windowMs: 60_000, max: 60 }), camerasRouter);
   app.use('/api/directions', rateLimit({ windowMs: 60_000, max: 60 }), directionsRouter);
   app.use('/api/probes', rateLimit({ windowMs: 60_000, max: 12 }), probesRouter);
   app.use('/api/account', rateLimit({ windowMs: 10 * 60_000, max: 5 }), accountRouter);
