@@ -13,6 +13,7 @@ import { useOncomingAlerts } from '@/hooks/useOncomingAlerts';
 import { LiveShareBanner } from '@/components/live/LiveShareBanner';
 import { ConvoyBanner } from '@/components/convoy/ConvoyBanner';
 import { StopBanner } from '@/components/along/StopMarker';
+import { OfflineBanner } from './OfflineBanner';
 import { ShareLiveSheet } from '@/components/live/ShareLiveSheet';
 import { Radio } from 'lucide-react';
 import { RateTrip } from '@/components/trips/RateTrip';
@@ -126,6 +127,7 @@ export function NavigationHud() {
           )}
         </div>
         {oncoming && <OncomingBanner threat={oncoming} />}
+        {!showSteps && <OfflineBanner />}
         {!showSteps && <LiveShareBanner />}
         {!showSteps && <ConvoyBanner />}
         {!showSteps && <StopBanner />}

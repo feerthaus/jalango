@@ -2,7 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { useProbeConsent } from '@/hooks/useProbeConsent';
 import { ProbeCollector } from '@/services/probeService';
 import { fetchRoutes } from '@/services/routingService';
-import { clearActiveTrace, clearTrip, loadActiveTrace, loadTrip, saveActiveTrace, saveTrip } from '@/services/tripStore';
+import { clearActiveTrace, clearTrip, loadActiveTrace, loadTrip, loadTripRoute, saveActiveTrace, saveTrip, saveTripRoute } from '@/services/tripStore';
 import type { Shortcut } from '@/types';
 import { haversineMeters } from '@/utils/geo';
 import { speak, useVoiceAlerts, useVoiceLang } from '@/hooks/useVoiceAlerts';
@@ -135,6 +135,13 @@ export function RoutingProvider({ children }: { children: ReactNode }) {
       .then((res) => {
         // A reroute that hit a network blip must not swap a real road route for a straight line
         if (isReroute && res.mode === 'demo' && selectedRouteRef.current && selectedRouteRef.current.source !== 'demo') return;
+        // Reopened with no signal: carry on with the road route we were following, if we're still on it
+        if (!isReroute && res.mode === 'demo' && resumeRef.current === 'navigate') {
+          const saved = loadTripRoute(destination.id);
+          if (saved && projectOnRoute(buildRouteIndex(saved), origin).offset < 500) {
+            res = { routes: [saved], mode: 'live', notice: 'Tiada isyarat: meneruskan laluan yang tersimpan.' };
+          }
+        }
         setRoutes(res.routes);
         // After a reroute, don't follow a route that starts with a U-turn if an alternative doesn't
         setSelectedIndex(isReroute ? pickRerouteIndex(res.routes) : 0);
@@ -243,6 +250,11 @@ export function RoutingProvider({ children }: { children: ReactNode }) {
       request();
     }
   }, [fix, status, selectedRoute, request]);
+
+  // Keep the road route on the phone so a reopened app can continue without signal
+  useEffect(() => {
+    if (status === 'navigating' && destination && selectedRoute && selectedRoute.source !== 'demo') saveTripRoute(destination.id, selectedRoute);
+  }, [status, destination, selectedRoute]);
 
   // Navigating on a straight-line fallback: keep trying to get the real road route
   useEffect(() => {

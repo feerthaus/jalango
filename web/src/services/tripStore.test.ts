@@ -39,3 +39,16 @@ describe('tripStore', () => {
     expect(loadTrip()).toBeNull();
   });
 });
+
+describe('saved trip route', () => {
+  it('keeps the road route for the same destination only', async () => {
+    const { saveTripRoute, loadTripRoute, clearTrip } = await import('./tripStore');
+    const route = { id: 'r', source: 'mapbox', steps: [], geometry: { type: 'LineString', coordinates: [[101, 3], [102, 2]] } } as unknown as import('@/types').Route;
+    saveTripRoute('bp', route);
+    expect(loadTripRoute('bp')?.id).toBe('r');
+    expect(loadTripRoute('other')).toBeNull();
+    expect(loadTripRoute('bp', Date.now() + 9 * 3600_000)).toBeNull();
+    clearTrip();
+    expect(loadTripRoute('bp')).toBeNull();
+  });
+});

@@ -1,3 +1,4 @@
+import { markApiResult } from '@/lib/connectivity';
 import { env } from '@/lib/config';
 
 export class ApiError extends Error {
@@ -28,8 +29,10 @@ export async function apiGet<T>(path: string, params: Record<string, string | nu
     res = await fetch(url, { signal, headers: { Accept: 'application/json' } });
   } catch (err) {
     if (err instanceof DOMException && err.name === 'AbortError') throw err;
+    markApiResult(false);
     throw new ApiError(0, 'network_error', 'Cannot reach the JalanGo server');
   }
+  markApiResult(true);
 
   const isJson = res.headers.get('content-type')?.includes('application/json');
   const body = isJson ? await res.json().catch(() => null) : null;
@@ -49,8 +52,10 @@ export async function apiPost<T>(path: string, body: unknown, accessToken?: stri
       body: JSON.stringify(body ?? {}),
     });
   } catch {
+    markApiResult(false);
     throw new ApiError(0, 'network_error', 'Cannot reach the JalanGo server');
   }
+  markApiResult(true);
   const json = res.headers.get('content-type')?.includes('application/json') ? await res.json().catch(() => null) : null;
   if (!res.ok) throw new ApiError(res.status, json?.error?.code ?? 'http_error', json?.error?.message ?? `Request failed (${res.status})`);
   return json as T;

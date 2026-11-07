@@ -1,4 +1,4 @@
-import type { Coordinates, Place } from '@/types';
+import type { Coordinates, Place, Route } from '@/types';
 
 /**
  * Remembers the current trip on this device so a closed or killed app can
@@ -19,6 +19,31 @@ export interface SavedTrip {
 }
 
 const KEY = 'jalango:active-trip';
+const ROUTE_KEY = 'jalango:active-route';
+
+/**
+ * The road route being followed, kept so a trip can carry on after the app is
+ * reopened somewhere without signal (the server can't be asked for a new one).
+ */
+export function saveTripRoute(destinationId: string, route: Route): void {
+  try {
+    localStorage.setItem(ROUTE_KEY, JSON.stringify({ destinationId, route, savedAt: Date.now() }));
+  } catch {
+    /* storage full / unavailable */
+  }
+}
+
+export function loadTripRoute(destinationId: string, now = Date.now()): Route | null {
+  try {
+    const raw = localStorage.getItem(ROUTE_KEY);
+    if (!raw) return null;
+    const v = JSON.parse(raw) as { destinationId: string; route: Route; savedAt: number };
+    if (v.destinationId !== destinationId || now - v.savedAt > TRIP_MAX_AGE_MS || v.route?.source === 'demo') return null;
+    return v.route;
+  } catch {
+    return null;
+  }
+}
 /** Older trips are considered finished/abandoned. */
 export const TRIP_MAX_AGE_MS = 8 * 3600_000;
 
@@ -54,6 +79,11 @@ export function saveTrip(trip: Omit<SavedTrip, 'savedAt'>): void {
 }
 
 export function clearTrip(): void {
+  try {
+    localStorage.removeItem(ROUTE_KEY);
+  } catch {
+    /* ignore */
+  }
   try {
     localStorage.removeItem(KEY);
   } catch {
