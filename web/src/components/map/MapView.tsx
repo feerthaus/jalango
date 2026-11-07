@@ -18,6 +18,7 @@ import { ConvoyMarkers } from '@/components/convoy/ConvoyMarkers';
 import { StopMarker } from '@/components/along/StopMarker';
 import { AlongMarkers } from '@/components/along/AlongMarkers';
 import { CameraMarkers } from './CameraMarkers';
+import { useDropPin } from '@/hooks/useDropPin';
 
 if (env.mapboxToken) mapboxgl.accessToken = env.mapboxToken;
 
@@ -34,6 +35,8 @@ export function MapView() {
   const navigating = useIsNavigating();
   const markerPlace = destination ?? selectedPlace;
   const [initError, setInitError] = useState<string | null>(null);
+  // Long-press to drop a pin (not while driving: a stray press shouldn't pop up cards)
+  useDropPin(!navigating);
   const initialTheme = useRef(theme);
   const appliedTheme = useRef(theme);
   const centeredOnUser = useRef(false);
