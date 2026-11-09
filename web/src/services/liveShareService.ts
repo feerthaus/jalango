@@ -10,6 +10,8 @@ export interface LiveShare {
   expires_at: string;
   stopped_at: string | null;
   created_at: string;
+  /** set on driver-mode shares */
+  driver_plate?: string | null;
 }
 
 export interface PublicLiveShare {
@@ -26,9 +28,21 @@ export interface PublicLiveShare {
   accuracy_m: number | null;
   position_at: string | null;
   expires_at: string;
+  /** driver mode (get_live_share_v2) */
+  driver_vehicle?: string | null;
+  driver_plate?: string | null;
+  driver_phone?: string | null;
+  next_stop_name?: string | null;
+  stops_left?: number | null;
 }
 
-const COLUMNS = 'id,token,display_name,destination_name,expires_at,stopped_at,created_at';
+export interface DriverInfo {
+  vehicle: string;
+  plate: string;
+  phone: string | null;
+}
+
+const COLUMNS = 'id,token,display_name,destination_name,expires_at,stopped_at,created_at,driver_plate';
 
 function client() {
   if (!supabase) throw new Error('Live sharing needs the community database.');
@@ -50,6 +64,7 @@ export async function createShare(input: {
   displayName: string;
   minutes: number;
   destination?: { name: string; coordinates: Coordinates } | null;
+  driver?: DriverInfo | null;
 }): Promise<LiveShare> {
   const { data, error } = await client()
     .from('location_shares')
@@ -61,6 +76,9 @@ export async function createShare(input: {
       dest_latitude: input.destination?.coordinates.lat ?? null,
       dest_longitude: input.destination?.coordinates.lng ?? null,
       expires_at: new Date(Date.now() + Math.min(input.minutes, 720) * 60_000).toISOString(),
+      ...(input.driver
+        ? { driver_vehicle: input.driver.vehicle.slice(0, 60) || null, driver_plate: input.driver.plate, driver_phone: input.driver.phone }
+        : {}),
     })
     .select(COLUMNS)
     .single();
@@ -79,7 +97,11 @@ export async function fetchMyActiveShares(): Promise<LiveShare[]> {
   return (data ?? []) as LiveShare[];
 }
 
-export async function pushPosition(ids: string[], fix: GeoFix, extra: { etaAt?: string | null; destination?: { name: string; coordinates: Coordinates } | null }) {
+export async function pushPosition(
+  ids: string[],
+  fix: GeoFix,
+  extra: { etaAt?: string | null; destination?: { name: string; coordinates: Coordinates } | null; nextStop?: { name: string; left: number } | null },
+) {
   if (ids.length === 0) return;
   const patch: Record<string, unknown> = {
     latitude: Math.round(fix.coordinates.lat * 1e6) / 1e6,
@@ -95,6 +117,10 @@ export async function pushPosition(ids: string[], fix: GeoFix, extra: { etaAt?: 
     patch.dest_latitude = extra.destination.coordinates.lat;
     patch.dest_longitude = extra.destination.coordinates.lng;
   }
+  if (extra.nextStop !== undefined) {
+    patch.next_stop_name = extra.nextStop ? extra.nextStop.name.slice(0, 160) : null;
+    patch.stops_left = extra.nextStop ? Math.min(30, extra.nextStop.left) : null;
+  }
   const { error } = await client().from('location_shares').update(patch).in('id', ids);
   if (error) throw toReportError(error);
 }
@@ -105,7 +131,11 @@ export async function stopShare(id: string): Promise<void> {
 }
 
 export async function getPublicShare(token: string): Promise<PublicLiveShare | null> {
-  const { data, error } = await client().rpc('get_live_share', { p_token: token });
+  // v2 adds driver details; fall back to v1 if the database hasn't got it yet
+  let { data, error } = await client().rpc('get_live_share_v2', { p_token: token });
+  if (error && /get_live_share_v2|PGRST202|function/i.test(`${error.code} ${error.message}`)) {
+    ({ data, error } = await client().rpc('get_live_share', { p_token: token }));
+  }
   if (error) throw new Error(error.message);
   const row = Array.isArray(data) ? data[0] : data;
   return (row ?? null) as PublicLiveShare | null;

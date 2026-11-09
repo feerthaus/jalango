@@ -29,15 +29,15 @@ export function AppProviders({ children }: { children: ReactNode }) {
                     <CommunityPlacesProvider>
                       <RoutingProvider>
                         <ReportsProvider>
-                          <LiveShareProvider>
-                            <ConvoyProvider>
-                              <AlongProvider>
-                                <CamerasProvider>
-                                  <ItineraryProvider>{children}</ItineraryProvider>
-                                </CamerasProvider>
-                              </AlongProvider>
-                            </ConvoyProvider>
-                          </LiveShareProvider>
+                          <ItineraryProvider>
+                            <LiveShareProvider>
+                              <ConvoyProvider>
+                                <AlongProvider>
+                                  <CamerasProvider>{children}</CamerasProvider>
+                                </AlongProvider>
+                              </ConvoyProvider>
+                            </LiveShareProvider>
+                          </ItineraryProvider>
                         </ReportsProvider>
                       </RoutingProvider>
                     </CommunityPlacesProvider>
