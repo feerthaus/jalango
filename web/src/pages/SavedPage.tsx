@@ -9,15 +9,17 @@ import { PagePanel } from '@/components/ui/PagePanel';
 import { useSavedPlaces } from '@/contexts/SavedPlacesContext';
 import { useShowOnMap } from '@/hooks/useShowOnMap';
 import { formatRelativeTime } from '@/utils/format';
+import { useT } from '@/lib/i18n';
 
 export function SavedPage() {
+  const [tr] = useT();
   const { favourites, recents, removeFavourite, removeRecent, clearRecents } = useSavedPlaces();
   const showOnMap = useShowOnMap();
   const { trips } = useTrips();
   const [tab, setTab] = useState<'places' | 'trips'>('places');
 
   return (
-    <PagePanel title="Saved" subtitle="Places and trip history">
+    <PagePanel title={tr('Simpanan', 'Saved')} subtitle={tr('Tempat dan sejarah perjalanan', 'Places and trip history')}>
       <div role="tablist" className="mb-2 grid grid-cols-2 gap-1 rounded-2xl bg-ink-100 p-1 dark:bg-ink-900">
         {(['places', 'trips'] as const).map((t) => (
           <button
@@ -28,7 +30,7 @@ export function SavedPage() {
             onClick={() => setTab(t)}
             className={cn('rounded-xl py-2 text-sm font-semibold', tab === t ? 'bg-white shadow-sm dark:bg-ink-700' : 'text-ink-500')}
           >
-            {t === 'places' ? `Places (${favourites.length})` : `Trips (${trips.length})`}
+            {t === 'places' ? `${tr('Tempat', 'Places')} (${favourites.length})` : `${tr('Perjalanan', 'Trips')} (${trips.length})`}
           </button>
         ))}
       </div>
@@ -36,10 +38,10 @@ export function SavedPage() {
         <TripHistory />
       ) : (
       <>
-      <h2 className="px-1 pb-2 pt-2 text-xs font-semibold uppercase tracking-wider text-ink-400">Favourites</h2>
+      <h2 className="px-1 pb-2 pt-2 text-xs font-semibold uppercase tracking-wider text-ink-400">{tr('Kegemaran', 'Favourites')}</h2>
       <div className="rounded-2xl bg-white p-2 shadow-sm ring-1 ring-ink-200 dark:bg-ink-900 dark:ring-ink-800">
         {favourites.length === 0 ? (
-          <EmptyState icon={Star} title="No favourites yet">
+          <EmptyState icon={Star} title={tr('Belum ada kegemaran', 'No favourites yet')}>
             Search for a place and tap <strong>Save</strong> to keep it here — home, office, your usual R&amp;R.
           </EmptyState>
         ) : (
@@ -58,7 +60,7 @@ export function SavedPage() {
       </div>
 
       <div className="flex items-center justify-between px-1 pb-2 pt-6">
-        <h2 className="text-xs font-semibold uppercase tracking-wider text-ink-400">Recent destinations</h2>
+        <h2 className="text-xs font-semibold uppercase tracking-wider text-ink-400">{tr('Destinasi terkini', 'Recent destinations')}</h2>
         {recents.length > 0 && (
           <button type="button" onClick={clearRecents} className="flex items-center gap-1 text-xs font-medium text-ink-500 hover:text-red-500">
             <Trash2 className="size-3.5" /> Clear all
@@ -67,7 +69,7 @@ export function SavedPage() {
       </div>
       <div className="rounded-2xl bg-white p-2 shadow-sm ring-1 ring-ink-200 dark:bg-ink-900 dark:ring-ink-800">
         {recents.length === 0 ? (
-          <EmptyState icon={Clock} title="No recent destinations">Places you search for will show up here.</EmptyState>
+          <EmptyState icon={Clock} title={tr('Tiada destinasi terkini', 'No recent destinations')}>{tr('Tempat yang anda cari akan muncul di sini.', 'Places you search for will show up here.')}</EmptyState>
         ) : (
           <ul role="listbox" aria-label="Recent destinations">
             {recents.map((p) => (

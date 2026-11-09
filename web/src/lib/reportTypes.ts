@@ -26,3 +26,8 @@ export const REPORT_TYPES: ReportTypeMeta[] = [
   { type: 'police', label: 'Speed trap / police', labelMs: 'Speed trap polis', icon: Siren, tone: 'bg-blue-600 text-white' },
   { type: 'speed_camera', label: 'Speed camera (AES/AWAS)', labelMs: 'Kamera AWAS', icon: Cctv, tone: 'bg-slate-700 text-white' },
 ];
+
+/** Report type name in the app language. */
+export function typeLabel(meta: ReportTypeMeta, lang: 'ms' | 'en'): string {
+  return lang === 'en' ? meta.label : meta.labelMs;
+}

@@ -17,9 +17,11 @@ import type { Place } from '@/types';
 import { formatCoordinates, formatDistance, haversineMeters } from '@/utils/geo';
 import { placeIcon } from './placeIcon';
 import { googleMapsReviewsUrl } from '@/utils/googleMapsLink';
+import { useT } from '@/lib/i18n';
 
 /** Bottom card for the selected destination. */
 export function PlaceCard({ place, onClose }: { place: Place; onClose: () => void }) {
+  const [t] = useT();
   const { fix } = useLocation();
   const { isFavourite, toggleFavourite } = useSavedPlaces();
   const { planRoute } = useRouting();
@@ -90,7 +92,7 @@ export function PlaceCard({ place, onClose }: { place: Place; onClose: () => voi
           <p className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-ink-500 dark:text-ink-400">
             {distance !== null && (
               <span title="Straight-line distance from your location. Road distance comes with route calculation.">
-                <strong className="font-semibold text-ink-800 dark:text-ink-100">{formatDistance(distance)}</strong> away (straight line)
+                <strong className="font-semibold text-ink-800 dark:text-ink-100">{formatDistance(distance)}</strong> {t('dari sini (garis lurus)', 'away (straight line)')}
               </span>
             )}
             <span className="tabular-nums">{coords}</span>
@@ -107,16 +109,16 @@ export function PlaceCard({ place, onClose }: { place: Place; onClose: () => voi
       </div>
 
       <Button className="mt-4 w-full py-3 text-base" onClick={() => planRoute(place)}>
-        <CornerUpRight className="size-5" /> Directions
+        <CornerUpRight className="size-5" /> {t('Arah', 'Directions')}
       </Button>
       <div className="mt-2 grid grid-cols-3 gap-2">
         <Button variant="secondary" className={saved ? 'text-amber-600 dark:text-amber-400' : undefined} onClick={() => toggleFavourite(place)} aria-pressed={saved}>
           <Star className="size-4" fill={saved ? 'currentColor' : 'none'} />
-          {saved ? 'Saved' : 'Save'}
+          {saved ? t('Disimpan', 'Saved') : t('Simpan', 'Save')}
         </Button>
         <Button variant="secondary" onClick={share}>
           {copied ? <Check className="size-4" /> : canShare ? <Share2 className="size-4" /> : <Copy className="size-4" />}
-          {copied ? 'Copied' : 'Share'}
+          {copied ? t('Disalin', 'Copied') : t('Kongsi', 'Share')}
         </Button>
         {pick ? (
           <Button
@@ -130,12 +132,12 @@ export function PlaceCard({ place, onClose }: { place: Place; onClose: () => voi
           </Button>
         ) : (
           <Button variant="secondary" onClick={() => setRecommending(true)} disabled={!community.available}>
-            <Heart className="size-4" /> Recommend
+            <Heart className="size-4" /> {t('Syorkan', 'Recommend')}
           </Button>
         )}
       </div>
       <Button variant="secondary" className="mt-2 w-full" onClick={() => !inItinerary && itinerary.add(place)} disabled={inItinerary} aria-pressed={inItinerary}>
-        {inItinerary ? <Check className="size-4" /> : <ListPlus className="size-4" />} {inItinerary ? 'Dalam itinerari' : '+ Itinerari'}
+        {inItinerary ? <Check className="size-4" /> : <ListPlus className="size-4" />} {inItinerary ? t('Dalam itinerari', 'In itinerary') : t('+ Itinerari', '+ Itinerary')}
       </Button>
       {place.source !== 'demo' && (
         <a
@@ -144,7 +146,7 @@ export function PlaceCard({ place, onClose }: { place: Place; onClose: () => voi
           rel="noreferrer"
           className="mt-2 flex items-center justify-center gap-1.5 rounded-xl py-2 text-sm font-semibold text-ink-600 hover:bg-ink-100 dark:text-ink-300 dark:hover:bg-ink-800"
         >
-          <Star className="size-4 text-amber-500" fill="currentColor" /> Baca review di Google Maps
+          <Star className="size-4 text-amber-500" fill="currentColor" /> {t('Baca review di Google Maps', 'Read reviews on Google Maps')}
         </a>
       )}
       {convoy.isLeader && (

@@ -58,21 +58,21 @@ export function NavigationHud() {
           <span className="mx-auto mb-2 grid size-14 place-items-center rounded-full bg-jade-500 text-ink-950">
             <Flag className="size-7" />
           </span>
-          <h2 className="text-xl font-bold">You’ve arrived</h2>
+          <h2 className="text-xl font-bold">{lang === 'ms' ? 'Anda telah sampai' : 'You’ve arrived'}</h2>
           <p className="mt-1 text-sm text-ink-500 dark:text-ink-300">{destination.name}</p>
           {finishedTrip && (
             <div className="mt-4 border-t border-ink-100 pt-4 dark:border-ink-800">
-              <p className="mb-2 text-sm font-semibold">How was this trip?</p>
+              <p className="mb-2 text-sm font-semibold">{lang === 'ms' ? 'Bagaimana perjalanan ini?' : 'How was this trip?'}</p>
               <RateTrip trip={finishedTrip} compact />
             </div>
           )}
           {nextStop && (
             <Button className="mt-4 w-full py-3" onClick={itinerary.goNext}>
-              Seterusnya: {nextStop.place.name.slice(0, 26)}
+              {lang === 'ms' ? 'Seterusnya' : 'Next'}: {nextStop.place.name.slice(0, 26)}
             </Button>
           )}
           <Button variant={nextStop ? 'ghost' : finishedTrip?.rating ? 'primary' : 'secondary'} className={nextStop ? 'mt-2 w-full' : 'mt-4 w-full py-3'} onClick={endNavigation}>
-            {nextStop ? 'Berhenti di sini' : 'Done'}
+            {nextStop ? (lang === 'ms' ? 'Berhenti di sini' : 'Stop here') : lang === 'ms' ? 'Selesai' : 'Done'}
           </Button>
         </div>
       </div>
@@ -151,7 +151,7 @@ export function NavigationHud() {
           // centred so it never covers the speed badge (left) or the report button (right)
           <div className="flex justify-center">
             <IconButton label="Re-centre" onClick={() => setFollowing(true)} className="!w-auto gap-2 px-4 text-sm font-semibold">
-              <LocateFixed className="size-5" /> Re-centre
+              <LocateFixed className="size-5" /> {lang === 'ms' ? 'Ke tengah' : 'Re-centre'}
             </IconButton>
           </div>
         )}
@@ -175,7 +175,7 @@ export function NavigationHud() {
             <ListOrdered className="size-5" />
           </IconButton>
           <Button variant="danger" className="h-11 shrink-0 px-3" onClick={endNavigation} aria-label="End navigation">
-            <X className="size-5 min-[420px]:size-4" /> <span className="hidden min-[420px]:inline">End</span>
+            <X className="size-5 min-[420px]:size-4" /> <span className="hidden min-[420px]:inline">{lang === 'ms' ? 'Tamat' : 'End'}</span>
           </Button>
         </div>
       </div>

@@ -10,8 +10,10 @@ import { reportMeta } from '@/lib/reportTypes';
 import type { ConfirmationType, TrafficReport } from '@/types';
 import { formatRelativeTime } from '@/utils/format';
 import { formatDistance, haversineMeters } from '@/utils/geo';
+import { useT } from '@/lib/i18n';
 
 export function ReportDetailCard({ report, onClose }: { report: TrafficReport; onClose: () => void }) {
+  const [t, lang] = useT();
   const { user } = useAuth();
   const { fix } = useLocation();
   const { vote, remove, myVotes } = useReports();
@@ -53,21 +55,21 @@ export function ReportDetailCard({ report, onClose }: { report: TrafficReport; o
         </span>
         <div className="min-w-0 flex-1">
           <h2 className="text-lg font-bold leading-tight">
-            {meta.label} <span className="text-sm font-normal text-ink-400">· {meta.labelMs}</span>
+            {lang === 'en' ? meta.label : meta.labelMs} <span className="text-sm font-normal text-ink-400">· {lang === 'en' ? meta.labelMs : meta.label}</span>
           </h2>
           <p className="mt-0.5 text-xs text-ink-500 dark:text-ink-400">
-            Reported {formatRelativeTime(report.created_at)}
-            {distance !== null && ` · ${formatDistance(distance)} away`}
+            {t('Dilaporkan', 'Reported')} {formatRelativeTime(report.created_at)}
+            {distance !== null && ` · ${formatDistance(distance)} ${t('dari sini', 'away')}`}
           </p>
           {report.description && <p className="mt-2 text-sm">{report.description}</p>}
           <p className="mt-2 flex gap-3 text-xs text-ink-500 dark:text-ink-400">
             <span>
               <ThumbsUp className="mr-1 inline size-3.5" />
-              {report.confirm_count} still there
+              {report.confirm_count} {t('masih ada', 'still there')}
             </span>
             <span>
               <CheckCheck className="mr-1 inline size-3.5" />
-              {report.resolve_count} cleared
+              {report.resolve_count} {t('dah tiada', 'cleared')}
             </span>
           </p>
         </div>
@@ -77,7 +79,7 @@ export function ReportDetailCard({ report, onClose }: { report: TrafficReport; o
       </div>
 
       <p className="mt-3 flex items-center justify-between gap-2 text-[11px] text-ink-400">
-        <span>Community report from JalanGo users — not verified by authorities.</span>
+        <span>{t('Laporan komuniti pengguna JalanGo — tidak disahkan oleh pihak berkuasa.', 'Community report from JalanGo users — not verified by authorities.')}</span>
         <FlagButton type="report" id={report.id} ownerId={report.user_id} />
       </p>
 
@@ -90,23 +92,23 @@ export function ReportDetailCard({ report, onClose }: { report: TrafficReport; o
       {mine ? (
         <div className="mt-3 grid grid-cols-2 gap-2">
           <Button variant="secondary" onClick={() => act('resolved')} disabled={busy !== null || myVote === 'resolved'}>
-            {busy === 'resolved' ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" />} It’s cleared
+            {busy === 'resolved' ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" />} {t('Dah selesai', 'It’s cleared')}
           </Button>
           <Button variant="danger" onClick={() => act('delete')} disabled={busy !== null}>
-            {busy === 'delete' ? <Loader2 className="size-4 animate-spin" /> : <Trash2 className="size-4" />} Delete
+            {busy === 'delete' ? <Loader2 className="size-4 animate-spin" /> : <Trash2 className="size-4" />} {t('Padam', 'Delete')}
           </Button>
         </div>
       ) : myVote ? (
         <p className="mt-3 rounded-xl bg-jade-500/10 px-3 py-2 text-sm font-medium text-jade-700 dark:text-jade-300">
-          <Check className="mr-1 inline size-4" /> Thanks — you said it’s {myVote === 'confirm' ? 'still there' : 'cleared'}.
+          <Check className="mr-1 inline size-4" /> {myVote === 'confirm' ? t('Terima kasih — anda kata masih ada.', 'Thanks — you said it’s still there.') : t('Terima kasih — anda kata dah tiada.', 'Thanks — you said it’s cleared.')}
         </p>
       ) : (
         <div className="mt-3 grid grid-cols-2 gap-2">
           <Button onClick={() => act('confirm')} disabled={busy !== null}>
-            {busy === 'confirm' ? <Loader2 className="size-4 animate-spin" /> : <ThumbsUp className="size-4" />} Still there
+            {busy === 'confirm' ? <Loader2 className="size-4 animate-spin" /> : <ThumbsUp className="size-4" />} {t('Masih ada', 'Still there')}
           </Button>
           <Button variant="secondary" onClick={() => act('resolved')} disabled={busy !== null}>
-            {busy === 'resolved' ? <Loader2 className="size-4 animate-spin" /> : <CheckCheck className="size-4" />} Not there
+            {busy === 'resolved' ? <Loader2 className="size-4 animate-spin" /> : <CheckCheck className="size-4" />} {t('Dah tiada', 'Not there')}
           </Button>
         </div>
       )}

@@ -24,6 +24,7 @@ import { hasVoiceFor, primeSpeech, speak, useVoiceAlerts, useVoiceLang } from '@
 import { Volume2 } from 'lucide-react';
 import { features } from '@/lib/config';
 import { cn } from '@/lib/cn';
+import { useT } from '@/lib/i18n';
 
 const THEMES: { id: ThemePreference; label: string; icon: typeof Sun }[] = [
   { id: 'system', label: 'Auto', icon: Laptop },
@@ -44,6 +45,7 @@ const GPS_LABEL: Record<string, string> = {
 };
 
 export function ProfilePage() {
+  const [t] = useT();
   const { preference, setPreference } = useTheme();
   const { server, searchMode, tilesMode, refresh } = useServiceStatus();
   const { status: gpsStatus, fix } = useLocation();
@@ -51,7 +53,7 @@ export function ProfilePage() {
   const [probeConsent, setProbeConsent] = useProbeConsent();
 
   return (
-    <PagePanel title="Profile">
+    <PagePanel title={t('Profil', 'Profile')}>
       <AccountCard favourites={favourites.length} recents={recents.length} />
 
       <InstallCard />
@@ -60,7 +62,7 @@ export function ProfilePage() {
       <VoiceSettings />
       <OncomingSettings />
 
-      <Heading>Map appearance</Heading>
+      <Heading>{t('Paparan peta', 'Map appearance')}</Heading>
       <div role="radiogroup" aria-label="Theme" className="grid grid-cols-3 gap-1 rounded-2xl bg-ink-100 p-1 dark:bg-ink-900">
         {THEMES.map(({ id, label, icon: Icon }) => (
           <button
@@ -80,7 +82,7 @@ export function ProfilePage() {
       </div>
 
       <div className="flex items-center justify-between px-1 pb-2 pt-6">
-        <h2 className="text-xs font-semibold uppercase tracking-wider text-ink-400">Data sources</h2>
+        <h2 className="text-xs font-semibold uppercase tracking-wider text-ink-400">{t('Sumber data', 'Data sources')}</h2>
         <button type="button" onClick={refresh} className="flex items-center gap-1 text-xs font-medium text-ink-500 hover:text-jade-600">
           <RefreshCw className="size-3.5" /> Re-check
         </button>
@@ -106,10 +108,10 @@ export function ProfilePage() {
         />
       </ul>
 
-      <Heading>Privacy</Heading>
+      <Heading>{t('Privasi', 'Privacy')}</Heading>
       <div className="mb-3 flex items-start gap-3 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-ink-200 dark:bg-ink-900 dark:ring-ink-800">
         <div className="min-w-0 flex-1">
-          <p id="probe-label" className="text-sm font-semibold">Share anonymous traffic data</p>
+          <p id="probe-label" className="text-sm font-semibold">{t('Kongsi data trafik tanpa nama', 'Share anonymous traffic data')}</p>
           <p className="mt-0.5 text-xs text-ink-500 dark:text-ink-400">
             While navigating, send your speed and position without any account link, to build JalanGo’s own traffic layer. Nothing near
             your start or destination is sent. Raw data is deleted after 30 days.
@@ -168,6 +170,7 @@ function StatusRow({ label, value, ok }: { label: string; value: string; ok: boo
 }
 
 function AccountCard({ favourites, recents }: { favourites: number; recents: number }) {
+  const [t] = useT();
   const { available, user, loading, signOut } = useAuth();
   const card = 'rounded-2xl bg-white p-4 shadow-sm ring-1 ring-ink-200 dark:bg-ink-900 dark:ring-ink-800';
   const name = (user?.user_metadata?.name as string | undefined) || user?.email?.split('@')[0];
@@ -191,7 +194,7 @@ function AccountCard({ favourites, recents }: { favourites: number; recents: num
       {user && <AccountExtras />}
       {!user && !loading && (
         <div className="mt-4 border-t border-ink-100 pt-4 dark:border-ink-800">
-          {available && <p className="mb-3 text-sm text-ink-500 dark:text-ink-400">Sign in to report incidents and confirm other drivers’ reports.</p>}
+          {available && <p className="mb-3 text-sm text-ink-500 dark:text-ink-400">{t('Log masuk untuk melapor insiden dan mengesahkan laporan pemandu lain.', 'Sign in to report incidents and confirm other drivers’ reports.')}</p>}
           <AuthForm />
         </div>
       )}
@@ -225,6 +228,7 @@ function InstallCard() {
 }
 
 function VoiceSettings() {
+  const [t] = useT();
   const [on, setOn] = useVoiceAlerts();
   const [lang, setLang] = useVoiceLang();
   const test = () => {
@@ -233,12 +237,12 @@ function VoiceSettings() {
   };
   return (
     <>
-      <Heading>Voice guidance</Heading>
+      <Heading>{t('Bahasa & suara', 'Language & voice')}</Heading>
       <div className="space-y-3 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-ink-200 dark:bg-ink-900 dark:ring-ink-800">
         <div className="flex items-center gap-3">
           <div className="min-w-0 flex-1">
-            <p id="voice-label" className="text-sm font-semibold">Spoken directions &amp; alerts</p>
-            <p className="text-xs text-ink-500 dark:text-ink-400">“Dalam 300 meter, belok kanan…” and hazard warnings while navigating.</p>
+            <p id="voice-label" className="text-sm font-semibold">{t('Arahan & amaran bersuara', 'Spoken directions & alerts')}</p>
+            <p className="text-xs text-ink-500 dark:text-ink-400">{t('“Dalam 300 meter, belok kanan…” dan amaran bahaya semasa navigasi. Pilihan bahasa di bawah juga menukar bahasa app.', '“In 300 metres, turn right…” and hazard warnings while navigating. The language below also sets the app language.')}</p>
           </div>
           <button
             type="button"
@@ -280,6 +284,7 @@ function VoiceSettings() {
 }
 
 function FeedbackCard() {
+  const [t] = useT();
   const [open, setOpen] = useState(false);
   return (
     <>
@@ -290,8 +295,8 @@ function FeedbackCard() {
       >
         <MessageSquareHeart className="size-6 shrink-0 text-jade-500" />
         <span className="min-w-0 flex-1">
-          <span className="block font-semibold">Send feedback</span>
-          <span className="block text-xs text-ink-500 dark:text-ink-400">Report a problem, wrong map data or share an idea</span>
+          <span className="block font-semibold">{t('Hantar maklum balas', 'Send feedback')}</span>
+          <span className="block text-xs text-ink-500 dark:text-ink-400">{t('Lapor masalah, data peta salah atau kongsi idea', 'Report a problem, wrong map data or share an idea')}</span>
         </span>
       </button>
       {open && <FeedbackSheet onClose={() => setOpen(false)} />}

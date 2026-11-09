@@ -7,9 +7,11 @@ import { reportMeta } from '@/lib/reportTypes';
 import type { ConfirmationType } from '@/types';
 import { formatRelativeTime } from '@/utils/format';
 import { formatDistance } from '@/utils/geo';
+import { useT } from '@/lib/i18n';
 
 /** Hazard ahead + "still there?" prompt, shown under the maneuver banner. */
 export function RouteAlerts({ alerts }: { alerts: RouteAlertsState }) {
+  const [t] = useT();
   const { next, aheadCount, ask, dismissAsk } = alerts;
   if (ask) return <AskCard alerts={alerts} key={ask.id} onDone={dismissAsk} />;
   if (!next) return null;
@@ -30,11 +32,11 @@ export function RouteAlerts({ alerts }: { alerts: RouteAlertsState }) {
       </span>
       <div className="min-w-0 flex-1">
         <p className="font-bold leading-tight">
-          {meta.label} ahead · {formatDistance(next.distance)}
+          {t(`${meta.labelMs} di depan`, `${meta.label} ahead`)} · {formatDistance(next.distance)}
         </p>
         <p className={cn('truncate text-xs', close ? 'text-ink-800' : 'text-ink-500 dark:text-ink-300')}>
-          {next.report.description || `Reported ${formatRelativeTime(next.report.created_at)}`}
-          {next.report.confirm_count > 0 && ` · ${next.report.confirm_count} confirmed`}
+          {next.report.description || `${t('Dilaporkan', 'Reported')} ${formatRelativeTime(next.report.created_at)}`}
+          {next.report.confirm_count > 0 && ` · ${next.report.confirm_count} ${t('pengesahan', 'confirmed')}`}
         </p>
       </div>
       {aheadCount > 1 && <span className="shrink-0 rounded-full bg-ink-950/10 px-2 py-0.5 text-xs font-semibold">+{aheadCount - 1}</span>}
@@ -43,6 +45,7 @@ export function RouteAlerts({ alerts }: { alerts: RouteAlertsState }) {
 }
 
 function AskCard({ alerts, onDone }: { alerts: RouteAlertsState; onDone: () => void }) {
+  const [t] = useT();
   const { vote } = useReports();
   const [busy, setBusy] = useState<ConfirmationType | null>(null);
   const [thanks, setThanks] = useState(false);
@@ -67,7 +70,7 @@ function AskCard({ alerts, onDone }: { alerts: RouteAlertsState; onDone: () => v
         <span className={`grid size-10 shrink-0 place-items-center rounded-xl ${meta.tone}`}>
           <Icon className="size-5" />
         </span>
-        <p className="flex-1 font-bold">{thanks ? 'Thanks for helping other drivers!' : `${meta.label} — still there?`}</p>
+        <p className="flex-1 font-bold">{thanks ? t('Terima kasih kerana membantu pemandu lain!', 'Thanks for helping other drivers!') : t(`${meta.labelMs} — masih ada?`, `${meta.label} — still there?`)}</p>
         <button type="button" onClick={onDone} aria-label="Dismiss" className="grid size-8 place-items-center rounded-full text-ink-400 hover:bg-ink-100 dark:hover:bg-ink-700">
           <X className="size-4" />
         </button>
@@ -80,7 +83,7 @@ function AskCard({ alerts, onDone }: { alerts: RouteAlertsState; onDone: () => v
             disabled={busy !== null}
             className="flex h-12 items-center justify-center gap-2 rounded-xl bg-jade-500 font-semibold text-ink-950 active:scale-[0.98]"
           >
-            {busy === 'confirm' ? <Loader2 className="size-5 animate-spin" /> : <ThumbsUp className="size-5" />} Yes
+            {busy === 'confirm' ? <Loader2 className="size-5 animate-spin" /> : <ThumbsUp className="size-5" />} {t('Ya', 'Yes')}
           </button>
           <button
             type="button"
@@ -88,7 +91,7 @@ function AskCard({ alerts, onDone }: { alerts: RouteAlertsState; onDone: () => v
             disabled={busy !== null}
             className="flex h-12 items-center justify-center gap-2 rounded-xl bg-ink-100 font-semibold active:scale-[0.98] dark:bg-ink-700"
           >
-            {busy === 'resolved' ? <Loader2 className="size-5 animate-spin" /> : <CheckCheck className="size-5" />} Gone
+            {busy === 'resolved' ? <Loader2 className="size-5 animate-spin" /> : <CheckCheck className="size-5" />} {t('Dah tiada', 'Gone')}
           </button>
         </div>
       )}

@@ -12,8 +12,10 @@ import { REPORT_TYPES, reportMeta } from '@/lib/reportTypes';
 import type { ReportType, TrafficReport } from '@/types';
 import { formatRelativeTime } from '@/utils/format';
 import { formatDistance, haversineMeters } from '@/utils/geo';
+import { useT } from '@/lib/i18n';
 
 export function ReportsPage() {
+  const [t] = useT();
   const { available, reports, loading, error, live, refresh, selectReport } = useReports();
   const { fix } = useLocation();
   const navigate = useNavigate();
@@ -34,15 +36,15 @@ export function ReportsPage() {
 
   return (
     <PagePanel
-      title="Reports"
+      title={t('Laporan', 'Reports')}
       subtitle={
         available ? (
           <span className="inline-flex items-center gap-1.5">
             <Radio className={cn('size-3.5', live ? 'text-jade-500' : 'text-ink-300')} />
-            {live ? 'Live updates on' : 'Live updates connecting…'}
+            {live ? t('Kemas kini langsung aktif', 'Live updates on') : t('Menyambung kemas kini langsung…', 'Live updates connecting…')}
           </span>
         ) : (
-          'Community road reports near you'
+          t('Laporan jalan komuniti berhampiran anda', 'Community road reports near you')
         )
       }
       action={
@@ -77,7 +79,7 @@ export function ReportsPage() {
 
           <div className="rounded-2xl bg-white p-2 shadow-sm ring-1 ring-ink-200 dark:bg-ink-900 dark:ring-ink-800">
             {error ? (
-              <EmptyState icon={AlertTriangle} title="Couldn’t load reports">
+              <EmptyState icon={AlertTriangle} title={t('Tak dapat muat laporan', 'Couldn’t load reports')}>
                 <p>{error}</p>
                 <Button variant="secondary" className="mt-3" onClick={refresh}>
                   <RefreshCw className="size-4" /> Try again
@@ -90,7 +92,7 @@ export function ReportsPage() {
                 ))}
               </ul>
             ) : list.length === 0 ? (
-              <EmptyState icon={ShieldCheck} title="No active reports nearby">
+              <EmptyState icon={ShieldCheck} title={t('Tiada laporan aktif berhampiran', 'No active reports nearby')}>
                 Roads look clear from the community’s side. Seen something? Tap <strong>Report</strong>.
               </EmptyState>
             ) : (

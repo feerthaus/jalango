@@ -1,5 +1,6 @@
 import { ArrowLeft, Search, X } from 'lucide-react';
 import { forwardRef, type KeyboardEvent } from 'react';
+import { useT } from '@/lib/i18n';
 import { LogoMark } from '@/components/brand/LogoMark';
 import { Spinner } from '@/components/ui/Spinner';
 import { cn } from '@/lib/cn';
@@ -19,6 +20,7 @@ export const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(function S
   { value, onChange, open, onOpen, onClose, onKeyDown, loading, activeDescendant },
   ref,
 ) {
+  const [t] = useT();
   return (
     <div
       className={cn(
@@ -46,7 +48,7 @@ export const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(function S
         onChange={(e) => onChange(e.target.value)}
         onFocus={onOpen}
         onKeyDown={onKeyDown}
-        placeholder="Where to? Place, address, postcode…"
+        placeholder={t('Ke mana? Tempat, jalan, poskod…', 'Where to? Place, address, postcode…')}
         aria-label="Search destination"
         role="combobox"
         aria-expanded={open}

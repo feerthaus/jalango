@@ -10,9 +10,11 @@ import { REPORT_TYPES, reportMeta } from '@/lib/reportTypes';
 import { DESCRIPTION_MAX } from '@/services/reportsService';
 import type { ReportType } from '@/types';
 import { isInMalaysia } from '@/utils/geo';
+import { useT } from '@/lib/i18n';
 
 /** Report flow: pick type → optional note → submit at the current GPS position. */
 export function ReportSheet({ onClose }: { onClose: () => void }) {
+  const [t, lang] = useT();
   const { available, submit } = useReports();
   const { user, loading: authLoading } = useAuth();
   const { fix, status: gpsStatus, request } = useLocation();
@@ -57,7 +59,7 @@ export function ReportSheet({ onClose }: { onClose: () => void }) {
     body = (
       <p className="flex items-start gap-2 rounded-xl bg-ink-100 p-3 text-sm text-ink-600 dark:bg-ink-800 dark:text-ink-300">
         <Info className="mt-0.5 size-4 shrink-0" />
-        Community reporting isn’t connected yet (the Supabase database is not configured). Nothing can be submitted.
+        {t('Laporan komuniti belum disambungkan. Tiada laporan boleh dihantar buat masa ini.', 'Community reporting isn’t connected yet (the Supabase database is not configured). Nothing can be submitted.')}
       </p>
     );
   } else if (authLoading) {
@@ -65,7 +67,7 @@ export function ReportSheet({ onClose }: { onClose: () => void }) {
   } else if (!user) {
     body = (
       <div className="space-y-3">
-        <p className="text-sm text-ink-600 dark:text-ink-300">Sign in so reports can be confirmed and spam kept out.</p>
+        <p className="text-sm text-ink-600 dark:text-ink-300">{t('Log masuk supaya laporan boleh disahkan dan spam dielakkan.', 'Sign in so reports can be confirmed and spam kept out.')}</p>
         <AuthForm compact />
       </div>
     );
@@ -73,20 +75,20 @@ export function ReportSheet({ onClose }: { onClose: () => void }) {
     body = (
       <div className="flex flex-col items-center py-4 text-center">
         <CheckCircle2 className="size-12 text-jade-500" />
-        <p className="mt-2 font-semibold">Thanks! {meta.label} reported.</p>
-        <p className="text-sm text-ink-500">Other drivers nearby can see it now.</p>
+        <p className="mt-2 font-semibold">{t(`Terima kasih! ${meta.labelMs} dilaporkan.`, `Thanks! ${meta.label} reported.`)}</p>
+        <p className="text-sm text-ink-500">{t('Pemandu lain berhampiran kini boleh melihatnya.', 'Other drivers nearby can see it now.')}</p>
       </div>
     );
   } else if (!type) {
     body = (
       <div className="grid grid-cols-3 gap-3 sm:grid-cols-4">
-        {REPORT_TYPES.map(({ type: t, label, labelMs, icon: Icon, tone }) => (
-          <button key={t} type="button" onClick={() => setType(t)} className="flex flex-col items-center gap-1.5 rounded-2xl p-1 text-center transition hover:bg-ink-100 active:scale-95 dark:hover:bg-ink-800">
+        {REPORT_TYPES.map(({ type: rt, label, labelMs, icon: Icon, tone }) => (
+          <button key={rt} type="button" onClick={() => setType(rt)} className="flex flex-col items-center gap-1.5 rounded-2xl p-1 text-center transition hover:bg-ink-100 active:scale-95 dark:hover:bg-ink-800">
             <span className={`grid size-14 place-items-center rounded-2xl ${tone}`}>
               <Icon className="size-7" />
             </span>
-            <span className="text-xs font-semibold leading-tight">{label}</span>
-            <span className="-mt-1 text-[10px] text-ink-400">{labelMs}</span>
+            <span className="text-xs font-semibold leading-tight">{lang === 'en' ? label : labelMs}</span>
+            <span className="-mt-1 text-[10px] text-ink-400">{lang === 'en' ? labelMs : label}</span>
           </button>
         ))}
       </div>
@@ -99,31 +101,31 @@ export function ReportSheet({ onClose }: { onClose: () => void }) {
           <div className="min-w-0 flex-1 text-sm">
             {fix ? (
               <>
-                <p className="font-medium">At your current location</p>
-                <p className="text-xs text-ink-500">±{Math.round(fix.accuracy)} m accuracy</p>
+                <p className="font-medium">{t('Di lokasi semasa anda', 'At your current location')}</p>
+                <p className="text-xs text-ink-500">±{Math.round(fix.accuracy)} m {t('ketepatan', 'accuracy')}</p>
               </>
             ) : (
               <>
-                <p className="font-medium">Waiting for GPS…</p>
-                <p className="text-xs text-ink-500">{gpsStatus === 'denied' ? 'Location is blocked in your browser settings.' : 'Reports are placed at your position.'}</p>
+                <p className="font-medium">{t('Menunggu GPS…', 'Waiting for GPS…')}</p>
+                <p className="text-xs text-ink-500">{gpsStatus === 'denied' ? t('Lokasi disekat dalam tetapan pelayar.', 'Location is blocked in your browser settings.') : t('Laporan diletakkan di kedudukan anda.', 'Reports are placed at your position.')}</p>
               </>
             )}
           </div>
           {!fix && (
             <Button variant="secondary" className="px-3 py-1.5 text-xs" onClick={request}>
-              Enable
+              {t('Hidupkan', 'Enable')}
             </Button>
           )}
         </div>
-        {poorFix && <p className="text-xs text-amber-600">GPS accuracy is low — move to an open area if you can.</p>}
-        {outside && <p className="text-xs text-red-600">Reports can only be made inside Malaysia.</p>}
+        {poorFix && <p className="text-xs text-amber-600">{t('Ketepatan GPS rendah — ke kawasan terbuka jika boleh.', 'GPS accuracy is low — move to an open area if you can.')}</p>}
+        {outside && <p className="text-xs text-red-600">{t('Laporan hanya boleh dibuat di Malaysia.', 'Reports can only be made inside Malaysia.')}</p>}
         <label className="block">
-          <span className="text-sm font-medium">Details (optional)</span>
+          <span className="text-sm font-medium">{t('Butiran (pilihan)', 'Details (optional)')}</span>
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value.slice(0, DESCRIPTION_MAX))}
             rows={3}
-            placeholder={meta?.type === 'flood' ? 'e.g. Water knee-deep, left lane blocked' : 'e.g. Left lane blocked'}
+            placeholder={meta?.type === 'flood' ? t('cth. Air paras lutut, lorong kiri tertutup', 'e.g. Water knee-deep, left lane blocked') : t('cth. Lorong kiri tertutup', 'e.g. Left lane blocked')}
             className="mt-1 w-full resize-none rounded-xl bg-ink-100 px-3 py-2 text-base outline-none ring-jade-500 focus:ring-2 dark:bg-ink-800"
           />
           <span className="block text-right text-[11px] text-ink-400">
@@ -136,9 +138,9 @@ export function ReportSheet({ onClose }: { onClose: () => void }) {
           </p>
         )}
         <Button className="w-full py-3 text-base" onClick={send} disabled={busy || !fix || Boolean(outside)}>
-          {busy && <Loader2 className="size-4 animate-spin" />} Report {meta?.label.toLowerCase()}
+          {busy && <Loader2 className="size-4 animate-spin" />} {t('Lapor', 'Report')} {(lang === 'en' ? meta?.label : meta?.labelMs)?.toLowerCase()}
         </Button>
-        <p className="text-center text-[11px] text-ink-400">Only report what you can see. False reports may be removed.</p>
+        <p className="text-center text-[11px] text-ink-400">{t('Laporkan hanya apa yang anda lihat. Laporan palsu boleh dibuang.', 'Only report what you can see. False reports may be removed.')}</p>
       </div>
     );
   }
@@ -160,7 +162,7 @@ export function ReportSheet({ onClose }: { onClose: () => void }) {
             </button>
           )}
           <h2 id="report-title" className="flex-1 text-xl font-bold">
-            {meta && !done ? meta.label : 'Report on the road'}
+            {meta && !done ? (lang === 'en' ? meta.label : meta.labelMs) : t('Lapor di jalan', 'Report on the road')}
           </h2>
           <button type="button" onClick={onClose} aria-label="Close" className="grid size-9 place-items-center rounded-full hover:bg-ink-100 dark:hover:bg-ink-800">
             <X className="size-5" />

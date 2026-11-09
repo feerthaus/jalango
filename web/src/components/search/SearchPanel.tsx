@@ -6,6 +6,7 @@ import { DEMO_PLACES } from '@/data/demoPlaces';
 import { useSavedPlaces } from '@/contexts/SavedPlacesContext';
 import type { PlaceSearchState } from '@/hooks/usePlaceSearch';
 import type { Place } from '@/types';
+import { useT } from '@/lib/i18n';
 
 const QUICK_CITIES = ['demo:kl', 'demo:johor-bahru', 'demo:george-town', 'demo:ipoh', 'demo:melaka', 'demo:kota-kinabalu', 'demo:kuching']
   .map((id) => DEMO_PLACES.find((p) => p.id === id))
@@ -23,6 +24,7 @@ export function optionId(index: number) {
 }
 
 export function SearchPanel({ query, search, activeIndex, onSelect }: SearchPanelProps) {
+  const [t] = useT();
   const { recents, favourites, removeRecent, clearRecents } = useSavedPlaces();
   const typing = query.trim().length >= 2;
 
@@ -35,7 +37,7 @@ export function SearchPanel({ query, search, activeIndex, onSelect }: SearchPane
         <Results search={search} activeIndex={activeIndex} onSelect={onSelect} pending={search.query !== query.trim()} />
       ) : (
         <>
-          <Section title="Cities">
+          <Section title={t('Bandar', 'Cities')}>
             <div className="flex flex-wrap gap-2 px-2 pb-2">
               {QUICK_CITIES.map((c) => (
                 <button
@@ -51,7 +53,7 @@ export function SearchPanel({ query, search, activeIndex, onSelect }: SearchPane
           </Section>
 
           {favourites.length > 0 && (
-            <Section title="Favourites">
+            <Section title={t('Kegemaran', 'Favourites')}>
               <ul role="listbox" aria-label="Favourites">
                 {favourites.slice(0, 5).map((p) => (
                   <PlaceRow key={p.id} place={p} onSelect={onSelect} leadingIcon={<Star className="size-5 text-amber-500" fill="currentColor" />} />
@@ -61,11 +63,11 @@ export function SearchPanel({ query, search, activeIndex, onSelect }: SearchPane
           )}
 
           <Section
-            title="Recent"
+            title={t('Terkini', 'Recent')}
             action={
               recents.length > 0 && (
                 <button type="button" onClick={clearRecents} className="flex items-center gap-1 text-xs font-medium text-ink-500 hover:text-red-500">
-                  <Trash2 className="size-3.5" /> Clear
+                  <Trash2 className="size-3.5" /> {t('Padam', 'Clear')}
                 </button>
               )
             }
@@ -102,6 +104,7 @@ export function SearchPanel({ query, search, activeIndex, onSelect }: SearchPane
 }
 
 function Results({ search, activeIndex, onSelect, pending }: { search: PlaceSearchState; activeIndex: number; onSelect: (p: Place) => void; pending: boolean }) {
+  const [t] = useT();
   if (search.error) {
     return (
       <div className="flex items-start gap-3 p-3 text-sm">
@@ -147,7 +150,7 @@ function Results({ search, activeIndex, onSelect, pending }: { search: PlaceSear
       {search.mode === 'demo' && (
         <div className="mx-1 mb-1 flex items-start gap-2 rounded-xl bg-amber-400/10 px-3 py-2 text-xs text-amber-800 dark:text-amber-200">
           <DemoBadge label="Demo" className="shrink-0" />
-          <span>{search.notice ?? 'Live search not configured — results come from a small offline sample of Malaysian places.'}</span>
+          <span>{search.notice ?? t('Carian langsung tidak tersedia — hasil daripada sampel kecil tempat di Malaysia.', 'Live search not configured — results come from a small offline sample of Malaysian places.')}</span>
         </div>
       )}
       <ul role="listbox" aria-label="Search results">

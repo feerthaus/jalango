@@ -29,8 +29,10 @@ import { IconButton } from '@/components/ui/IconButton';
 import { useMapContext } from '@/contexts/MapContext';
 import { useReports } from '@/contexts/ReportsContext';
 import { useIsNavigating, useRouting } from '@/contexts/RoutingContext';
+import { useT } from '@/lib/i18n';
 
 export function MapPage() {
+  const [t] = useT();
   const { selectedPlace, clearSelection, tileError } = useMapContext();
   const { status } = useRouting();
   const { selectedReport, selectReport } = useReports();
@@ -107,7 +109,7 @@ export function MapPage() {
             <DemoModeBanner />
             {tileError && (
               <div role="status" className="pointer-events-auto inline-flex max-w-full items-center gap-2 rounded-full bg-ink-900/90 px-3 py-1.5 text-xs text-white shadow-float">
-                <WifiOff className="size-3.5 shrink-0" /> Some map tiles failed to load — check your connection
+                <WifiOff className="size-3.5 shrink-0" /> {t('Sebahagian peta gagal dimuat — semak sambungan anda', 'Some map tiles failed to load — check your connection')}
               </div>
             )}
             <LocationStatusBanner />

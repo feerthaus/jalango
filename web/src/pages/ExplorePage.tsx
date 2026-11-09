@@ -18,18 +18,20 @@ import { cn } from '@/lib/cn';
 import { searchNearbyCategory } from '@/services/geocodingService';
 import type { Coordinates, ExploreCategory, Place } from '@/types';
 import { FuelPriceCard } from '@/components/fuel/FuelPriceCard';
+import { useT } from '@/lib/i18n';
 
-const CATEGORIES: { id: ExploreCategory; label: string; icon: LucideIcon }[] = [
-  { id: 'petrol', label: 'Petrol', icon: Fuel },
-  { id: 'rnr', label: 'R&R', icon: Coffee },
-  { id: 'ev', label: 'EV charging', icon: BatteryCharging },
-  { id: 'parking', label: 'Parking', icon: ParkingSquare },
-  { id: 'hospital', label: 'Hospital', icon: Hospital },
+const CATEGORIES: { id: ExploreCategory; label: [ms: string, en: string]; icon: LucideIcon }[] = [
+  { id: 'petrol', label: ['Minyak', 'Petrol'], icon: Fuel },
+  { id: 'rnr', label: ['R&R', 'R&R'], icon: Coffee },
+  { id: 'ev', label: ['Cas EV', 'EV charging'], icon: BatteryCharging },
+  { id: 'parking', label: ['Parkir', 'Parking'], icon: ParkingSquare },
+  { id: 'hospital', label: ['Hospital', 'Hospital'], icon: Hospital },
 ];
 
 type NearbyState = { status: 'idle' | 'loading' | 'done' | 'error'; results: Place[]; error?: string };
 
 export function ExplorePage() {
+  const [t] = useT();
   const { searchMode } = useServiceStatus();
   const { fix } = useLocation();
   const { map } = useMapContext();
@@ -39,9 +41,9 @@ export function ExplorePage() {
   const [nonce, setNonce] = useState(0);
 
   const origin: { coords: Coordinates; label: string } | null = fix
-    ? { coords: fix.coordinates, label: 'your location' }
+    ? { coords: fix.coordinates, label: t('lokasi anda', 'your location') }
     : map
-      ? { coords: { lng: map.getCenter().lng, lat: map.getCenter().lat }, label: 'the map centre' }
+      ? { coords: { lng: map.getCenter().lng, lat: map.getCenter().lat }, label: t('tengah peta', 'the map centre') }
       : null;
   const originKey = origin ? `${origin.coords.lat.toFixed(2)},${origin.coords.lng.toFixed(2)}` : null;
 
@@ -60,8 +62,8 @@ export function ExplorePage() {
   }, [category, searchMode, originKey, nonce]);
 
   return (
-    <PagePanel title="Explore" subtitle="Malaysia-first places along your way">
-      <h2 className="px-1 pb-2 pt-2 text-xs font-semibold uppercase tracking-wider text-ink-400">Nearby</h2>
+    <PagePanel title={t('Teroka', 'Explore')} subtitle={t('Tempat di Malaysia sepanjang perjalanan anda', 'Malaysia-first places along your way')}>
+      <h2 className="px-1 pb-2 pt-2 text-xs font-semibold uppercase tracking-wider text-ink-400">{t('Berhampiran', 'Nearby')}</h2>
       <div className="flex gap-2 overflow-x-auto pb-2" role="tablist" aria-label="Nearby categories">
         {CATEGORIES.map(({ id, label, icon: Icon }) => (
           <button
@@ -76,7 +78,7 @@ export function ExplorePage() {
             )}
           >
             <Icon className="size-4" />
-            {label}
+            {t(label[0], label[1])}
           </button>
         ))}
       </div>
@@ -99,7 +101,7 @@ export function ExplorePage() {
 
       <CommunityShortcuts />
 
-      <h2 className="px-1 pb-2 pt-6 text-xs font-semibold uppercase tracking-wider text-ink-400">States &amp; cities</h2>
+      <h2 className="px-1 pb-2 pt-6 text-xs font-semibold uppercase tracking-wider text-ink-400">{t('Negeri & bandar', 'States & cities')}</h2>
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
         {STATE_CAPITALS.map(({ state, placeId }) => {
           const place = DEMO_PLACES.find((p) => p.id === placeId)!;
@@ -116,7 +118,7 @@ export function ExplorePage() {
           );
         })}
       </div>
-      <p className="mt-3 px-1 text-xs text-ink-400">City shortcuts use approximate city-centre coordinates.</p>
+      <p className="mt-3 px-1 text-xs text-ink-400">{t('Pintasan bandar guna koordinat anggaran pusat bandar.', 'City shortcuts use approximate city-centre coordinates.')}</p>
     </PagePanel>
   );
 }
@@ -130,13 +132,14 @@ function NearbyResults(props: {
   onSelect: (p: Place) => void;
   onRetry: () => void;
 }) {
+  const [t] = useT();
   const { category, state, live, checking, originLabel, onSelect, onRetry } = props;
 
   if (!category) {
-    return <EmptyState icon={MapPinned} title="Find petrol, R&R and more">Pick a category to see places near {originLabel ?? 'you'}.</EmptyState>;
+    return <EmptyState icon={MapPinned} title={t('Cari minyak, R&R dan lain-lain', 'Find petrol, R&R and more')}>{t(`Pilih kategori untuk lihat tempat berhampiran ${originLabel ?? 'anda'}.`, `Pick a category to see places near ${originLabel ?? 'you'}.`)}</EmptyState>;
   }
   if (checking) {
-    return <EmptyState icon={RefreshCw} title="Checking services…" />;
+    return <EmptyState icon={RefreshCw} title={t('Menyemak perkhidmatan…', 'Checking services…')} />;
   }
   if (!live) {
     return (
@@ -161,7 +164,7 @@ function NearbyResults(props: {
   }
   if (state.status === 'error') {
     return (
-      <EmptyState icon={AlertTriangle} title="Couldn’t load nearby places">
+      <EmptyState icon={AlertTriangle} title={t('Tak dapat muat tempat berhampiran', 'Couldn’t load nearby places')}>
         <p>{state.error}</p>
         <Button variant="secondary" className="mt-3" onClick={onRetry}>
           <RefreshCw className="size-4" /> Try again
@@ -170,7 +173,7 @@ function NearbyResults(props: {
     );
   }
   if (state.results.length === 0) {
-    return <EmptyState icon={MapPinned} title="Nothing found nearby">Try another category or move the map.</EmptyState>;
+    return <EmptyState icon={MapPinned} title={t('Tiada dijumpai berhampiran', 'Nothing found nearby')}>{t('Cuba kategori lain atau gerakkan peta.', 'Try another category or move the map.')}</EmptyState>;
   }
   return (
     <>
@@ -185,12 +188,13 @@ function NearbyResults(props: {
 }
 
 function CommunityShortcuts() {
+  const [t] = useT();
   const { available, shortcuts, selectShortcut } = useShortcuts();
   const navigate = useNavigate();
   if (!available) return null;
   return (
     <>
-      <h2 className="px-1 pb-2 pt-6 text-xs font-semibold uppercase tracking-wider text-ink-400">Community shortcuts nearby</h2>
+      <h2 className="px-1 pb-2 pt-6 text-xs font-semibold uppercase tracking-wider text-ink-400">{t('Jalan pintas komuniti berhampiran', 'Community shortcuts nearby')}</h2>
       <div className="rounded-2xl bg-white p-2 shadow-sm ring-1 ring-ink-200 dark:bg-ink-900 dark:ring-ink-800">
         {shortcuts.length === 0 ? (
           <p className="p-3 text-sm text-ink-500 dark:text-ink-400">

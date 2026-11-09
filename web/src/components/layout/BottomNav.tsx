@@ -2,17 +2,19 @@ import { Compass, Map, Megaphone, Star, UserRound, type LucideIcon } from 'lucid
 import { NavLink } from 'react-router';
 import { LogoMark, Wordmark } from '@/components/brand/LogoMark';
 import { cn } from '@/lib/cn';
+import { useT } from '@/lib/i18n';
 
-const ITEMS: { to: string; label: string; icon: LucideIcon }[] = [
-  { to: '/', label: 'Map', icon: Map },
-  { to: '/explore', label: 'Explore', icon: Compass },
-  { to: '/reports', label: 'Reports', icon: Megaphone },
-  { to: '/saved', label: 'Saved', icon: Star },
-  { to: '/profile', label: 'Profile', icon: UserRound },
+const ITEMS: { to: string; label: [ms: string, en: string]; icon: LucideIcon }[] = [
+  { to: '/', label: ['Peta', 'Map'], icon: Map },
+  { to: '/explore', label: ['Teroka', 'Explore'], icon: Compass },
+  { to: '/reports', label: ['Laporan', 'Reports'], icon: Megaphone },
+  { to: '/saved', label: ['Simpanan', 'Saved'], icon: Star },
+  { to: '/profile', label: ['Profil', 'Profile'], icon: UserRound },
 ];
 
 /** Bottom tab bar on mobile, left rail on desktop. */
 export function BottomNav() {
+  const [t] = useT();
   return (
     <nav
       aria-label="Main"
@@ -39,7 +41,7 @@ export function BottomNav() {
                   <span className={cn('grid h-7 w-12 place-items-center rounded-full transition', isActive && 'bg-jade-500/15')}>
                     <Icon className="size-5" strokeWidth={isActive ? 2.5 : 2} />
                   </span>
-                  {label}
+                  {t(label[0], label[1])}
                 </>
               )}
             </NavLink>

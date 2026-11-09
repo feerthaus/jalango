@@ -16,9 +16,11 @@ import type { Route } from '@/types';
 import { formatDuration } from '@/utils/format';
 import { formatDistance } from '@/utils/geo';
 import { arrivalClock } from '@/utils/time';
+import { useT } from '@/lib/i18n';
 
 /** Route preview: alternatives, ETA, tolls, avoid-tolls and Start. */
 export function RoutePanel() {
+  const [t] = useT();
   const [alongOpen, setAlongOpen] = useState(false);
   const { status, destination, routes, selectedIndex, selectRoute, mode, notice, error, avoidTolls, setAvoidTolls, startNavigation, clearRoute, retry } = useRouting();
   if (!destination) return null;
@@ -41,7 +43,7 @@ export function RoutePanel() {
           <ArrowLeft className="size-5" />
         </button>
         <div className="min-w-0 flex-1">
-          <p className="text-xs text-ink-500 dark:text-ink-400">From your location to</p>
+          <p className="text-xs text-ink-500 dark:text-ink-400">{t('Dari lokasi anda ke', 'From your location to')}</p>
           <h2 className="truncate font-bold">{destination.name}</h2>
         </div>
         <label className="flex cursor-pointer items-center gap-2 rounded-xl px-2 py-1.5 text-xs font-semibold hover:bg-ink-100 dark:hover:bg-ink-800">
@@ -52,15 +54,15 @@ export function RoutePanel() {
             disabled={status === 'loading' || mode === 'demo'}
             className="size-4 accent-jade-500"
           />
-          Avoid tolls
+          {t('Elak tol', 'Avoid tolls')}
         </label>
       </header>
 
       <div className="min-h-0 flex-1 overflow-y-auto px-3">
         <ResumeToast className="mb-2" />
         {status === 'needs-location' && (
-          <Message icon={LocateFixed} title="Waiting for your location">
-            Directions start from where you are. Allow location access, or move to an open area for a GPS fix.
+          <Message icon={LocateFixed} title={t('Menunggu lokasi anda', 'Waiting for your location')}>
+            {t('Laluan bermula dari lokasi anda. Benarkan akses lokasi, atau ke kawasan terbuka untuk isyarat GPS.', 'Directions start from where you are. Allow location access, or move to an open area for a GPS fix.')}
           </Message>
         )}
         {status === 'loading' && (
@@ -71,10 +73,10 @@ export function RoutePanel() {
           </ul>
         )}
         {status === 'error' && (
-          <Message icon={AlertTriangle} title="Couldn’t calculate a route">
+          <Message icon={AlertTriangle} title={t('Tak dapat kira laluan', 'Couldn’t calculate a route')}>
             <p>{error}</p>
             <Button variant="secondary" className="mt-3" onClick={retry}>
-              <RefreshCw className="size-4" /> Try again
+              <RefreshCw className="size-4" /> {t('Cuba lagi', 'Try again')}
             </Button>
           </Message>
         )}
@@ -83,7 +85,7 @@ export function RoutePanel() {
             {mode === 'demo' && (
               <div className="mb-2 flex items-start gap-2 rounded-xl bg-amber-400/10 px-3 py-2 text-xs text-amber-800 dark:text-amber-200">
                 <DemoBadge label="Demo" className="shrink-0" />
-                <span>{notice ?? 'Routing isn’t connected, so this is a straight line, not a road route. The time is a rough estimate at 50 km/h.'}</span>
+                <span>{notice ?? t('Laluan jalan tidak tersedia, jadi ini garis lurus, bukan jalan sebenar. Masa ialah anggaran kasar pada 50 km/j.', 'Routing isn’t connected, so this is a straight line, not a road route. The time is a rough estimate at 50 km/h.')}</span>
               </div>
             )}
             <ShortcutSuggestions />
@@ -100,7 +102,7 @@ export function RoutePanel() {
         <footer className="space-y-2 p-3 pt-1">
           <ProbeConsentPrompt />
           <Button variant="secondary" className="w-full" onClick={() => setAlongOpen(true)}>
-            <Utensils className="size-4" /> Tempat makan & menarik sepanjang laluan
+            <Utensils className="size-4" /> {t('Tempat makan & menarik sepanjang laluan', 'Food & sights along the route')}
           </Button>
           <Button
             className="w-full py-3 text-base"
@@ -109,7 +111,7 @@ export function RoutePanel() {
               startNavigation();
             }}
           >
-            <Navigation className="size-5" fill="currentColor" /> Start
+            <Navigation className="size-5" fill="currentColor" /> {t('Mula', 'Start')}
           </Button>
         </footer>
       )}
@@ -119,6 +121,7 @@ export function RoutePanel() {
 }
 
 function RouteOption({ route, reportCount, selected, fastest, onSelect }: { route: Route; reportCount: number; selected: boolean; fastest: boolean; onSelect: () => void }) {
+  const [t] = useT();
   const delay = route.typicalDurationSeconds ? route.durationSeconds - route.typicalDurationSeconds : 0;
   const heavy = delay > 300;
   const demo = route.source === 'demo';
@@ -143,27 +146,27 @@ function RouteOption({ route, reportCount, selected, fastest, onSelect }: { rout
             {formatDistance(route.distanceMeters)} · arrive {arrivalClock(route.durationSeconds)}
           </span>
         </div>
-        <p className="mt-0.5 truncate text-sm text-ink-600 dark:text-ink-300">{route.summary ? `via ${route.summary}` : 'Route'}</p>
+        <p className="mt-0.5 truncate text-sm text-ink-600 dark:text-ink-300">{route.summary ? `${t('melalui', 'via')} ${route.summary}` : t('Laluan', 'Route')}</p>
         <div className="mt-2 flex flex-wrap gap-1.5">
-          {fastest && <Chip className="bg-jade-500/15 text-jade-700 dark:text-jade-300">Fastest</Chip>}
+          {fastest && <Chip className="bg-jade-500/15 text-jade-700 dark:text-jade-300">{t('Terpantas', 'Fastest')}</Chip>}
           {route.hasTolls && (
             <Chip className="bg-amber-400/15 text-amber-700 dark:text-amber-300">
-              <Coins className="size-3" /> Toll road
+              <Coins className="size-3" /> {t('Bertol', 'Toll road')}
             </Chip>
           )}
           {route.hasMotorway && (
             <Chip className="bg-sky-500/15 text-sky-700 dark:text-sky-300">
-              <RouteIcon className="size-3" /> Highway
+              <RouteIcon className="size-3" /> {t('Lebuh raya', 'Highway')}
             </Chip>
           )}
           {reportCount > 0 && (
             <Chip className="bg-red-500/15 text-red-600 dark:text-red-300">
-              <Megaphone className="size-3" /> {reportCount} report{reportCount === 1 ? '' : 's'} on route
+              <Megaphone className="size-3" /> {reportCount} {t('laporan di laluan', reportCount === 1 ? 'report on route' : 'reports on route')}
             </Chip>
           )}
           {delay > 120 && (
             <Chip className={heavy ? 'bg-red-500/15 text-red-600 dark:text-red-300' : 'bg-amber-400/15 text-amber-700 dark:text-amber-300'}>
-              <Gauge className="size-3" /> +{formatDuration(delay)} traffic
+              <Gauge className="size-3" /> +{formatDuration(delay)} {t('trafik', 'traffic')}
             </Chip>
           )}
         </div>
@@ -190,6 +193,7 @@ function Message({ icon: Icon, title, children }: { icon: typeof AlertTriangle; 
 
 /** One-time opt-in for anonymous traffic data. Default is off. */
 function ProbeConsentPrompt() {
+  const [t] = useT();
   const [consent, setConsent] = useProbeConsent();
   if (consent !== null) return null;
   return (
@@ -197,16 +201,17 @@ function ProbeConsentPrompt() {
       <p className="flex items-start gap-2">
         <ShieldCheck className="mt-0.5 size-4 shrink-0 text-jade-500" />
         <span>
-          <strong className="font-semibold">Help build JalanGo traffic?</strong> While you navigate, share your speed and position anonymously.
-          No account is linked, and nothing near your start or destination is sent. You can change this in Profile. <a href="/privacy#s2" className="underline">Details</a>
+          <strong className="font-semibold">{t('Bantu bina data trafik JalanGo?', 'Help build JalanGo traffic?')}</strong>{' '}
+          {t('Semasa navigasi, kongsi kelajuan dan kedudukan anda tanpa nama. Tiada akaun dikaitkan, dan tiada apa-apa berhampiran titik mula atau destinasi dihantar. Boleh ditukar di Profil.', 'While you navigate, share your speed and position anonymously. No account is linked, and nothing near your start or destination is sent. You can change this in Profile.')}{' '}
+          <a href="/privacy#s2" className="underline">{t('Butiran', 'Details')}</a>
         </span>
       </p>
       <div className="mt-2 flex justify-end gap-2">
         <Button variant="ghost" className="px-3 py-1.5 text-xs" onClick={() => setConsent('denied')}>
-          No thanks
+          {t('Tak mengapa', 'No thanks')}
         </Button>
         <Button className="px-3 py-1.5 text-xs" onClick={() => setConsent('granted')}>
-          Share anonymously
+          {t('Kongsi tanpa nama', 'Share anonymously')}
         </Button>
       </div>
     </div>

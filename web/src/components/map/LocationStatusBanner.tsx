@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { useLocation } from '@/contexts/LocationContext';
 import type { GeoStatus } from '@/types';
+import { useT } from '@/lib/i18n';
 
 const MESSAGES: Partial<Record<GeoStatus, { title: string; body: string; retry: boolean }>> = {
   prompt: {
@@ -37,10 +38,22 @@ const MESSAGES: Partial<Record<GeoStatus, { title: string; body: string; retry: 
   },
 };
 
+/** Malay versions of MESSAGES (same keys). */
+const MESSAGES_MS: Partial<Record<GeoStatus, { title: string; body: string }>> = {
+  prompt: { title: 'Guna lokasi anda?', body: 'JalanGo perlukan GPS untuk tunjuk kedudukan anda dan untuk navigasi. Lokasi anda kekal dalam peranti ini.' },
+  denied: { title: 'Akses lokasi disekat', body: 'Benarkan lokasi untuk laman ini dalam tetapan pelayar (tekan ikon 🔒 di bar alamat), kemudian cuba lagi.' },
+  unavailable: { title: 'Tak dapat isyarat GPS', body: 'Peranti tak dapat tentukan kedudukan. Ke kawasan terbuka atau pastikan perkhidmatan lokasi dihidupkan.' },
+  timeout: { title: 'Masih mencari GPS…', body: 'Ini ambil masa lebih lama daripada biasa. Kami akan terus mencuba.' },
+  unsupported: { title: 'Lokasi tidak disokong', body: 'Pelayar ini tidak menyokong lokasi. Anda masih boleh cari tempat dan lihat peta.' },
+  insecure: { title: 'Lokasi perlukan HTTPS', body: 'Pelayar hanya kongsi lokasi dengan laman selamat (https://). Buka JalanGo melalui HTTPS.' },
+};
+
 export function LocationStatusBanner() {
+  const [t, lang] = useT();
   const { status, request } = useLocation();
   const [dismissed, setDismissed] = useState<GeoStatus | null>(null);
-  const msg = MESSAGES[status];
+  const base = MESSAGES[status];
+  const msg = base && lang === 'ms' && MESSAGES_MS[status] ? { ...base, ...MESSAGES_MS[status] } : base;
   if (!msg || dismissed === status) return null;
 
   const Icon = status === 'prompt' ? MapPinned : ShieldAlert;
@@ -54,7 +67,7 @@ export function LocationStatusBanner() {
         <p className="mt-0.5 text-xs text-ink-500 dark:text-ink-300">{msg.body}</p>
         {msg.retry && (
           <Button className="mt-2 px-3 py-1.5 text-xs" onClick={request}>
-            {status === 'prompt' ? 'Enable location' : 'Try again'}
+            {status === 'prompt' ? t('Hidupkan lokasi', 'Enable location') : t('Cuba lagi', 'Try again')}
           </Button>
         )}
       </div>
