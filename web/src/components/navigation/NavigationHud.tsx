@@ -79,8 +79,10 @@ export function NavigationHud() {
     );
   }
 
-  const stepIndex = progress?.stepIndex ?? 0;
+  // Clamp: right after a reroute the progress may still describe the previous route
+  const stepIndex = Math.min(progress?.stepIndex ?? 0, Math.max(0, route.steps.length - 1));
   const next = route.steps[stepIndex + 1] ?? route.steps[stepIndex];
+  if (!next) return null;
   const after = route.steps[stepIndex + 2];
   const remainingSeconds = progress?.remainingSeconds ?? route.durationSeconds;
   const remainingMeters = progress?.remainingMeters ?? route.distanceMeters;

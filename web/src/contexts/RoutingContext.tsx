@@ -145,6 +145,8 @@ export function RoutingProvider({ children }: { children: ReactNode }) {
           }
         }
         setRoutes(res.routes);
+        // Progress belongs to the old route (its step index may not exist on the new one)
+        setProgress(null);
         // After a reroute, don't follow a route that starts with a U-turn if an alternative doesn't
         setSelectedIndex(isReroute ? pickRerouteIndex(res.routes) : 0);
         setMode(res.mode);
