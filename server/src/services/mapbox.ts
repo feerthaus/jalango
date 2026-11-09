@@ -1,5 +1,6 @@
 import { config } from '../config.js';
 import { HttpError } from '../lib/errors.js';
+import { guardUsage } from '../lib/usageGuard.js';
 import type { Coordinates, Place, PlaceKind } from '../types.js';
 
 const SEARCHBOX = 'https://api.mapbox.com/search/searchbox/v1';
@@ -67,6 +68,7 @@ async function request(url: URL): Promise<MapboxFeature[]> {
   if (!config.mapboxToken) {
     throw new HttpError(503, 'mapbox_not_configured', 'Mapbox is not configured on the server');
   }
+  await guardUsage('geo'); // every paid Mapbox call, including retries and fan-out
   url.searchParams.set('access_token', config.mapboxToken);
 
   let res: Response;

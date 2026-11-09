@@ -1,5 +1,6 @@
 import { config } from '../config.js';
 import { HttpError } from '../lib/errors.js';
+import { guardUsage } from '../lib/usageGuard.js';
 import type { Congestion, Coordinates, Route, RouteStep } from '../types.js';
 
 const DIRECTIONS_TRAFFIC = 'https://api.mapbox.com/directions/v5/mapbox/driving-traffic';
@@ -156,6 +157,7 @@ async function fetchDirections(
   opts: { avoidTolls?: boolean; via?: Coordinates[]; heading?: number },
 ): Promise<Route[]> {
   const url = buildDirectionsUrl(from, to, opts);
+  await guardUsage('directions'); // each attempt, including the retry without a heading
   url.searchParams.set('access_token', config.mapboxToken ?? '');
 
   let res: Response;
