@@ -1,6 +1,7 @@
 import mapboxgl from 'mapbox-gl';
 import { useEffect, useRef } from 'react';
 import { carSvg } from '@/components/map/UserLocationMarker';
+import { motoSvg } from '@/lib/vehicle';
 import { useConvoy, type ConvoyPlace } from '@/contexts/ConvoyContext';
 import { useMapContext } from '@/contexts/MapContext';
 import { useRouting } from '@/contexts/RoutingContext';
@@ -54,7 +55,7 @@ export function ConvoyMarkers() {
         el.className = 'flex flex-col items-center';
         el.setAttribute('aria-label', `Convoy: ${m.display_name}`);
         const car = document.createElement('div');
-        car.innerHTML = carSvg(m.color, m.user_id.slice(0, 8), 28);
+        car.innerHTML = m.vehicle === 'motorcycle' ? motoSvg(m.color, 20) : carSvg(m.color, m.user_id.slice(0, 8), 28);
         car.style.transition = 'transform .6s ease-out';
         const label = document.createElement('div');
         label.className = 'mt-0.5 max-w-[110px] truncate rounded-full px-2 py-0.5 text-[11px] font-bold text-white shadow';

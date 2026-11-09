@@ -35,6 +35,8 @@ export interface ConvoyMember {
   eta_at: string | null;
   arrived_at: string | null;
   removed: boolean;
+  /** absent until the vehicle migration is applied */
+  vehicle?: 'car' | 'motorcycle';
 }
 
 export class ConvoyError extends Error {
@@ -110,6 +112,11 @@ export async function pushConvoyPosition(convoyId: string, userId: string, fix: 
   };
   if (extra.arrived !== null) patch.arrived_at = extra.arrived ? new Date().toISOString() : null;
   const { error } = await client().from('convoy_members').update(patch).eq('convoy_id', convoyId).eq('user_id', userId);
+  if (error) throw toConvoyError(error);
+}
+
+export async function setConvoyVehicle(convoyId: string, userId: string, vehicle: 'car' | 'motorcycle') {
+  const { error } = await client().from('convoy_members').update({ vehicle }).eq('convoy_id', convoyId).eq('user_id', userId);
   if (error) throw toConvoyError(error);
 }
 

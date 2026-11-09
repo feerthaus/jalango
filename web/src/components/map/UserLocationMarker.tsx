@@ -4,6 +4,7 @@ import { useMapContext } from '@/contexts/MapContext';
 import { useVehiclePose } from '@/hooks/useVehiclePose';
 import { lerp, lerpAngle } from '@/utils/motion';
 import { shade } from '@/utils/convoy';
+import { motoSvg, useMyVehicle } from '@/lib/vehicle';
 
 /** Top-down car (pointing up), drawn in SVG so it stays crisp at any size. */
 export const CAR_SVG = `
@@ -61,21 +62,27 @@ export function UserLocationMarker() {
   const markerRef = useRef<mapboxgl.Marker | null>(null);
   const shown = useRef<{ lng: number; lat: number; bearing: number } | null>(null);
   const frame = useRef<number | null>(null);
+  const [vehicle] = useMyVehicle();
+  const lastShown = useRef<{ lng: number; lat: number; bearing: number } | null>(null);
 
   useEffect(() => {
     if (!map) return;
     const el = document.createElement('div');
     el.className = 'relative grid place-items-center';
     el.setAttribute('aria-label', 'Your location');
-    el.innerHTML = `<span class="absolute size-10 animate-pulse-ring rounded-full bg-jade-500/35"></span>${CAR_SVG}`;
+    el.innerHTML = `<span class="absolute size-10 animate-pulse-ring rounded-full bg-jade-500/35"></span>${vehicle === 'motorcycle' ? motoSvg('#14c493', 26) : CAR_SVG}`;
     markerRef.current = new mapboxgl.Marker({ element: el, rotationAlignment: 'map', pitchAlignment: 'map' });
+    // Re-created (e.g. car ↔ motorcycle): put it straight back where it was
+    const last = lastShown.current;
+    if (last) markerRef.current.setLngLat([last.lng, last.lat]).setRotation(last.bearing).addTo(map);
     return () => {
+      if (shown.current) lastShown.current = shown.current;
       if (frame.current) cancelAnimationFrame(frame.current);
       markerRef.current?.remove();
       markerRef.current = null;
       shown.current = null;
     };
-  }, [map]);
+  }, [map, vehicle]);
 
   useEffect(() => {
     const marker = markerRef.current;

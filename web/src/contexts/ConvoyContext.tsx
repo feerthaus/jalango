@@ -10,6 +10,7 @@ import {
   leaveConvoy,
   pushConvoyPosition,
   removeMember,
+  setConvoyVehicle,
   subscribeToConvoy,
   type Convoy,
   type ConvoyMember,
@@ -18,6 +19,7 @@ import type { Coordinates, Place } from '@/types';
 import { ARRIVE_M, convoyEvents, eventPhrase, newAlertMemory } from '@/utils/convoy';
 import { haversineMeters } from '@/utils/geo';
 import { useAuth } from './AuthContext';
+import { useMyVehicle } from '@/lib/vehicle';
 import { useLocation } from './LocationContext';
 import { useRouting } from './RoutingContext';
 
@@ -199,6 +201,16 @@ export function ConvoyProvider({ children }: { children: ReactNode }) {
       else lastPush.current = prev;
     });
   }, [fix, convoy, me, user, destination, status, progress, routeDest]);
+
+  // Everyone sees whether I'm in a car or on a motorcycle
+  const [myVehicle] = useMyVehicle();
+  const meVehicle = me?.vehicle;
+  useEffect(() => {
+    if (!convoy || !user || !meVehicle || meVehicle === myVehicle) return;
+    setConvoyVehicle(convoy.id, user.id, myVehicle)
+      .then(() => setNonce((n) => n + 1))
+      .catch(() => {});
+  }, [convoy, user, meVehicle, myVehicle]);
 
   // Voice alerts for the group
   useEffect(() => {

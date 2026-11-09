@@ -11,6 +11,7 @@ import { cn } from '@/lib/cn';
 import { convoyUrl, type ConvoyMember } from '@/services/convoyService';
 import { formatConvoyCode, memberPosition, memberStatus, normalizeConvoyCode, type MemberStatus } from '@/utils/convoy';
 import { formatDistance, haversineMeters } from '@/utils/geo';
+import { useMyVehicle, type Vehicle } from '@/lib/vehicle';
 
 function defaultName(user: ReturnType<typeof useAuth>['user']): string {
   return ((user?.user_metadata?.name as string | undefined) || user?.email?.split('@')[0] || '').slice(0, 40);
@@ -104,6 +105,7 @@ function StartConvoy({ joinCode }: { joinCode: string | null }) {
           Destinasi: <strong className="truncate">{routeDest.name}</strong>
         </label>
       )}
+      <VehicleToggle />
       <p className="flex items-start gap-2 text-xs text-ink-500 dark:text-ink-400">
         <ShieldCheck className="mt-0.5 size-4 shrink-0 text-jade-500" />
         Hanya ahli konvoi nampak lokasi terkini anda (bukan sejarah). Konvoi tamat sendiri selepas 12 jam, dan anda boleh keluar bila-bila masa.
@@ -165,6 +167,7 @@ function ConvoyPanel({ onClose }: { onClose: () => void }) {
   return (
     <div className="space-y-4">
       <ConvoyCode code={convoy.code} name={convoy.name} />
+      <VehicleToggle />
 
       <section className="space-y-2">
         <PlaceRow icon={<Flag className="size-4" />} color="#0ea5e9" title="Destinasi" place={c.destination} onGo={() => go('destination')} />
@@ -268,6 +271,7 @@ function MemberRow({ m, isMe, isLeader, from, dest, canRemove, busy, onRemove }:
       <span className="size-3.5 shrink-0 rounded-full ring-2 ring-white dark:ring-ink-900" style={{ background: m.color }} />
       <div className="min-w-0 flex-1">
         <p className="flex items-center gap-1 truncate text-sm font-semibold">
+          {m.vehicle === 'motorcycle' && <span aria-label="motosikal">🏍️</span>}
           {m.display_name}
           {isMe && <span className="text-xs font-normal text-ink-400">(anda)</span>}
           {isLeader && <Crown className="size-3.5 text-amber-500" aria-label="Leader" />}
@@ -315,6 +319,27 @@ function ConvoyCode({ code, name }: { code: string; name: string }) {
         <Button variant="secondary" onClick={() => navigator.share?.({ title: 'JalanGo Konvoi', text, url }).catch(() => {})} disabled={typeof navigator.share !== 'function'}>
           <Share2 className="size-4" /> Lain
         </Button>
+      </div>
+    </div>
+  );
+}
+
+/** "Saya naik: Kereta / Motor" — changes my icon on everyone's map. */
+function VehicleToggle() {
+  const [vehicle, setVehicle] = useMyVehicle();
+  const opts: [Vehicle, string][] = [
+    ['car', '🚗 Kereta'],
+    ['motorcycle', '🏍️ Motor'],
+  ];
+  return (
+    <div className="flex items-center gap-2 text-sm">
+      <span className="font-medium">Saya naik:</span>
+      <div role="radiogroup" aria-label="Kenderaan" className="grid flex-1 grid-cols-2 gap-1 rounded-xl bg-ink-100 p-1 dark:bg-ink-800">
+        {opts.map(([v, label]) => (
+          <button key={v} type="button" role="radio" aria-checked={vehicle === v} onClick={() => setVehicle(v)} className={cn('rounded-lg py-1.5 text-sm font-semibold', vehicle === v ? 'bg-white shadow-sm dark:bg-ink-600' : 'text-ink-500')}>
+            {label}
+          </button>
+        ))}
       </div>
     </div>
   );
