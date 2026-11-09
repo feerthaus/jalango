@@ -27,8 +27,8 @@ begin
 end;
 $$;
 
-drop function public.get_live_share(text);
-create function public.get_live_share(p_token text)
+-- New name instead of replacing get_live_share: no DROP needed, old clients keep working
+create or replace function public.get_live_share_v2(p_token text)
 returns table (
   status text, display_name text, destination_name text, dest_latitude double precision, dest_longitude double precision,
   eta_at timestamptz, latitude double precision, longitude double precision, heading real, speed_mps real,
@@ -52,5 +52,5 @@ as $$
   from public.location_shares s
   where s.token = p_token
 $$;
-revoke execute on function public.get_live_share(text) from public;
-grant execute on function public.get_live_share(text) to anon, authenticated;
+revoke execute on function public.get_live_share_v2(text) from public;
+grant execute on function public.get_live_share_v2(text) to anon, authenticated;
