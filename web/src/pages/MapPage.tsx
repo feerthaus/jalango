@@ -10,6 +10,7 @@ import { ItinerarySheet } from '@/components/itinerary/ItinerarySheet';
 import { ItineraryChip } from '@/components/itinerary/ItineraryChip';
 import { LiveShareBanner } from '@/components/live/LiveShareBanner';
 import { ShareLiveSheet } from '@/components/live/ShareLiveSheet';
+import { ShareSpotButton } from '@/components/live/ShareSpotButton';
 import { useCallback, useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router';
 import { InstallBanner } from '@/components/pwa/InstallBanner';
@@ -83,7 +84,6 @@ export function MapPage() {
                 {reportButton}
               </div>
             </div>
-            <AlongLayerChip onOpen={() => setAlongOpen(true)} />
             <AlongPlaceCard />
             {selectedReport && <ReportDetailCard report={selectedReport} onClose={() => selectReport(null)} />}
           </div>
@@ -130,6 +130,7 @@ export function MapPage() {
             <SpeedIndicator />
             <div className="ml-auto flex flex-col items-end gap-3">
               <ItineraryButton onOpen={() => setItineraryOpen(true)} />
+              <ShareSpotButton />
               <ConvoyButton onOpen={() => setConvoyOpen({ code: null })} />
               <IconButton label="Share live location" onClick={() => setShareOpen(true)}>
                 <Radio className="size-5 text-jade-600 dark:text-jade-400" />

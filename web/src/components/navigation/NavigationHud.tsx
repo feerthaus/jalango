@@ -15,6 +15,8 @@ import { ConvoyBanner } from '@/components/convoy/ConvoyBanner';
 import { StopBanner } from '@/components/along/StopMarker';
 import { OfflineBanner } from './OfflineBanner';
 import { ItineraryChip } from '@/components/itinerary/ItineraryChip';
+import { AlongLayerChip } from '@/components/along/AlongMarkers';
+import { AlongRouteSheet } from '@/components/along/AlongRouteSheet';
 import { useItinerary } from '@/contexts/ItineraryContext';
 import { ShareLiveSheet } from '@/components/live/ShareLiveSheet';
 import { Radio } from 'lucide-react';
@@ -42,6 +44,7 @@ export function NavigationHud() {
   const { following, setFollowing } = useMapContext();
   const [showSteps, setShowSteps] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
+  const [alongOpen, setAlongOpen] = useState(false);
   const alerts = useRouteAlerts();
   useWakeLock(status === 'navigating');
   useVoiceGuidance();
@@ -143,6 +146,7 @@ export function NavigationHud() {
         {!showSteps && <ConvoyBanner />}
         {!showSteps && <StopBanner />}
         {!showSteps && <ItineraryChip />}
+        {!showSteps && <AlongLayerChip onOpen={() => setAlongOpen(true)} />}
         {!showSteps && <ResumeToast />}
         {!showSteps && <RouteAlerts alerts={alerts} />}
       </div>
@@ -182,6 +186,7 @@ export function NavigationHud() {
         </div>
       </div>
       {shareOpen && <ShareLiveSheet onClose={() => setShareOpen(false)} />}
+      {alongOpen && <AlongRouteSheet onClose={() => setAlongOpen(false)} />}
     </>
   );
 }
