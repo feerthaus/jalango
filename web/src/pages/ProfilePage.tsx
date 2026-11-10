@@ -11,6 +11,7 @@ import { MessageSquareHeart, ShieldCheck } from 'lucide-react';
 import { LogoMark } from '@/components/brand/LogoMark';
 import { IosSteps } from '@/components/pwa/InstallBanner';
 import { useInstallPrompt } from '@/hooks/useInstallPrompt';
+import { ShareAppCard } from '@/components/share/ShareAppCard';
 import { Logo } from '@/components/layout/BottomNav';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/Button';
@@ -56,6 +57,7 @@ export function ProfilePage() {
     <PagePanel title={t('Profil', 'Profile')}>
       <AccountCard favourites={favourites.length} recents={recents.length} />
 
+      <ShareAppCard />
       <InstallCard />
       <FeedbackCard />
 
