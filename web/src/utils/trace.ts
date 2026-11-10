@@ -94,3 +94,20 @@ export function sampleWaypoints(path: LngLat[], max = 10): Coordinates[] {
 export function roundPath(path: LngLat[]): LngLat[] {
   return path.map(([x, y]) => [Math.round(x * 1e5) / 1e5, Math.round(y * 1e5) / 1e5]);
 }
+
+/**
+ * Shrink a long recorded trace so recording can carry on (a 450 km trip
+ * at 20 m spacing would be ~22,000 points). Simplifies with a growing
+ * tolerance until it is at most half the size; the last point is kept.
+ */
+export function thinTrace(path: LngLat[], maxPoints = 4000): LngLat[] {
+  const target = Math.floor(maxPoints / 2);
+  if (path.length <= target) return path;
+  let out = simplify(path, 5);
+  for (let tol = 10; out.length > target && tol < 5000; tol *= 2) out = simplify(path, tol);
+  if (out.length > target) {
+    const step = Math.ceil(out.length / target);
+    out = out.filter((_, i) => i % step === 0 || i === out.length - 1);
+  }
+  return out;
+}

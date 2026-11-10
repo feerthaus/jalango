@@ -1,6 +1,7 @@
-import { ChevronDown, CornerUpRight, Flag, History, Route as RouteIcon, Share2, Star, Trash2 } from 'lucide-react';
+import { ChevronDown, Users, CornerUpRight, Flag, History, Route as RouteIcon, Share2, Star, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
+import { canShareAsCommunityRoute, ShareCommunityRouteSheet } from '@/components/communityRoutes/ShareCommunityRouteSheet';
 import { ShareShortcutSheet } from '@/components/shortcuts/ShareShortcutSheet';
 import { Button } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -35,6 +36,7 @@ export function TripHistory() {
 function TripItem({ trip }: { trip: Trip }) {
   const [open, setOpen] = useState(false);
   const [sharing, setSharing] = useState(false);
+  const [sharingRoute, setSharingRoute] = useState(false);
   const [editing, setEditing] = useState(false);
   const { removeTrip } = useTrips();
   const { planRoute } = useRouting();
@@ -94,8 +96,14 @@ function TripItem({ trip }: { trip: Trip }) {
               <Trash2 className="size-4" /> Delete
             </Button>
           </div>
+          {canShareAsCommunityRoute(trip) && (
+            <Button variant="secondary" className="w-full text-xs" onClick={() => setSharingRoute(true)}>
+              <Users className="size-4" /> Kongsi sebagai laluan komuniti
+            </Button>
+          )}
         </div>
       )}
+      {sharingRoute && <ShareCommunityRouteSheet trip={trip} onClose={() => setSharingRoute(false)} />}
       {sharing && <ShareShortcutSheet trip={trip} onClose={() => setSharing(false)} />}
     </li>
   );

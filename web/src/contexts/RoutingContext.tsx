@@ -3,10 +3,10 @@ import { useProbeConsent } from '@/hooks/useProbeConsent';
 import { ProbeCollector } from '@/services/probeService';
 import { fetchRoutes } from '@/services/routingService';
 import { clearActiveTrace, clearTrip, loadActiveTrace, loadTrip, loadTripRoute, saveActiveTrace, saveTrip, saveTripRoute } from '@/services/tripStore';
-import type { Shortcut } from '@/types';
+import type { CommunityRoute, Shortcut } from '@/types';
 import { haversineMeters } from '@/utils/geo';
 import { speak, useVoiceAlerts, useVoiceLang } from '@/hooks/useVoiceAlerts';
-import { pathLength, roundPath, sampleWaypoints, simplify } from '@/utils/trace';
+import { pathLength, roundPath, sampleWaypoints, simplify, thinTrace } from '@/utils/trace';
 import { useTrips } from './TripsContext';
 import type { Coordinates, Place, Route } from '@/types';
 import { buildRouteIndex, computeProgress, pickRerouteIndex, projectOnRoute, type RouteIndex, type RouteProgress } from '@/utils/routeProgress';
@@ -45,6 +45,8 @@ interface RoutingValue {
   shortcut: Shortcut | null;
   shortcutTitle: string | null;
   applyShortcut: (s: Shortcut, destination?: Place | null) => void;
+  /** Follow a long community route to the current destination. */
+  applyCommunityRoute: (r: Pick<CommunityRoute, 'title' | 'path'>) => void;
   clearShortcut: () => void;
   /** A stop on the way (e.g. lunch); the route goes through it, then on to the destination */
   stop: Place | null;
@@ -277,9 +279,11 @@ export function RoutingProvider({ children }: { children: ReactNode }) {
     const t = traceRef.current;
     const last = t[t.length - 1];
     if (last && haversineMeters({ lng: last[0], lat: last[1] }, c) < 20) return;
-    if (t.length >= 4000) return;
     t.push([c.lng, c.lat]);
-    if (startedAtRef.current && t.length % 10 === 0) saveActiveTrace({ startedAt: startedAtRef.current, trace: t });
+    // Long trips (balik kampung): thin the path instead of dropping the rest
+    if (t.length >= 4000) traceRef.current = thinTrace(t);
+    const cur = traceRef.current;
+    if (startedAtRef.current && cur.length % 10 === 0) saveActiveTrace({ startedAt: startedAtRef.current, trace: cur });
   };
 
   /** Save the trip to history. Ended early trips under 300 m aren't worth keeping. */
@@ -458,6 +462,20 @@ export function RoutingProvider({ children }: { children: ReactNode }) {
     [request],
   );
 
+  const applyCommunityRoute = useCallback(
+    (r: Pick<CommunityRoute, 'title' | 'path'>) => {
+      // Dense enough to hold the driver on the alternative corridor; the server caps via points at 20
+      viaRef.current = sampleWaypoints(r.path, 18);
+      setStop(null);
+      setShortcut(null);
+      setShortcutTitle(r.title);
+      setRoutes([]);
+      setProgress(null);
+      queueMicrotask(request);
+    },
+    [request],
+  );
+
   const clearShortcut = useCallback(() => {
     viaRef.current = [];
     setShortcut(null);
@@ -529,10 +547,11 @@ export function RoutingProvider({ children }: { children: ReactNode }) {
       addStop,
       clearStop,
       applyShortcut,
+      applyCommunityRoute,
       clearShortcut,
       finishedTripId,
     }),
-    [status, destination, routes, selectedIndex, selectedRoute, mode, notice, error, avoidTolls, progress, rerouting, resumedTo, planRoute, navigateTo, request, setAvoidTolls, startNavigation, endNavigation, clearRoute, shortcut, shortcutTitle, applyShortcut, clearShortcut, stop, addStop, clearStop, finishedTripId],
+    [status, destination, routes, selectedIndex, selectedRoute, mode, notice, error, avoidTolls, progress, rerouting, resumedTo, planRoute, navigateTo, request, setAvoidTolls, startNavigation, endNavigation, clearRoute, shortcut, shortcutTitle, applyShortcut, applyCommunityRoute, clearShortcut, stop, addStop, clearStop, finishedTripId],
   );
 
   return <RoutingContext.Provider value={value}>{children}</RoutingContext.Provider>;

@@ -206,3 +206,23 @@ export interface CommunityPlace {
   recommend_count: number;
   created_at: string;
 }
+
+/** A long-distance alternative another driver actually took (mirrors `community_routes`). */
+export interface CommunityRoute {
+  id: string;
+  user_id: string;
+  title: string;
+  via_label: string | null;
+  note: string | null;
+  path: [number, number][];
+  start_lat: number;
+  start_lng: number;
+  end_lat: number;
+  end_lng: number;
+  distance_m: number;
+  duration_s: number;
+  driven_at: string;
+  upvotes: number;
+  downvotes: number;
+  created_at: string;
+}
