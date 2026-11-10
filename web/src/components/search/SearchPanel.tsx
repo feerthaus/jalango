@@ -1,4 +1,4 @@
-import { AlertTriangle, Clock, SearchX, Star, Trash2, X } from 'lucide-react';
+import { AlertTriangle, Clock, ExternalLink, Link2, SearchX, Star, Trash2, X } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { PlaceRow } from '@/components/places/PlaceRow';
 import { DemoBadge } from '@/components/ui/DemoBadge';
@@ -7,6 +7,7 @@ import { useSavedPlaces } from '@/contexts/SavedPlacesContext';
 import type { PlaceSearchState } from '@/hooks/usePlaceSearch';
 import type { Place } from '@/types';
 import { useT } from '@/lib/i18n';
+import { LINK_UNREADABLE, looksLikeLinkOrCoords } from '@/services/geocodingService';
 
 const QUICK_CITIES = ['demo:kl', 'demo:johor-bahru', 'demo:george-town', 'demo:ipoh', 'demo:melaka', 'demo:kota-kinabalu', 'demo:kuching']
   .map((id) => DEMO_PLACES.find((p) => p.id === id))
@@ -134,13 +135,19 @@ function Results({ search, activeIndex, onSelect, pending }: { search: PlaceSear
   }
 
   if (search.results.length === 0) {
+    const link = looksLikeLinkOrCoords(search.query);
     return (
-      <div className="flex flex-col items-center gap-2 px-4 py-8 text-center text-sm text-ink-500 dark:text-ink-300">
+      <div className="flex flex-col items-center gap-2 px-4 py-6 text-center text-sm text-ink-500 dark:text-ink-300">
         <SearchX className="size-8 text-ink-300" />
-        <p>
-          No places found for “<span className="font-medium text-ink-800 dark:text-ink-100">{search.query}</span>”.
-        </p>
+        {link || search.notice === LINK_UNREADABLE ? (
+          <p>{t('Tak dapat baca lokasi dari pautan ini. Pastikan ia pautan Google Maps ke tempat di Malaysia.', 'Couldn’t read a location from this link. Make sure it’s a Google Maps link to a place in Malaysia.')}</p>
+        ) : (
+          <p>
+            {t('Tiada tempat ditemui untuk', 'No places found for')} “<span className="font-medium text-ink-800 dark:text-ink-100">{search.query}</span>”.
+          </p>
+        )}
         {search.mode === 'demo' && <p className="text-xs">Offline sample data only covers major Malaysian cities and landmarks.</p>}
+        {!link && search.mode !== 'demo' && <GoogleMapsHelp query={search.query} />}
       </div>
     );
   }
@@ -158,7 +165,40 @@ function Results({ search, activeIndex, onSelect, pending }: { search: PlaceSear
           <PlaceRow key={p.id} id={optionId(i)} place={p} onSelect={onSelect} active={i === activeIndex} />
         ))}
       </ul>
+      {search.mode === 'live' && !looksLikeLinkOrCoords(search.query) && (
+        <div className="mt-1 border-t border-ink-100 px-2 pt-2 dark:border-ink-800">
+          <GoogleMapsHelp query={search.query} compact />
+        </div>
+      )}
     </>
+  );
+}
+
+/**
+ * Not here? Look it up in Google Maps (a plain link: no API, no Google data in JalanGo),
+ * then share or copy the place's link and paste it into our search.
+ */
+function GoogleMapsHelp({ query, compact }: { query: string; compact?: boolean }) {
+  const [t] = useT();
+  const href = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${query}, Malaysia`)}`;
+  return (
+    <div className={compact ? 'flex items-center gap-2 text-xs text-ink-500' : 'mt-1 flex w-full flex-col items-center gap-2'}>
+      {compact && <span className="min-w-0 flex-1">{t('Tak jumpa tempat yang betul?', 'Not the right place?')}</span>}
+      <a
+        href={href}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={compact ? 'flex shrink-0 items-center gap-1 rounded-lg bg-ink-100 px-2.5 py-1.5 font-semibold text-ink-700 dark:bg-ink-800 dark:text-ink-200' : 'flex items-center gap-1.5 rounded-xl bg-ink-100 px-3 py-2 font-semibold text-ink-800 dark:bg-ink-800 dark:text-ink-100'}
+      >
+        <ExternalLink className="size-3.5" /> {t('Cari di Google Maps', 'Search in Google Maps')}
+      </a>
+      {!compact && (
+        <p className="flex items-start gap-1.5 text-left text-xs">
+          <Link2 className="mt-0.5 size-3.5 shrink-0" />
+          {t('Jumpa di sana? Tekan Kongsi → Salin pautan, kemudian tampal pautan itu di kotak carian ini.', 'Found it there? Tap Share → Copy link, then paste the link into this search box.')}
+        </p>
+      )}
+    </div>
   );
 }
 

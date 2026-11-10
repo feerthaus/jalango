@@ -16,7 +16,7 @@ const ms: LegalSection[] = [
     body: (
       <Ul>
         <li><strong>Akaun:</strong> email, nama (jika diberi) dan, jika anda log masuk dengan Google atau Facebook, maklumat profil asas yang mereka kongsi (nama, email, gambar profil).</li>
-        <li><strong>Lokasi:</strong> kedudukan GPS peranti anda digunakan dalam app untuk memaparkan peta, mencari tempat berdekatan dan navigasi. Untuk carian dan laluan, koordinat (titik mula, destinasi dan titik laluan) dihantar ke pelayan kami dan penyedia peta.</li>
+        <li><strong>Lokasi:</strong> kedudukan GPS peranti anda digunakan dalam app untuk memaparkan peta, mencari tempat berdekatan dan navigasi. Untuk carian dan laluan, koordinat (titik mula, destinasi dan titik laluan) dihantar ke pelayan kami dan penyedia peta. Jika anda tampal pautan Google Maps, pelayan kami membuka pautan itu (tanpa maklumat anda) untuk membaca lokasinya.</li>
         <li><strong>Kandungan yang anda kongsi:</strong> laporan jalan raya (jenis, nota, lokasi, masa), undian, jalan pintas (shortcut), laluan komuniti dan tempat yang anda syorkan.</li>
         <li><strong>Sejarah perjalanan:</strong> destinasi, masa, jarak, tempoh dan rating. Disimpan dalam peranti, dan dalam akaun anda jika log masuk. <strong>Jejak GPS perjalanan disimpan dalam peranti sahaja</strong> dan hanya dikongsi jika anda sendiri memilih untuk berkongsi jalan pintas atau laluan komuniti. Laluan komuniti juga menunjukkan tarikh dan tempoh sebenar perjalanan itu.</li>
         <li><strong>Data trafik tanpa nama (pilihan):</strong> jika anda bersetuju, kelajuan dan kedudukan semasa navigasi dihantar <strong>tanpa akaun</strong>, menggunakan ID perjalanan rawak. Kedudukan dalam lingkungan 300 m dari titik mula dan destinasi tidak dihantar.</li>
@@ -137,7 +137,7 @@ const en: LegalSection[] = [
     body: (
       <Ul>
         <li><strong>Account:</strong> email, name (if given) and, if you sign in with Google or Facebook, the basic profile they share (name, email, profile picture).</li>
-        <li><strong>Location:</strong> your device GPS is used in the app to show the map, find nearby places and navigate. For search and routing, coordinates (start, destination and waypoints) are sent to our server and the map provider.</li>
+        <li><strong>Location:</strong> your device GPS is used in the app to show the map, find nearby places and navigate. For search and routing, coordinates (start, destination and waypoints) are sent to our server and the map provider. If you paste a Google Maps link, our server opens that link (without your details) to read its location.</li>
         <li><strong>Content you share:</strong> road reports (type, note, location, time), votes, shortcuts, community routes and places you recommend.</li>
         <li><strong>Trip history:</strong> destination, times, distance, duration and rating — on your device, and in your account if signed in. <strong>The GPS trace of a trip stays on your device</strong> and is only shared if you choose to share a shortcut or community route. A community route also shows the date and the actual duration of that trip.</li>
         <li><strong>Anonymous traffic data (optional):</strong> if you agree, speed and position while navigating are sent <strong>without your account</strong>, under a random trip ID. Positions within 300 m of the start and destination are never sent.</li>
