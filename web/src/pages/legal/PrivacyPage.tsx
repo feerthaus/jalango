@@ -17,8 +17,8 @@ const ms: LegalSection[] = [
       <Ul>
         <li><strong>Akaun:</strong> email, nama (jika diberi) dan, jika anda log masuk dengan Google atau Facebook, maklumat profil asas yang mereka kongsi (nama, email, gambar profil).</li>
         <li><strong>Lokasi:</strong> kedudukan GPS peranti anda digunakan dalam app untuk memaparkan peta, mencari tempat berdekatan dan navigasi. Untuk carian dan laluan, koordinat (titik mula, destinasi dan titik laluan) dihantar ke pelayan kami dan penyedia peta.</li>
-        <li><strong>Kandungan yang anda kongsi:</strong> laporan jalan raya (jenis, nota, lokasi, masa), undian, jalan pintas (shortcut) dan tempat yang anda syorkan.</li>
-        <li><strong>Sejarah perjalanan:</strong> destinasi, masa, jarak, tempoh dan rating. Disimpan dalam peranti, dan dalam akaun anda jika log masuk. <strong>Jejak GPS perjalanan disimpan dalam peranti sahaja</strong> dan hanya dikongsi jika anda sendiri memilih untuk berkongsi jalan pintas.</li>
+        <li><strong>Kandungan yang anda kongsi:</strong> laporan jalan raya (jenis, nota, lokasi, masa), undian, jalan pintas (shortcut), laluan komuniti dan tempat yang anda syorkan.</li>
+        <li><strong>Sejarah perjalanan:</strong> destinasi, masa, jarak, tempoh dan rating. Disimpan dalam peranti, dan dalam akaun anda jika log masuk. <strong>Jejak GPS perjalanan disimpan dalam peranti sahaja</strong> dan hanya dikongsi jika anda sendiri memilih untuk berkongsi jalan pintas atau laluan komuniti. Laluan komuniti juga menunjukkan tarikh dan tempoh sebenar perjalanan itu.</li>
         <li><strong>Data trafik tanpa nama (pilihan):</strong> jika anda bersetuju, kelajuan dan kedudukan semasa navigasi dihantar <strong>tanpa akaun</strong>, menggunakan ID perjalanan rawak. Kedudukan dalam lingkungan 300 m dari titik mula dan destinasi tidak dihantar.</li>
         <li><strong>Kongsi lokasi live (pilihan):</strong> jika anda mulakan perkongsian, kedudukan terkini, kelajuan, arah, destinasi dan ETA anda boleh dilihat oleh sesiapa yang mempunyai pautan, sehingga anda hentikan atau ia tamat (maksimum 12 jam). Hanya kedudukan terkini disimpan, tanpa sejarah, dan ia dipadam sebaik perkongsian dihentikan.</li>
         <li><strong>Mod Driver (pilihan):</strong> jika anda hidupkan Mod Driver semasa berkongsi lokasi live, sesiapa yang ada pautan itu juga nampak kenderaan, nombor plat, nombor WhatsApp (jika diberi) dan nama hentian seterusnya dari itinerari anda. Nombor telefon dipadam sebaik perkongsian dihentikan. Butiran kenderaan dan nombor telefon juga disimpan dalam peranti anda untuk kegunaan seterusnya.</li>
@@ -47,7 +47,7 @@ const ms: LegalSection[] = [
     body: (
       <p>
         Laporan jalan raya, jalan pintas dan tempat yang anda kongsi boleh dilihat oleh semua pengguna, termasuk tanpa log masuk. Nama dan email anda <strong>tidak</strong> dipaparkan
-        bersama kandungan ini. Bagi jalan pintas, 300 m pertama dan terakhir dibuang secara automatik supaya lokasi rumah atau pejabat tidak terdedah. Jangan masukkan maklumat peribadi
+        bersama kandungan ini. Bagi jalan pintas, 300 m pertama dan terakhir dibuang secara automatik, dan bagi laluan komuniti, 1 km pertama dan terakhir, supaya lokasi rumah atau pejabat tidak terdedah. Jangan masukkan maklumat peribadi
         dalam nota atau ulasan.
       </p>
     ),
@@ -138,8 +138,8 @@ const en: LegalSection[] = [
       <Ul>
         <li><strong>Account:</strong> email, name (if given) and, if you sign in with Google or Facebook, the basic profile they share (name, email, profile picture).</li>
         <li><strong>Location:</strong> your device GPS is used in the app to show the map, find nearby places and navigate. For search and routing, coordinates (start, destination and waypoints) are sent to our server and the map provider.</li>
-        <li><strong>Content you share:</strong> road reports (type, note, location, time), votes, shortcuts and places you recommend.</li>
-        <li><strong>Trip history:</strong> destination, times, distance, duration and rating — on your device, and in your account if signed in. <strong>The GPS trace of a trip stays on your device</strong> and is only shared if you choose to share a shortcut.</li>
+        <li><strong>Content you share:</strong> road reports (type, note, location, time), votes, shortcuts, community routes and places you recommend.</li>
+        <li><strong>Trip history:</strong> destination, times, distance, duration and rating — on your device, and in your account if signed in. <strong>The GPS trace of a trip stays on your device</strong> and is only shared if you choose to share a shortcut or community route. A community route also shows the date and the actual duration of that trip.</li>
         <li><strong>Anonymous traffic data (optional):</strong> if you agree, speed and position while navigating are sent <strong>without your account</strong>, under a random trip ID. Positions within 300 m of the start and destination are never sent.</li>
         <li><strong>Live location sharing (optional):</strong> if you start sharing, your latest position, speed, direction, destination and ETA are visible to anyone with the link until you stop or it expires (12 hours max). Only the latest position is stored — no history — and it is deleted as soon as sharing stops.</li>
         <li><strong>Driver mode (optional):</strong> if you turn on Driver mode when sharing your live location, anyone with that link also sees your vehicle, plate number, WhatsApp number (if given) and the name of the next stop from your itinerary. The phone number is deleted as soon as sharing stops. Your vehicle details and number are also kept on your device for next time.</li>
@@ -168,7 +168,7 @@ const en: LegalSection[] = [
     body: (
       <p>
         Road reports, shortcuts and places you share are visible to all users, including people who aren’t signed in. Your name and email are <strong>not</strong> shown with this
-        content. For shortcuts, the first and last 300 m are removed automatically so your home or office isn’t revealed. Please don’t put personal information in notes or reviews.
+        content. For shortcuts the first and last 300 m, and for community routes the first and last 1 km, are removed automatically so your home or office isn’t revealed. Please don’t put personal information in notes or reviews.
       </p>
     ),
   },

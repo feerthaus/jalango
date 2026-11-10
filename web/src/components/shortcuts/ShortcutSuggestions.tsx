@@ -1,6 +1,7 @@
 import { Navigation, ThumbsUp, X, Zap } from 'lucide-react';
 import { useMemo } from 'react';
 import { useRouting } from '@/contexts/RoutingContext';
+import { useT } from '@/lib/i18n';
 import { useShortcuts } from '@/contexts/ShortcutsContext';
 import { formatDistance } from '@/utils/geo';
 import { shortcutsOnRoute } from '@/utils/routeAlerts';
@@ -14,6 +15,7 @@ import { buildRouteIndex } from '@/utils/routeProgress';
 export function ShortcutSuggestions() {
   const { selectedRoute, destination, shortcut, shortcutTitle, applyShortcut, clearShortcut } = useRouting();
   const { shortcuts, selectShortcut } = useShortcuts();
+  const [t] = useT();
 
   const suggestions = useMemo(() => {
     if (!selectedRoute || selectedRoute.source === 'demo' || shortcut) return [];
@@ -27,11 +29,11 @@ export function ShortcutSuggestions() {
       <div className="mb-2 flex items-center gap-2 rounded-2xl bg-violet-500/10 p-3 text-sm">
         <Navigation className="size-4 shrink-0 text-violet-500" />
         <span className="min-w-0 flex-1">
-          Via community shortcut <strong className="font-semibold">{shortcutTitle}</strong>
-          <span className="block text-xs text-ink-500">Time shown without live traffic for the shortcut part.</span>
+          {t('Ikut laluan komuniti', 'Via community route')} <strong className="font-semibold">{shortcutTitle}</strong>
+          <span className="block text-xs text-ink-500">{t('Masa dipaparkan tanpa trafik langsung untuk bahagian ini.', 'Time shown without live traffic for this part.')}</span>
         </span>
         <button type="button" onClick={clearShortcut} className="flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold text-violet-600 hover:bg-violet-500/10 dark:text-violet-300">
-          <X className="size-3.5" /> Remove
+          <X className="size-3.5" /> {t('Buang', 'Remove')}
         </button>
       </div>
     );
