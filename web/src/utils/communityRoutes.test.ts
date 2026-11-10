@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { CommunityRoute, Route } from '@/types';
-import { daysAgo, divergence, matchesTrip, prepareRoutePath, suggestCommunityRoutes } from './communityRoutes';
+import { daysAgo, divergence, mainRouteSeconds, matchesTrip, prepareRoutePath, suggestCommunityRoutes } from './communityRoutes';
 import { buildRouteIndex } from './routeProgress';
 import { pathLength, thinTrace, type LngLat } from './trace';
 
@@ -61,6 +61,23 @@ describe('matching and suggestions', () => {
     const idx = buildRouteIndex(mainRoute);
     const list = [cr({ id: 'a', upvotes: 1 }), cr({ id: 'b', upvotes: 9 }), cr({ id: 'same', path: mainPath, upvotes: 50 })];
     expect(suggestCommunityRoutes(idx, from, to, list).map((s) => s.route.id)).toEqual(['b', 'a']);
+  });
+  it('offers a part-way alternative that rejoins the main route (Kuala Pilah → exit Gambang)', () => {
+    const KARAK: LngLat = [102.03, 3.42], GAMBANG: LngLat = [103.1, 3.7];
+    const lpt = [...line(KL, KARAK, 60), ...line(KARAK, GAMBANG, 200).slice(1), ...line(GAMBANG, KB, 200).slice(1)];
+    const idx = buildRouteIndex({ geometry: { type: 'LineString', coordinates: lpt }, steps: [] } as unknown as Route);
+    const pilah = [...line(KL, [102.25, 2.74], 100), ...line([102.25, 2.74], GAMBANG, 150).slice(1)];
+    const r = cr({ id: 'pilah', path: pilah, end_lat: GAMBANG[1], end_lng: GAMBANG[0], duration_s: 3 * 3600 });
+    const [s] = suggestCommunityRoutes(idx, from, to, [r]);
+    expect(s?.route.id).toBe('pilah');
+    expect(s.full).toBe(false);
+    expect(s.toAlong).toBeLessThan(idx.total * 0.6); // rejoins around Gambang, not at KB
+    expect(mainRouteSeconds(idx, 8 * 3600, s)).toBeLessThan(5 * 3600);
+  });
+  it('ignores a route going the other way', () => {
+    const idx = buildRouteIndex(mainRoute);
+    const back = cr({ id: 'back', path: [...inland].reverse(), start_lat: KB[1], start_lng: KB[0], end_lat: KL[1], end_lng: KL[0] });
+    expect(suggestCommunityRoutes(idx, from, to, [back])).toEqual([]);
   });
   it('counts whole days', () => {
     expect(daysAgo(new Date(Date.now() - 3.5 * 86_400_000).toISOString())).toBe(3);

@@ -5,20 +5,20 @@ import { useRouting } from '@/contexts/RoutingContext';
 import { features } from '@/lib/config';
 import { cn } from '@/lib/cn';
 import { useT } from '@/lib/i18n';
-import { fetchCommunityRoutes, fetchMyCommunityRouteVotes, voteCommunityRoute } from '@/services/communityRoutesService';
+import { fetchCommunityRoutes, fetchMyCommunityRouteVotes, tripArea, voteCommunityRoute } from '@/services/communityRoutesService';
 import type { CommunityRoute, Coordinates } from '@/types';
-import { COMMUNITY_MIN_M, daysAgo, suggestCommunityRoutes } from '@/utils/communityRoutes';
+import { COMMUNITY_MIN_M, daysAgo, mainRouteSeconds, suggestCommunityRoutes } from '@/utils/communityRoutes';
 import { formatDuration } from '@/utils/format';
 import { formatDistance } from '@/utils/geo';
 import { buildRouteIndex } from '@/utils/routeProgress';
 
 // One fetch per trip (rounded ends), not per reroute
 const cache = new Map<string, Promise<CommunityRoute[]>>();
-function load(from: Coordinates, to: Coordinates): Promise<CommunityRoute[]> {
+function load(from: Coordinates, to: Coordinates, coords: [number, number][]): Promise<CommunityRoute[]> {
   const key = [from.lat, from.lng, to.lat, to.lng].map((n) => n.toFixed(2)).join(',');
   let p = cache.get(key);
   if (!p) {
-    p = fetchCommunityRoutes(from, to).catch((err) => {
+    p = fetchCommunityRoutes(tripArea([...coords, [to.lng, to.lat]])).catch((err) => {
       cache.delete(key);
       throw err;
     });
@@ -50,18 +50,19 @@ export function CommunityRouteSuggestions() {
     if (!eligible || !from || !to) return;
     let alive = true;
     setLoading(true);
-    load(from, to)
+    load(from, to, selectedRoute!.geometry.coordinates as [number, number][])
       .then((rows) => alive && setList(rows), () => alive && setList([]))
       .finally(() => alive && setLoading(false));
     return () => {
       alive = false;
     };
-  }, [eligible, from, to]);
+  }, [eligible, from, to]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const index = useMemo(() => (selectedRoute ? buildRouteIndex(selectedRoute) : null), [selectedRoute]);
   const suggestions = useMemo(() => {
-    if (!eligible || !selectedRoute || !from || !to || list.length === 0) return [];
-    return suggestCommunityRoutes(buildRouteIndex(selectedRoute), from, to, list);
-  }, [eligible, selectedRoute, from, to, list]);
+    if (!eligible || !index || !from || !to || list.length === 0) return [];
+    return suggestCommunityRoutes(index, from, to, list);
+  }, [eligible, index, from, to, list]);
 
   useEffect(() => {
     if (!user || suggestions.length === 0) return;
@@ -110,8 +111,9 @@ export function CommunityRouteSuggestions() {
         {jammed ? t('Jem? Pemandu lain ikut jalan ini', 'Jammed? Other drivers took these roads') : t('Laluan alternatif dari komuniti', 'Alternative routes from the community')}
       </p>
       <ul className="mt-2 space-y-1.5">
-        {suggestions.map(({ route: r }) => {
-          const faster = selectedRoute ? selectedRoute.durationSeconds - r.duration_s : 0;
+        {suggestions.map((sg) => {
+          const r = sg.route;
+          const faster = selectedRoute && index ? mainRouteSeconds(index, selectedRoute.durationSeconds, sg) - r.duration_s : 0;
           const d = daysAgo(r.driven_at);
           const mine = user?.id === r.user_id;
           return (
@@ -120,6 +122,7 @@ export function CommunityRouteSuggestions() {
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-semibold">{r.title}</p>
                   {r.via_label && <p className="truncate text-xs text-ink-500">{t('Ikut', 'Via')} {r.via_label}</p>}
+                  {!sg.full && <p className="text-xs text-sky-700 dark:text-sky-300">{t('Sebahagian perjalanan: keluar dan masuk semula laluan utama', 'Part of the trip: leaves and rejoins the main route')}</p>}
                   <p className="mt-0.5 flex flex-wrap items-center gap-x-1.5 text-xs text-ink-500">
                     <span>{formatDistance(r.distance_m)}</span>·
                     <span className="flex items-center gap-0.5">

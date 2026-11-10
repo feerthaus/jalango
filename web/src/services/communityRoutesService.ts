@@ -1,9 +1,8 @@
 import { supabase } from '@/lib/supabase';
-import type { CommunityRoute, Coordinates } from '@/types';
-import { boundsAround } from '@/utils/bounds';
+import type { CommunityRoute } from '@/types';
 import { COMMUNITY_MATCH_M } from '@/utils/communityRoutes';
 import type { LngLat } from '@/utils/trace';
-import { toReportError } from './reportsService';
+import { toReportError, type Bounds } from './reportsService';
 
 const COLUMNS = 'id,user_id,title,via_label,note,path,start_lat,start_lng,end_lat,end_lng,distance_m,duration_s,driven_at,upvotes,downvotes,created_at';
 
@@ -12,28 +11,39 @@ function client() {
   return supabase;
 }
 
-/** Routes that start near `from` and end near `to` (precise matching happens on the phone). */
-export async function fetchCommunityRoutes(from: Coordinates, to: Coordinates, signal?: AbortSignal): Promise<CommunityRoute[]> {
-  const km = COMMUNITY_MATCH_M / 1000;
-  const a = boundsAround(from.lat, from.lng, km);
-  const b = boundsAround(to.lat, to.lng, km);
+/** Routes that start and end inside the trip's area (precise matching happens on the phone). */
+export async function fetchCommunityRoutes(area: Bounds, signal?: AbortSignal): Promise<CommunityRoute[]> {
   let q = client()
     .from('community_routes')
     .select(COLUMNS)
-    .gte('start_lat', a.minLat)
-    .lte('start_lat', a.maxLat)
-    .gte('start_lng', a.minLng)
-    .lte('start_lng', a.maxLng)
-    .gte('end_lat', b.minLat)
-    .lte('end_lat', b.maxLat)
-    .gte('end_lng', b.minLng)
-    .lte('end_lng', b.maxLng)
+    .gte('start_lat', area.minLat)
+    .lte('start_lat', area.maxLat)
+    .gte('start_lng', area.minLng)
+    .lte('start_lng', area.maxLng)
+    .gte('end_lat', area.minLat)
+    .lte('end_lat', area.maxLat)
+    .gte('end_lng', area.minLng)
+    .lte('end_lng', area.maxLng)
     .order('upvotes', { ascending: false })
-    .limit(30);
+    .limit(60);
   if (signal) q = q.abortSignal(signal);
   const { data, error } = await q;
   if (error) throw toReportError(error);
   return (data ?? []) as CommunityRoute[];
+}
+
+/** Bounding box of a trip's route plus a margin (km). */
+export function tripArea(coords: [number, number][], km = COMMUNITY_MATCH_M / 1000): Bounds {
+  let minLat = 90, maxLat = -90, minLng = 180, maxLng = -180;
+  for (const [lng, lat] of coords) {
+    if (lat < minLat) minLat = lat;
+    if (lat > maxLat) maxLat = lat;
+    if (lng < minLng) minLng = lng;
+    if (lng > maxLng) maxLng = lng;
+  }
+  const dLat = km / 111;
+  const dLng = km / (111 * Math.cos((((minLat + maxLat) / 2) * Math.PI) / 180));
+  return { minLat: minLat - dLat, maxLat: maxLat + dLat, minLng: minLng - dLng, maxLng: maxLng + dLng };
 }
 
 export interface NewCommunityRoute {
