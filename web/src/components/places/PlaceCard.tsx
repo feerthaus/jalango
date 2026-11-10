@@ -1,4 +1,4 @@
-import { Check, Copy, CornerUpRight, Heart, ListPlus, Share2, Star, ThumbsUp, Users, X } from 'lucide-react';
+import { Check, CornerUpRight, Heart, ListPlus, Share2, Star, ThumbsUp, Users, X } from 'lucide-react';
 import { RecommendPlaceSheet } from '@/components/community/RecommendPlaceSheet';
 import { FlagButton } from '@/components/moderation/FlagButton';
 import { useCommunityPlaces } from '@/contexts/CommunityPlacesContext';
@@ -9,6 +9,8 @@ import { useRouting } from '@/contexts/RoutingContext';
 import { useConvoy } from '@/contexts/ConvoyContext';
 import { useItinerary } from '@/contexts/ItineraryContext';
 import { useState } from 'react';
+import { spotUrl } from '@/components/live/ShareSpotButton';
+import { ShareSheet } from '@/components/share/ShareSheet';
 import { Button } from '@/components/ui/Button';
 import { DemoBadge } from '@/components/ui/DemoBadge';
 import { useLocation } from '@/contexts/LocationContext';
@@ -25,7 +27,7 @@ export function PlaceCard({ place, onClose }: { place: Place; onClose: () => voi
   const { fix } = useLocation();
   const { isFavourite, toggleFavourite } = useSavedPlaces();
   const { planRoute } = useRouting();
-  const [copied, setCopied] = useState(false);
+  const [sharing, setSharing] = useState(false);
   const [recommending, setRecommending] = useState(false);
   const { user } = useAuth();
   const convoy = useConvoy();
@@ -41,27 +43,12 @@ export function PlaceCard({ place, onClose }: { place: Place; onClose: () => voi
   const community = useCommunityPlaces();
   const pick = place.source === 'community' ? community.findById(place.id.replace(/^community:/, '')) : undefined;
   const picked = pick ? community.recommended.has(pick.id) : false;
-  const canShare = typeof navigator.share === 'function';
   const Icon = placeIcon(place);
   const saved = isFavourite(place.id);
   const distance = fix ? haversineMeters(fix.coordinates, place.coordinates) : null;
   const coords = formatCoordinates(place.coordinates);
-  const mapsUrl = `https://www.openstreetmap.org/?mlat=${place.coordinates.lat}&mlon=${place.coordinates.lng}#map=17/${place.coordinates.lat}/${place.coordinates.lng}`;
 
-  const share = async () => {
-    const text = `${place.name}${place.address ? ` — ${place.address}` : ''} (${coords})`;
-    try {
-      if (canShare) {
-        await navigator.share({ title: place.name, text, url: mapsUrl });
-        return;
-      }
-      await navigator.clipboard.writeText(`${text}\n${mapsUrl}`);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1800);
-    } catch {
-      /* user cancelled the share sheet or clipboard blocked */
-    }
-  };
+  const share = () => setSharing(true);
 
   return (
     <article
@@ -117,8 +104,8 @@ export function PlaceCard({ place, onClose }: { place: Place; onClose: () => voi
           {saved ? t('Disimpan', 'Saved') : t('Simpan', 'Save')}
         </Button>
         <Button variant="secondary" onClick={share}>
-          {copied ? <Check className="size-4" /> : canShare ? <Share2 className="size-4" /> : <Copy className="size-4" />}
-          {copied ? t('Disalin', 'Copied') : t('Kongsi', 'Share')}
+          <Share2 className="size-4" />
+          {t('Kongsi', 'Share')}
         </Button>
         {pick ? (
           <Button
@@ -164,6 +151,13 @@ export function PlaceCard({ place, onClose }: { place: Place; onClose: () => voi
         <RecommendPlaceSheet
           initial={{ name: place.name, address: place.address, coordinates: place.coordinates, category: guessCategory(place.category) }}
           onClose={() => setRecommending(false)}
+        />
+      )}
+      {sharing && (
+        <ShareSheet
+          heading={t('Kongsi tempat ini', 'Share this place')}
+          content={{ title: place.name, text: `📍 ${place.name}${place.address ? ` — ${place.address}` : ''}`, url: spotUrl(place.coordinates.lat, place.coordinates.lng) }}
+          onClose={() => setSharing(false)}
         />
       )}
     </article>
