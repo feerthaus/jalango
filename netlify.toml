@@ -31,7 +31,7 @@
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
     X-Frame-Options = "DENY"
-    Permissions-Policy = "geolocation=(self), camera=(), microphone=(), payment=(), usb=()"
+    Permissions-Policy = "geolocation=(self), camera=(), microphone=(self), payment=(), usb=()"
 
 # Service worker and manifest must always be fresh so updates reach installed apps
 [[headers]]
