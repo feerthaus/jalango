@@ -23,7 +23,7 @@ export interface Place {
   kind: PlaceKind;
   category?: string;
   /** Where the record came from. `demo` records are sample data. */
-  source: 'mapbox' | 'demo' | 'osm';
+  source: 'mapbox' | 'demo' | 'osm' | 'link';
   distanceMeters?: number;
 }
 
@@ -60,7 +60,7 @@ export interface Route {
   hasMotorway: boolean;
   /** Per-segment live congestion (length = coordinates - 1) */
   congestion?: Congestion[];
-  source: 'mapbox' | 'demo' | 'osm';
+  source: 'mapbox' | 'demo' | 'osm' | 'link';
   /** speed limit (km/h) per geometry segment, null where unknown */
   maxspeeds?: (number | null)[];
 }

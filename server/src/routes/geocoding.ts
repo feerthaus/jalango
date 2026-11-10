@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { withUsagePolicy } from '../lib/usageGuard.js';
+import { placeFromMapsLink } from '../services/mapsLink.js';
 import { CATEGORY_MAP, reverseGeocode, searchAlong, searchCategory, searchPlaces } from '../services/mapbox.js';
 
 const lng = z.coerce.number().min(-180).max(180);
@@ -45,6 +46,14 @@ geocodingRouter.get('/search', async (req, res) => {
   const { q, lng, lat, limit } = searchQuery.parse(req.query);
   const near = lng !== undefined && lat !== undefined ? { lng, lat } : undefined;
   res.json({ results: await searchPlaces(q, near, limit) });
+});
+
+/** A pasted Google Maps link (or "lat, lng") → the place it points to. */
+const linkQuery = z.object({ url: z.string().trim().min(5).max(2000), lng: lng.optional(), lat: lat.optional() });
+geocodingRouter.get('/link', async (req, res) => {
+  const { url, lng, lat } = linkQuery.parse(req.query);
+  const near = lng !== undefined && lat !== undefined ? { lng, lat } : undefined;
+  res.json({ result: await placeFromMapsLink(url, near) });
 });
 
 geocodingRouter.get('/reverse', async (req, res) => {

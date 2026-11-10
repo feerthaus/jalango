@@ -28,6 +28,14 @@ export function searchDemoPlaces(query: string, near?: Coordinates | null, limit
     .map((r) => r.place);
 }
 
+export const LINK_UNREADABLE = 'link';
+
+/** A pasted link (e.g. shared from Google Maps) or "lat, lng" — resolved by the server instead of searched. */
+export function looksLikeLinkOrCoords(q: string): boolean {
+  const t = q.trim();
+  return /^https:\/\/\S+$/i.test(t) || /^-?\d{1,2}\.\d{3,}\s*,\s*-?\d{1,3}\.\d{3,}$/.test(t);
+}
+
 const DEMO_NOTICE_UNREACHABLE = 'Live search is unavailable right now — showing offline sample places.';
 
 export async function searchPlaces(
@@ -36,6 +44,10 @@ export async function searchPlaces(
 ): Promise<SearchResponse> {
   if (!opts.live) {
     return { results: searchDemoPlaces(query, opts.near), mode: 'demo' };
+  }
+  if (looksLikeLinkOrCoords(query)) {
+    const { result } = await apiGet<{ result: Place | null }>('/geo/link', { url: query, lng: opts.near?.lng, lat: opts.near?.lat }, opts.signal);
+    return { results: result ? [result] : [], mode: 'live', notice: result ? undefined : LINK_UNREADABLE };
   }
   try {
     const { results } = await apiGet<{ results: Place[] }>(
