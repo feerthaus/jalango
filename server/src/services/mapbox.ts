@@ -237,7 +237,39 @@ export async function searchPlaces(query: string, near?: Coordinates, limit = 8)
     const [p2, s2] = await Promise.all([searchBox(spaced, near, limit), geocodeStreets(spaced, near, limit).catch(() => [] as Place[])]);
     results = mergePlaces(s2.filter((p) => p.kind === 'street' || p.kind === 'address').concat(p2), s2, limit);
   }
+
+  // Still nothing: the name is half-typed ("Awana Sky") or split differently ("Awana Sky Way").
+  // Search the complete words, keep places whose name holds every typed piece, and ask OpenStreetMap too.
+  if (results.length === 0) results = await partialNameSearch(q, near, limit);
   return results;
+}
+
+/** Lower-case letters and digits only: "Awana SkyWay" → "awanaskyway". */
+export const compactName = (s: string) => s.normalize('NFKD').toLowerCase().replace(/[^a-z0-9]/g, '');
+
+/** Does the place name contain every word the user typed (ignoring spaces)? */
+export function nameHasAllTokens(name: string, q: string): boolean {
+  const n = compactName(name);
+  const tokens = q.split(/\s+/).map(compactName).filter(Boolean);
+  return tokens.length > 0 && tokens.every((t) => n.includes(t));
+}
+
+/** The query minus its last word, while keeping at least one word of 3+ letters. */
+export function completeWordsOf(q: string): string | null {
+  const words = q.trim().split(/\s+/);
+  if (words.length < 2) return null;
+  const head = words.slice(0, -1).join(' ');
+  return compactName(head).length >= 3 ? head : null;
+}
+
+async function partialNameSearch(q: string, near: Coordinates | undefined, limit: number): Promise<Place[]> {
+  const head = completeWordsOf(q);
+  const [pois, osm] = await Promise.all([
+    head ? searchBox(head, near, 10).catch(() => [] as Place[]) : Promise.resolve([] as Place[]),
+    searchOsm(q, near, limit),
+  ]);
+  const matching = pois.filter((p) => nameHasAllTokens(p.name, q));
+  return mergePlaces(matching, osm.filter((p) => nameHasAllTokens(p.name, q) || nameHasAllTokens(`${p.name} ${p.address}`, q)), limit);
 }
 
 export async function reverseGeocode(at: Coordinates): Promise<Place | null> {

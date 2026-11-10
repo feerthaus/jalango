@@ -49,6 +49,26 @@ afterEach(() => {
 
 const paid = (calls: string[]) => calls.filter((c) => c.startsWith('api.mapbox.com')).length;
 
+describe('half-typed place names', () => {
+  it('finds "Awana Sky" by searching "Awana" and keeping names with every typed piece', async () => {
+    const counts = countingCounter();
+    const calls = mockUpstream((url) => {
+      if (url.hostname === 'photon.komoot.io') return { features: [] };
+      if (url.searchParams.get('q') === 'Awana') return { features: [feature('Awana Puri Condominium'), feature('Awana Skyway', 101.78), feature('Resorts World Awana', 101.79)] };
+      return { features: [] };
+    });
+    const res = await mapbox.searchPlaces('Awana Sky', { lng: 101.6, lat: 3.1 });
+    expect(res.map((p) => p.name)).toEqual(['Awana Skyway']);
+    expect(paid(calls)).toBe(counts.geo); // every Mapbox call counted
+  });
+  it('matches a name typed with a space in it ("Sky Way")', () => {
+    expect(mapbox.nameHasAllTokens('Awana SkyWay Chin Swee Station', 'awana sky way')).toBe(true);
+    expect(mapbox.nameHasAllTokens('Resorts World Awana', 'awana sky')).toBe(false);
+    expect(mapbox.completeWordsOf('Awana Sky')).toBe('Awana');
+    expect(mapbox.completeWordsOf('KL')).toBeNull();
+  });
+});
+
 describe('upstream request counting', () => {
   it('plain search: one Search Box call, counted once', async () => {
     const counts = countingCounter();
