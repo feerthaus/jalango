@@ -1,6 +1,6 @@
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
-import { Clock, Flag, Loader2, MapPinOff, Navigation, Radio } from 'lucide-react';
+import { Clock, Flag, ListOrdered, Loader2, MapPinOff, MessageCircle, Navigation, Phone, Radio } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router';
 import { LogoMark } from '@/components/brand/LogoMark';
@@ -137,7 +137,11 @@ export function LiveViewPage() {
             <Ended icon={MapPinOff} title={`${share.display_name} stopped sharing`} text="Their location is no longer available." />
           ) : (
             <>
-              <p className="text-lg font-bold">{share.display_name}</p>
+              {share.driver_plate || share.driver_vehicle ? (
+                <DriverCard share={share} />
+              ) : (
+                <p className="text-lg font-bold">{share.display_name}</p>
+              )}
               <p className="text-sm text-ink-500 dark:text-ink-300">
                 {share.latitude === null ? 'Waiting for location…' : stale ? `Last seen ${formatRelativeTime(share.position_at!)}` : `Updated ${Math.max(0, Math.round((Date.now() - Date.parse(share.position_at!)) / 1000))} s ago`}
                 {share.speed_mps !== null && share.speed_mps > 1 && !stale && ` · ${toKmh(share.speed_mps)} km/h`}
@@ -149,6 +153,15 @@ export function LiveViewPage() {
                     Heading to <strong>{share.destination_name}</strong>
                     {etaMin !== null && ` · arriving in ~${etaMin} min`}
                   </span>
+                </p>
+              )}
+              {share.next_stop_name && (
+                <p className="mt-2 flex items-center gap-2 rounded-xl bg-violet-500/10 px-3 py-2 text-sm">
+                  <ListOrdered className="size-4 shrink-0 text-violet-600" />
+                  <span className="min-w-0 flex-1 truncate">
+                    Next stop: <strong>{share.next_stop_name}</strong>
+                  </span>
+                  {typeof share.stops_left === 'number' && share.stops_left > 1 && <span className="shrink-0 text-xs text-ink-500">{share.stops_left} left</span>}
                 </p>
               )}
               <p className="mt-2 flex items-center gap-1.5 text-xs text-ink-400">
@@ -177,6 +190,37 @@ function Ended({ icon: Icon, title, text }: { icon: typeof MapPinOff; title: str
       <Icon className="mx-auto mb-2 size-8 text-ink-400" />
       <p className="font-semibold">{title}</p>
       <p className="text-sm text-ink-500">{text}</p>
+    </div>
+  );
+}
+
+/** Who is coming: name, vehicle, a big plate number to spot the car, and ways to reach the driver. */
+function DriverCard({ share }: { share: PublicLiveShare }) {
+  const phone = share.driver_phone;
+  return (
+    <div className="mb-2">
+      <p className="text-xs font-semibold uppercase tracking-wide text-ink-400">Your driver · Pemandu anda</p>
+      <div className="mt-1 flex items-center gap-3">
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-lg font-bold">{share.display_name}</p>
+          {share.driver_vehicle && <p className="truncate text-sm text-ink-500 dark:text-ink-300">{share.driver_vehicle}</p>}
+        </div>
+        {share.driver_plate && (
+          <span className="shrink-0 rounded-lg border-2 border-ink-900 bg-ink-950 px-3 py-1.5 font-mono text-lg font-black tracking-wider text-white dark:border-white" aria-label={`Plate number ${share.driver_plate}`}>
+            {share.driver_plate}
+          </span>
+        )}
+      </div>
+      {phone && (
+        <div className="mt-3 grid grid-cols-2 gap-2">
+          <a href={`https://wa.me/${phone}`} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-1.5 rounded-xl bg-[#25D366] py-2.5 text-sm font-semibold text-white">
+            <MessageCircle className="size-4" /> WhatsApp
+          </a>
+          <a href={`tel:+${phone}`} className="flex items-center justify-center gap-1.5 rounded-xl bg-ink-100 py-2.5 text-sm font-semibold dark:bg-ink-800">
+            <Phone className="size-4" /> Call
+          </a>
+        </div>
+      )}
     </div>
   );
 }

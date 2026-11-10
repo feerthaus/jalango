@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { features } from '@/lib/config';
-import { createShare, fetchMyActiveShares, pushPosition, stopShare, type LiveShare } from '@/services/liveShareService';
+import { createShare, fetchMyActiveShares, pushPosition, stopShare, type DriverInfo, type LiveShare } from '@/services/liveShareService';
+import { useItinerary } from './ItineraryContext';
 import { haversineMeters } from '@/utils/geo';
 import { useAuth } from './AuthContext';
 import { useLocation } from './LocationContext';
@@ -9,7 +10,7 @@ import { useRouting } from './RoutingContext';
 interface LiveShareValue {
   available: boolean;
   shares: LiveShare[];
-  start: (opts: { displayName: string; minutes: number; untilArrival: boolean }) => Promise<LiveShare>;
+  start: (opts: { displayName: string; minutes: number; untilArrival: boolean; driver?: DriverInfo | null }) => Promise<LiveShare>;
   stop: (id: string) => Promise<void>;
   stopAll: () => Promise<void>;
 }
@@ -36,6 +37,13 @@ export function LiveShareProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const { fix } = useLocation();
   const { status, destination, progress } = useRouting();
+  const itinerary = useItinerary();
+  // Driver mode: the stop being driven to (or the next unvisited one) and how many are left
+  const nextStopIdx = itinerary.activeIndex !== -1 ? itinerary.activeIndex : itinerary.nextIndex;
+  const nextStopName = nextStopIdx !== -1 ? itinerary.stops[nextStopIdx].place.name : null;
+  const stopsLeft = itinerary.stops.filter((s) => !s.done).length;
+  const nextStopKey = nextStopName ? `${nextStopName}|${stopsLeft}` : '';
+  const lastStopKey = useRef<string | null>(null);
   const [shares, setShares] = useState<LiveShare[]>([]);
   const last = useRef<{ t: number; lat: number; lng: number } | null>(null);
   const available = features.supabase && Boolean(user);
@@ -70,13 +78,14 @@ export function LiveShareProvider({ children }: { children: ReactNode }) {
   }, [shares, stop]);
 
   const start = useCallback(
-    async (opts: { displayName: string; minutes: number; untilArrival: boolean }) => {
+    async (opts: { displayName: string; minutes: number; untilArrival: boolean; driver?: DriverInfo | null }) => {
       if (!user) throw new Error('Sign in to share your live location.');
       const share = await createShare({
         userId: user.id,
         displayName: opts.displayName,
         minutes: opts.minutes,
         destination: destination && status !== 'idle' ? { name: destination.name, coordinates: destination.coordinates } : null,
+        driver: opts.driver ?? null,
       });
       setShares((s) => [share, ...s]);
       if (opts.untilArrival) {
@@ -87,6 +96,7 @@ export function LiveShareProvider({ children }: { children: ReactNode }) {
         }
       }
       last.current = null; // publish the first position right away
+      lastStopKey.current = null;
       return share;
     },
     [user, destination, status],
@@ -98,18 +108,29 @@ export function LiveShareProvider({ children }: { children: ReactNode }) {
     const now = Date.now();
     const prev = last.current;
     const moved = prev ? haversineMeters({ lat: prev.lat, lng: prev.lng }, fix.coordinates) : Infinity;
-    if (prev && (now - prev.t < MIN_INTERVAL_MS || (moved < MIN_MOVE_M && now - prev.t < HEARTBEAT_MS))) return;
+    // Only driver-mode links show the itinerary's next stop; personal links never do
+    const driverShare = shares.some((s) => s.driver_plate);
+    const stopChanged = driverShare && lastStopKey.current !== nextStopKey;
+    if (prev && !stopChanged && (now - prev.t < MIN_INTERVAL_MS || (moved < MIN_MOVE_M && now - prev.t < HEARTBEAT_MS))) return;
     last.current = { t: now, lat: fix.coordinates.lat, lng: fix.coordinates.lng };
     const navigating = status === 'navigating';
     const etaAt = navigating && progress ? new Date(now + progress.remainingSeconds * 1000).toISOString() : null;
     pushPosition(
       shares.map((s) => s.id),
       fix,
-      { etaAt, destination: navigating && destination ? { name: destination.name, coordinates: destination.coordinates } : undefined },
-    ).catch(() => {
-      last.current = prev; // retry on next fix
-    });
-  }, [fix, shares, status, progress, destination]);
+      {
+        etaAt,
+        destination: navigating && destination ? { name: destination.name, coordinates: destination.coordinates } : undefined,
+        nextStop: stopChanged ? (nextStopName ? { name: nextStopName, left: stopsLeft } : null) : undefined,
+      },
+    )
+      .then(() => {
+        lastStopKey.current = nextStopKey;
+      })
+      .catch(() => {
+        last.current = prev; // retry on next fix
+      });
+  }, [fix, shares, status, progress, destination, nextStopKey, nextStopName, stopsLeft]);
 
   // "Until I arrive" shares stop when the trip ends
   const prevStatus = useRef(status);
