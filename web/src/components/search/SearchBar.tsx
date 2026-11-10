@@ -1,5 +1,5 @@
 import { ArrowLeft, Search, X } from 'lucide-react';
-import { forwardRef, type KeyboardEvent } from 'react';
+import { forwardRef, type KeyboardEvent, type ReactNode } from 'react';
 import { useT } from '@/lib/i18n';
 import { LogoMark } from '@/components/brand/LogoMark';
 import { Spinner } from '@/components/ui/Spinner';
@@ -14,10 +14,12 @@ interface SearchBarProps {
   onKeyDown?: (e: KeyboardEvent<HTMLInputElement>) => void;
   loading?: boolean;
   activeDescendant?: string;
+  /** Shown when the box is empty (e.g. the voice search mic) */
+  extra?: ReactNode;
 }
 
 export const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(function SearchBar(
-  { value, onChange, open, onOpen, onClose, onKeyDown, loading, activeDescendant },
+  { value, onChange, open, onOpen, onClose, onKeyDown, loading, activeDescendant, extra },
   ref,
 ) {
   const [t] = useT();
@@ -68,6 +70,7 @@ export const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(function S
           <X className="size-5" />
         </button>
       )}
+      {!value && extra}
       {!open && (
         <span className="mr-1" aria-hidden>
           <LogoMark className="size-10" title="" />

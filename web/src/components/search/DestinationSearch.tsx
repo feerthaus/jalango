@@ -4,6 +4,7 @@ import { useSavedPlaces } from '@/contexts/SavedPlacesContext';
 import { usePlaceSearch } from '@/hooks/usePlaceSearch';
 import { cn } from '@/lib/cn';
 import type { Place } from '@/types';
+import { VoiceSearchButton } from '@/components/voice/VoiceSearch';
 import { SearchBar } from './SearchBar';
 import { optionId, SearchPanel } from './SearchPanel';
 
@@ -75,6 +76,15 @@ export function DestinationSearch({ onOpenChange }: { onOpenChange?: (open: bool
         onKeyDown={onKeyDown}
         loading={search.loading}
         activeDescendant={activeIndex >= 0 ? optionId(activeIndex) : undefined}
+        extra={
+          <VoiceSearchButton
+            onTypeInstead={(text) => {
+              setQuery(text);
+              setOpen(true);
+              setTimeout(() => inputRef.current?.focus(), 50);
+            }}
+          />
+        }
       />
       {open && <SearchPanel query={query} search={search} activeIndex={activeIndex} onSelect={choose} />}
     </div>
