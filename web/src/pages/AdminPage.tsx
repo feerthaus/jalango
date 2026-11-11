@@ -2,6 +2,7 @@ import { ArrowLeft, Ban, Check, EyeOff, Loader2, RefreshCw, RotateCcw, ShieldAle
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router';
 import { Wordmark } from '@/components/brand/LogoMark';
+import { PhotoReviewQueue } from '@/components/accidents/PhotoReviewQueue';
 import { Button } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { useAuth } from '@/contexts/AuthContext';
@@ -25,7 +26,7 @@ import type { ReportType } from '@/types';
 export function AdminPage() {
   const { user, loading } = useAuth();
   const [allowed, setAllowed] = useState<boolean | null>(null);
-  const [tab, setTab] = useState<'flags' | 'feedback'>('flags');
+  const [tab, setTab] = useState<'flags' | 'photos' | 'feedback'>('flags');
 
   useEffect(() => {
     if (loading) return;
@@ -53,14 +54,14 @@ export function AdminPage() {
           </EmptyState>
         ) : (
           <>
-            <div role="tablist" className="mb-4 grid grid-cols-2 gap-1 rounded-2xl bg-ink-100 p-1 dark:bg-ink-900">
-              {(['flags', 'feedback'] as const).map((t) => (
+            <div role="tablist" className="mb-4 grid grid-cols-3 gap-1 rounded-2xl bg-ink-100 p-1 dark:bg-ink-900">
+              {(['flags', 'photos', 'feedback'] as const).map((t) => (
                 <button key={t} type="button" role="tab" aria-selected={tab === t} onClick={() => setTab(t)} className={cn('rounded-xl py-2 text-sm font-semibold', tab === t ? 'bg-white shadow-sm dark:bg-ink-700' : 'text-ink-500')}>
-                  {t === 'flags' ? 'Reported content' : 'Feedback'}
+                  {t === 'flags' ? 'Reported content' : t === 'photos' ? 'Gambar kemalangan' : 'Feedback'}
                 </button>
               ))}
             </div>
-            {tab === 'flags' ? <FlagQueue /> : <FeedbackInbox />}
+            {tab === 'flags' ? <FlagQueue /> : tab === 'photos' ? <PhotoReviewQueue /> : <FeedbackInbox />}
           </>
         )}
       </main>

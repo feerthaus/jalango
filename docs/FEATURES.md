@@ -35,6 +35,37 @@ Kemas kini fail ini dalam PR yang sama setiap kali fungsi baru ditambah atau diu
 
 ---
 
+## Rekod kemalangan dan amaran kawasan kerap kemalangan
+
+**Apa:** sejarah kemalangan di sesuatu lokasi, dipaparkan di peta dengan gambar. Pemandu diberi amaran bila menghampiri kawasan yang kerap berlaku kemalangan ("titik hitam"). Idea ini datang dari senarai kemalangan di Simpang Taman Seri Dagang yang dikongsi di Facebook.
+
+- **Di peta:** lencana merah ⚠ dengan bilangan kemalangan. Rekod dalam lingkungan 150 m dikira sebagai satu lokasi.
+- **Tekan lencana:** senarai kemalangan, yang terbaru dahulu. Setiap rekod tunjuk tarikh, siang/malam, kenderaan (cth. Motosikal & Kereta), keadaan mangsa, nota, dan gambar yang diluluskan.
+- **Undi:** pengguna lain boleh tekan "Betul" atau "Tak betul". Rekod yang mendapat ≥5 undi "Tak betul" (dan lebih 2× undi "Betul") disorok.
+- **Tambah rekod:**
+  - Dari kad tempat (cari tempat atau tekan lama di peta), tekan **"Rekod kemalangan di sini"**, atau dari lencana tekan **"Tambah rekod kemalangan di sini"**.
+  - Boleh rekod kemalangan **lama, sehingga 2 tahun lepas**.
+  - Had 10 rekod sehari bagi setiap pengguna.
+- **Laporan live:** laporan "Kemalangan" yang disahkan oleh pemandu lain menjadi rekod secara automatik.
+- **Gambar:**
+  - Pilihan. Pengguna perlu akui bahawa gambar tidak menunjukkan mangsa, muka atau nombor plat yang jelas.
+  - Gambar dikecilkan (1280 px) dan GPS/EXIF dibuang dalam telefon sebelum dimuat naik.
+  - Disimpan dalam bucket **peribadi**, dan **hanya dipaparkan selepas admin lulus** (Admin → Gambar kemalangan).
+- **Amaran navigasi:** lokasi dengan **≥2 kemalangan** dalam lingkungan 80 m dari laluan dipaparkan sebagai banner merah dalam 1 km. Pada 500 m, telefon bergetar dan suara berkata: *"Awas, kawasan kerap kemalangan di hadapan. 6 kemalangan direkodkan. Pandu berhati-hati."*
+
+**Had:**
+- Rekod datang daripada pengguna, bukan data rasmi PDRM/JKR.
+- Data dimuat untuk kawasan ~40 km di sekeliling peta.
+
+**Kod:**
+- Migrasi: `supabase/migrations/20261111000000_accident_records.sql` (jadual, undi, trigger dari laporan live, `review_accident_photo`, bucket `accident-photos` dan polisinya).
+- `web/src/services/accidentService.ts`, `web/src/contexts/AccidentsContext.tsx`.
+- `web/src/utils/accidentHotspots.ts`: pengelompokan, titik hitam di laluan, ayat amaran. Ujian: `accidentHotspots.test.ts`.
+- `web/src/components/accidents/`: penanda peta, senarai rekod, borang tambah, banner amaran, semakan gambar admin.
+- `web/src/hooks/useAccidentAlerts.ts`.
+
+---
+
 ## Simpan laluan, ikut semula, balik ikut jalan sama
 
 **Apa:** jalan yang anda lalui boleh diguna semula. Ini diminta oleh pengguna di Threads: *"boleh ke kita save map yang kita dah lalu, bila balik semula kita just buka map tu"*.
