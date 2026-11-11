@@ -35,6 +35,7 @@ CI (`.github/workflows/ci.yml`) runs `npm ci`, typecheck, test and build on ever
 - **Merge only when the owner says so.** No force-push, and never rewrite `main`.
 - Do not deploy or apply production migrations before review, unless the owner asks.
 - Keep changes focused. Put tests and the Privacy Policy update in the same PR as the feature.
+- Describe every new or changed user-facing feature in [`docs/FEATURES.md`](docs/FEATURES.md) (Malay) in the same PR.
 
 ## Supabase migrations
 
