@@ -12,6 +12,7 @@ import { DestinationMarker } from './DestinationMarker';
 import { NavigationCamera } from './NavigationCamera';
 import { RouteLayer } from './RouteLayer';
 import { ReportMarkers } from '@/components/reports/ReportMarkers';
+import { AccidentMarkers } from '@/components/accidents/AccidentMarkers';
 import { ShortcutLayer } from '@/components/shortcuts/ShortcutLayer';
 import { UserLocationMarker } from './UserLocationMarker';
 import { ConvoyMarkers } from '@/components/convoy/ConvoyMarkers';
@@ -142,6 +143,7 @@ export function MapView() {
       {map && <RouteLayer />}
       {map && <ShortcutLayer />}
       {map && <ReportMarkers />}
+      {map && <AccidentMarkers />}
       {map && <NavigationCamera />}
 
       {initError && (

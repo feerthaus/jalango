@@ -1,5 +1,7 @@
 import { ChevronDown, ChevronUp, Flag, ListOrdered, LocateFixed, Loader2, Volume2, VolumeX, X } from 'lucide-react';
 import { useRouteAlerts } from '@/hooks/useRouteAlerts';
+import { useAccidentAlerts } from '@/hooks/useAccidentAlerts';
+import { AccidentAlertBanner } from '@/components/accidents/AccidentAlertBanner';
 import { useVoiceAlerts, useVoiceLang } from '@/hooks/useVoiceAlerts';
 import { useSpeedAlert } from '@/hooks/useSpeedLimit';
 import { displayInstruction } from '@/utils/voiceInstructions';
@@ -47,6 +49,7 @@ export function NavigationHud() {
   const [shareOpen, setShareOpen] = useState(false);
   const [alongOpen, setAlongOpen] = useState(false);
   const alerts = useRouteAlerts();
+  const accidentAlert = useAccidentAlerts();
   useWakeLock(status === 'navigating');
   useVoiceGuidance();
   const oncoming = useOncomingAlerts();
@@ -151,6 +154,7 @@ export function NavigationHud() {
         {!showSteps && <ItineraryChip />}
         {!showSteps && <AlongLayerChip onOpen={() => setAlongOpen(true)} />}
         {!showSteps && <ResumeToast />}
+        {!showSteps && accidentAlert && <AccidentAlertBanner alert={accidentAlert} />}
         {!showSteps && <RouteAlerts alerts={alerts} />}
       </div>
 

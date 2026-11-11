@@ -1,4 +1,5 @@
-import { Check, CornerUpRight, Heart, ListPlus, Share2, Star, ThumbsUp, Users, X } from 'lucide-react';
+import { Check, CornerUpRight, Heart, ListPlus, Share2, Star, ThumbsUp, TriangleAlert, Users, X } from 'lucide-react';
+import { AddAccidentSheet } from '@/components/accidents/AddAccidentSheet';
 import { RecommendPlaceSheet } from '@/components/community/RecommendPlaceSheet';
 import { FlagButton } from '@/components/moderation/FlagButton';
 import { useCommunityPlaces } from '@/contexts/CommunityPlacesContext';
@@ -28,6 +29,7 @@ export function PlaceCard({ place, onClose }: { place: Place; onClose: () => voi
   const { isFavourite, toggleFavourite } = useSavedPlaces();
   const { planRoute } = useRouting();
   const [sharing, setSharing] = useState(false);
+  const [recordingAccident, setRecordingAccident] = useState(false);
   const [recommending, setRecommending] = useState(false);
   const { user } = useAuth();
   const convoy = useConvoy();
@@ -126,6 +128,10 @@ export function PlaceCard({ place, onClose }: { place: Place; onClose: () => voi
       <Button variant="secondary" className="mt-2 w-full" onClick={() => !inItinerary && itinerary.add(place)} disabled={inItinerary} aria-pressed={inItinerary}>
         {inItinerary ? <Check className="size-4" /> : <ListPlus className="size-4" />} {inItinerary ? t('Dalam itinerari', 'In itinerary') : t('+ Itinerari', '+ Itinerary')}
       </Button>
+      <Button variant="ghost" className="mt-2 w-full text-red-600 dark:text-red-400" onClick={() => setRecordingAccident(true)}>
+        <TriangleAlert className="size-4" /> {t('Rekod kemalangan di sini', 'Record an accident here')}
+      </Button>
+      {recordingAccident && <AddAccidentSheet at={place.coordinates} placeName={place.name} onClose={() => setRecordingAccident(false)} />}
       {place.source !== 'demo' && (
         <a
           href={googleMapsReviewsUrl(place)}

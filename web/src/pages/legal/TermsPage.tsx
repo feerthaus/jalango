@@ -42,7 +42,8 @@ const ms: LegalSection[] = [
           <li>iklan, spam atau promosi tanpa kebenaran;</li>
           <li>maklumat peribadi orang lain, gambar atau butiran yang boleh mengenal pasti individu;</li>
           <li>kandungan yang menyalahi undang-undang, berbaur kebencian, lucah atau memfitnah;</li>
-          <li>jalan pintas melalui kawasan persendirian, larangan masuk atau yang berbahaya.</li>
+          <li>jalan pintas melalui kawasan persendirian, larangan masuk atau yang berbahaya;</li>
+          <li>rekod kemalangan palsu, atau gambar kemalangan yang menunjukkan mangsa, muka atau nombor plat yang jelas.</li>
         </Ul>
         <p>
           Dengan berkongsi kandungan, anda memberi kami lesen bukan eksklusif dan bebas royalti untuk menyimpan, memaparkan dan menggunakan kandungan itu bagi menyediakan dan
@@ -142,7 +143,8 @@ const en: LegalSection[] = [
           <li>ads, spam or unauthorised promotion;</li>
           <li>other people’s personal information, photos or details that identify individuals;</li>
           <li>illegal, hateful, obscene or defamatory content;</li>
-          <li>shortcuts through private property, no-entry areas or dangerous roads.</li>
+          <li>shortcuts through private property, no-entry areas or dangerous roads;</li>
+          <li>false accident records, or crash photos that clearly show victims, faces or number plates.</li>
         </Ul>
         <p>
           By sharing content you give us a non-exclusive, royalty-free licence to store, display and use it to provide and improve JalanGo. We may remove content and suspend accounts

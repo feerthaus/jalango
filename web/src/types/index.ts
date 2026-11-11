@@ -226,3 +226,25 @@ export interface CommunityRoute {
   downvotes: number;
   created_at: string;
 }
+
+/* ─── Accident records (mirrors `accident_records`) ─────────────────── */
+export type AccidentVehicle = 'motorcycle' | 'car' | 'lorry' | 'bus' | 'van' | 'bicycle' | 'pedestrian' | 'other';
+export type AccidentOutcome = 'no_injury' | 'injured' | 'fatal' | 'unknown';
+export interface AccidentRecord {
+  id: string;
+  user_id: string;
+  latitude: number;
+  longitude: number;
+  /** YYYY-MM-DD (Malaysia date) */
+  occurred_on: string;
+  time_of_day: 'day' | 'night' | null;
+  vehicles: AccidentVehicle[];
+  outcome: AccidentOutcome;
+  note: string | null;
+  source: 'user' | 'live_report';
+  photo_path: string | null;
+  photo_status: 'none' | 'pending' | 'approved' | 'rejected';
+  upvotes: number;
+  downvotes: number;
+  created_at: string;
+}
