@@ -12,6 +12,7 @@ import type { Trip } from '@/types';
 import { formatDuration } from '@/utils/format';
 import { formatDistance } from '@/utils/geo';
 import { RateTrip, TRIP_TAGS } from './RateTrip';
+import { TripRouteActions } from './SavedRoutes';
 
 export function TripHistory() {
   const { trips } = useTrips();
@@ -96,6 +97,7 @@ function TripItem({ trip }: { trip: Trip }) {
               <Trash2 className="size-4" /> Delete
             </Button>
           </div>
+          <TripRouteActions trip={trip} />
           {canShareAsCommunityRoute(trip) && (
             <Button variant="secondary" className="w-full text-xs" onClick={() => setSharingRoute(true)}>
               <Users className="size-4" /> Kongsi sebagai laluan komuniti

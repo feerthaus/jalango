@@ -35,6 +35,34 @@ Kemas kini fail ini dalam PR yang sama setiap kali fungsi baru ditambah atau diu
 
 ---
 
+## Simpan laluan, ikut semula, balik ikut jalan sama
+
+**Apa:** jalan yang anda lalui boleh diguna semula. Ini diminta oleh pengguna di Threads: *"boleh ke kita save map yang kita dah lalu, bila balik semula kita just buka map tu"*.
+
+- **Ikut laluan ini:** navigasi ke destinasi yang sama melalui **jalan yang sama** seperti perjalanan dulu. Ini berbeza dengan "Go again", yang mengira laluan baru dan mungkin ikut jalan lain.
+- **Balik jalan sama:** laluan yang sama tetapi arah terbalik, kembali ke titik mula perjalanan itu.
+- **Simpan laluan:** beri nama (cth. "Rumah → Kampung") dan laluan itu disimpan dalam **Simpanan → Laluan**, dengan butang Ikut laluan, Balik jalan sama, Tukar nama dan Padam. Maksimum 30 laluan.
+
+**Cara guna:** Simpanan → Perjalanan → buka satu perjalanan → bahagian "Laluan yang anda lalui".
+
+**Bagaimana ia berfungsi:**
+- Jejak GPS perjalanan (yang memang disimpan dalam telefon) diambil sampel kepada ≤18 titik.
+- Titik-titik itu dihantar sebagai titik laluan (*via*) kepada router, supaya laluan baru ikut jalan yang sama.
+- Banner "Ikut laluan …" dipaparkan dan boleh dibuang.
+
+**Had:**
+- Sejarah hanya menyimpan jejak untuk 10 perjalanan terakhir. Simpan laluan yang penting supaya ia tidak hilang.
+- Untuk laluan dengan titik via, masa perjalanan dikira tanpa trafik langsung.
+- Laluan yang disimpan hanya ada dalam telefon itu, tidak diselaraskan ke akaun.
+
+**Kod:**
+- `web/src/lib/savedRoutes.ts`: simpanan dalam telefon.
+- `web/src/hooks/useFollowPath.ts`: ikut laluan / balik ikut jalan sama.
+- `web/src/components/trips/SavedRoutes.tsx`: senarai laluan dan butang dalam setiap perjalanan.
+- `RoutingContext.followPath()`.
+
+---
+
 ## Navigasi
 
 - **Laluan dan arahan belokan:** laluan Mapbox dengan trafik langsung, beberapa pilihan laluan, dan pilihan **Elak tol**.

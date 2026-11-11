@@ -111,3 +111,8 @@ export function thinTrace(path: LngLat[], maxPoints = 4000): LngLat[] {
   }
   return out;
 }
+
+/** Same road, other direction: for "balik ikut jalan sama". */
+export function reversePath(path: LngLat[]): LngLat[] {
+  return path.slice().reverse();
+}
