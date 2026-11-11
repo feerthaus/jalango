@@ -3,7 +3,8 @@ import { useRouteAlerts } from '@/hooks/useRouteAlerts';
 import { useVoiceAlerts, useVoiceLang } from '@/hooks/useVoiceAlerts';
 import { useSpeedAlert } from '@/hooks/useSpeedLimit';
 import { displayInstruction } from '@/utils/voiceInstructions';
-import { LaneGuide } from './LaneGuide';
+import { hasLanes, LaneGuide } from './LaneGuide';
+import { LaneView3D } from './LaneView3D';
 import { useWakeLock } from '@/hooks/useWakeLock';
 import { useVoiceGuidance } from '@/hooks/useVoiceGuidance';
 import { ResumeToast } from './ResumeToast';
@@ -108,7 +109,9 @@ export function NavigationHud() {
             </span>
             {showSteps ? <ChevronUp className="size-5 text-ink-300" /> : <ChevronDown className="size-5 text-ink-300" />}
           </button>
-          {!showSteps && progress && progress.distanceToManeuver < 2000 && <LaneGuide step={next} />}
+          {!showSteps && progress && progress.distanceToManeuver < 2000 && hasLanes(next) && (
+            progress.distanceToManeuver < 800 ? <LaneView3D step={next} lang={lang} /> : <LaneGuide step={next} />
+          )}
           {after && !showSteps && (
             <div className="flex items-center gap-2 border-t border-white/10 px-4 py-2 text-sm text-ink-300">
               {lang === 'ms' ? 'Kemudian' : 'Then'} <ManeuverIcon step={after} className="size-4 text-white" />

@@ -19,12 +19,16 @@ export function laneArrow(indications: string[], modifier?: string): string {
   return indications[0] ?? 'straight';
 }
 
+/** Lane data worth showing: 2+ lanes and at least one to use. */
+export const hasLanes = (step: RouteStep) => Boolean(step.lanes && step.lanes.length >= 2 && step.lanes.some((l) => l.valid));
+
 /** "Use these lanes" strip under the maneuver banner. */
 export function LaneGuide({ step }: { step: RouteStep }) {
-  if (!step.lanes || step.lanes.length < 2 || !step.lanes.some((l) => l.valid)) return null;
+  if (!hasLanes(step)) return null;
+  const lanes = step.lanes!;
   return (
-    <div className="flex items-center justify-center gap-1 border-t border-white/10 px-4 py-2" aria-label={`Lanes: use ${step.lanes.filter((l) => l.valid).length} of ${step.lanes.length}`}>
-      {step.lanes.map((lane, i) => {
+    <div className="flex items-center justify-center gap-1 border-t border-white/10 px-4 py-2" aria-label={`Lanes: use ${lanes.filter((l) => l.valid).length} of ${lanes.length}`}>
+      {lanes.map((lane, i) => {
         const Icon = ICONS[laneArrow(lane.indications, step.maneuver.modifier)] ?? ArrowUp;
         return (
           <span key={i} className={cn('grid h-9 w-8 place-items-center rounded-md', lane.valid ? 'bg-white/10 text-white' : 'text-white/25')}>

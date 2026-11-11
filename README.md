@@ -9,6 +9,8 @@ Smart, Malaysia-first navigation: live map, GPS, destination search, traffic-awa
 └── supabase/   SQL migrations (Postgres schema, RLS, anti-spam triggers, Realtime)
 ```
 
+Full feature list (Malay): [`docs/FEATURES.md`](docs/FEATURES.md). Vision and roadmap: [`docs/VISION.md`](docs/VISION.md).
+
 ## Quick start
 
 ```bash
