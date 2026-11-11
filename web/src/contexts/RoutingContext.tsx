@@ -47,6 +47,8 @@ interface RoutingValue {
   applyShortcut: (s: Shortcut, destination?: Place | null) => void;
   /** Follow a long community route to the current destination. */
   applyCommunityRoute: (r: Pick<CommunityRoute, 'title' | 'path'>) => void;
+  /** Drive a path you drove before (or its reverse) to its end. */
+  followPath: (p: { title: string; path: [number, number][]; destination: Place }) => void;
   clearShortcut: () => void;
   /** A stop on the way (e.g. lunch); the route goes through it, then on to the destination */
   stop: Place | null;
@@ -197,6 +199,7 @@ export function RoutingProvider({ children }: { children: ReactNode }) {
       setShortcut(null);
       setShortcutTitle(null);
       setStop(null);
+      setResumedTo(null);
       setDestination(place);
       setRoutes([]);
       setProgress(null);
@@ -476,6 +479,22 @@ export function RoutingProvider({ children }: { children: ReactNode }) {
     [request],
   );
 
+  const followPath = useCallback(
+    ({ title, path, destination: dest }: { title: string; path: [number, number][]; destination: Place }) => {
+      // Points along the old path keep the router on the same roads; the last one is the destination itself
+      viaRef.current = sampleWaypoints(path, 18).slice(0, -1);
+      setStop(null);
+      setShortcut(null);
+      setShortcutTitle(title);
+      setResumedTo(null);
+      setDestination(dest);
+      setRoutes([]);
+      setProgress(null);
+      queueMicrotask(request);
+    },
+    [request],
+  );
+
   const clearShortcut = useCallback(() => {
     viaRef.current = [];
     setShortcut(null);
@@ -548,10 +567,11 @@ export function RoutingProvider({ children }: { children: ReactNode }) {
       clearStop,
       applyShortcut,
       applyCommunityRoute,
+      followPath,
       clearShortcut,
       finishedTripId,
     }),
-    [status, destination, routes, selectedIndex, selectedRoute, mode, notice, error, avoidTolls, progress, rerouting, resumedTo, planRoute, navigateTo, request, setAvoidTolls, startNavigation, endNavigation, clearRoute, shortcut, shortcutTitle, applyShortcut, applyCommunityRoute, clearShortcut, stop, addStop, clearStop, finishedTripId],
+    [status, destination, routes, selectedIndex, selectedRoute, mode, notice, error, avoidTolls, progress, rerouting, resumedTo, planRoute, navigateTo, request, setAvoidTolls, startNavigation, endNavigation, clearRoute, shortcut, shortcutTitle, applyShortcut, applyCommunityRoute, followPath, clearShortcut, stop, addStop, clearStop, finishedTripId],
   );
 
   return <RoutingContext.Provider value={value}>{children}</RoutingContext.Provider>;

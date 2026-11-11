@@ -1,7 +1,9 @@
 import { Clock, Star, Trash2, X } from 'lucide-react';
 import { useState } from 'react';
 import { PlaceRow } from '@/components/places/PlaceRow';
+import { SavedRoutes } from '@/components/trips/SavedRoutes';
 import { TripHistory } from '@/components/trips/TripHistory';
+import { useSavedRoutes } from '@/lib/savedRoutes';
 import { cn } from '@/lib/cn';
 import { useTrips } from '@/contexts/TripsContext';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -16,12 +18,13 @@ export function SavedPage() {
   const { favourites, recents, removeFavourite, removeRecent, clearRecents } = useSavedPlaces();
   const showOnMap = useShowOnMap();
   const { trips } = useTrips();
-  const [tab, setTab] = useState<'places' | 'trips'>('places');
+  const [tab, setTab] = useState<'places' | 'routes' | 'trips'>('places');
+  const { routes } = useSavedRoutes();
 
   return (
     <PagePanel title={tr('Simpanan', 'Saved')} subtitle={tr('Tempat dan sejarah perjalanan', 'Places and trip history')}>
-      <div role="tablist" className="mb-2 grid grid-cols-2 gap-1 rounded-2xl bg-ink-100 p-1 dark:bg-ink-900">
-        {(['places', 'trips'] as const).map((t) => (
+      <div role="tablist" className="mb-2 grid grid-cols-3 gap-1 rounded-2xl bg-ink-100 p-1 dark:bg-ink-900">
+        {(['places', 'routes', 'trips'] as const).map((t) => (
           <button
             key={t}
             type="button"
@@ -30,12 +33,14 @@ export function SavedPage() {
             onClick={() => setTab(t)}
             className={cn('rounded-xl py-2 text-sm font-semibold', tab === t ? 'bg-white shadow-sm dark:bg-ink-700' : 'text-ink-500')}
           >
-            {t === 'places' ? `${tr('Tempat', 'Places')} (${favourites.length})` : `${tr('Perjalanan', 'Trips')} (${trips.length})`}
+            {t === 'places' ? `${tr('Tempat', 'Places')} (${favourites.length})` : t === 'routes' ? `${tr('Laluan', 'Routes')} (${routes.length})` : `${tr('Perjalanan', 'Trips')} (${trips.length})`}
           </button>
         ))}
       </div>
       {tab === 'trips' ? (
         <TripHistory />
+      ) : tab === 'routes' ? (
+        <SavedRoutes />
       ) : (
       <>
       <h2 className="px-1 pb-2 pt-2 text-xs font-semibold uppercase tracking-wider text-ink-400">{tr('Kegemaran', 'Favourites')}</h2>
