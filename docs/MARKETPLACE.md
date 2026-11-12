@@ -1,6 +1,7 @@
 # Pelan Marketplace JalanGo
 
 **Status:** draf untuk semakan pemilik. Tiada kod lagi.
+**Dikemas kini:** Fasa 1 = homestay + kereta sewa **berlesen APAD sahaja** (keputusan pemilik, 13 Nov 2026).
 **Kedudukan:** JalanGo ialah **pengganti Waze**, dan itu teras produk. Marketplace ialah **tambahan**. Ia tidak boleh melambatkan, mengganggu atau melemahkan navigasi.
 
 ---
@@ -9,7 +10,8 @@
 
 | Perkara | Keputusan |
 |---|---|
-| Kategori pertama | **Kereta sewa** dan **homestay / rumah sewa** |
+| Kategori pertama | **Homestay / rumah sewa** dan **kereta sewa berlesen sahaja** |
+| Syarat kereta sewa | Operator **wajib** ada **lesen APAD** (kereta sewa pandu sendiri) dan **insurans komersial/sewa** yang sah. Operator tanpa lesen **tidak** disenaraikan, walaupun dengan label. Ramai operator tiada lesen, tetapi insurans kereta persendirian biasanya tidak melindungi kegunaan sewa (risiko kepada pelanggan), dan JalanGo tidak boleh mempromosikan aktiviti tanpa lesen. |
 | Kemudian | Rider penghantaran (makanan, barang, dokumen); hotel/chalet |
 | Tidak dibuat | **Pemandu e-hailing**. Mereka perlu lesen APAD dan hanya boleh beroperasi melalui syarikat pengantara berlesen. Menghubungkan pelanggan terus kepada pemandu berisiko menjadikan JalanGo pengantara tanpa lesen. Mungkin melalui kerjasama dengan syarikat berlesen pada masa depan. |
 | Siapa sahkan operator | Pemilik (admin), melalui halaman Admin dengan 2FA |
@@ -33,8 +35,12 @@
 ### Fasa 0: Asas (akaun bisnes + admin)
 - Pengguna boleh **daftar sebagai operator** dengan nama perniagaan, jenis, kawasan, nombor telefon/WhatsApp, dan dokumen.
 - **Dokumen pengesahan** disimpan dalam bucket peribadi. Hanya pemilik akaun dan admin boleh melihatnya.
-  - Kereta sewa: SSM + **lesen kereta sewa pandu sendiri** (APAD di Semenanjung; badan berkaitan di Sabah/Sarawak, perlu disahkan).
-  - Homestay: SSM atau IC pemilik + bukti pendaftaran/lesen PBT atau MOTAC jika ada (keperluan berbeza ikut negeri, perlu disahkan).
+  - **Kereta sewa (wajib semua):**
+    - SSM syarikat;
+    - **lesen APAD kereta sewa pandu sendiri** (atau lesen setara di Sabah/Sarawak, perlu disahkan) dengan nombor lesen dan tarikh tamat;
+    - **sijil insurans** yang meliputi kegunaan sewa, dengan tarikh tamat.
+  - **Homestay:** IC atau SSM pemilik + bukti pemilikan atau kebenaran pemilik (bil utiliti / perjanjian sewa) + pendaftaran PBT/MOTAC **jika** negeri itu mewajibkannya (perlu disahkan ikut negeri).
+  - Sistem menyimpan **tarikh tamat lesen dan insurans**. Listing kereta sewa **dijeda automatik** bila mana-mana satu tamat, dan operator diberi peringatan 30 hari sebelum.
 - **Admin → Operator:** senarai menunggu, lihat dokumen, kemudian **Lulus**, **Tolak** (dengan sebab) atau **Minta maklumat**.
 - **Admin → Log tindakan:** siapa lulus atau tolak apa, dan bila.
 
@@ -45,7 +51,7 @@
 - Listing dan gambar **disemak admin** sebelum disiarkan (guna semula sistem kelulusan gambar kemalangan).
 - **Tab baru "Sewa"** di bar bawah, dengan dua pilihan: Kereta | Homestay.
   - Cari ikut **kawasan atau peta**, dengan penapis harga, kapasiti dan transmisi.
-  - Kad listing: gambar, harga, kawasan, lencana **✓ Disahkan**, dan jarak.
+  - Kad listing: gambar, harga, kawasan, jarak, dan lencana **✓ Disahkan**. Kereta sewa juga ada lencana **✓ Berlesen APAD · Berinsurans**, sebagai nilai jualan: "Semua kereta sewa di JalanGo berlesen."
   - Butang: **WhatsApp** (mesej sudah diisi: listing, tarikh, lokasi), **Telefon**, **Navigasi ke sini**, **Kongsi**.
 - **Pin di peta** untuk listing (lapisan boleh dihidupkan atau dimatikan, dimatikan semasa navigasi).
 - **Papan pemuka operator:** tontonan, klik WhatsApp/telefon, navigasi, dan "ditandakan" mingguan.
@@ -143,7 +149,7 @@ Ikut prinsip `docs/VISION.md`: modular monolith, Supabase + RLS, tiada servis ba
 - **Dasar Privasi:** dokumen operator (tujuan: pengesahan sahaja, disimpan selagi akaun aktif + tempoh yang ditetapkan), statistik listing tanpa nama, dan ulasan.
 - **Jangan kumpul IC atau lesen memandu pelanggan** dalam app sehingga Fasa 4, dan hanya jika benar-benar perlu.
 - **Perlu disahkan dengan pihak berkuasa / peguam sebelum Fasa 1 dilancarkan:**
-  1. lesen yang diperlukan untuk kereta sewa pandu sendiri (APAD, dan Sabah/Sarawak);
+  1. lesen yang diperlukan untuk kereta sewa pandu sendiri (APAD, dan Sabah/Sarawak), cara menyemak nombor lesen operator, dan jenis insurans yang betul;
   2. keperluan homestay ikut negeri/PBT;
   3. sama ada mengiklankan operator berlesen memerlukan apa-apa kebenaran untuk JalanGo sendiri.
 
@@ -151,18 +157,19 @@ Ikut prinsip `docs/VISION.md`: modular monolith, Supabase + RLS, tiada servis ba
 
 ## 8. Strategi pelancaran
 
-1. **Mula dengan bisnes kereta sewa pemilik** sebagai operator pertama, untuk menguji aliran dari hujung ke hujung.
-2. **Jemput 20–30 operator** di 1–2 kawasan (kawasan pemilik + satu kawasan pelancongan atau lapangan terbang). Pendaftaran dan semakan pertama percuma.
-3. Kongsi di Threads/Facebook/TikTok dengan pautan terus ke listing (kad pratonton sudah ada).
-4. Selepas 1–2 bulan, semak statistik operator. Jika klik WhatsApp bermakna, perkenalkan Ditaja/Pro.
+1. **Homestay dahulu:** jemput 20–30 homestay di 1–2 kawasan. Pendaftaran dan semakan pertama percuma.
+2. **Kereta sewa berlesen:** cari operator yang sudah ada lesen APAD (biasanya syarikat kereta sewa yang lebih besar, termasuk di lapangan terbang). Kategori ini dibuka di app bila sudah ada sekurang-kurangnya 5 operator berlesen di kawasan pertama.
+3. **Bisnes pemilik:** boleh disenaraikan selepas mendapat lesen APAD dan insurans sewa, mengikut syarat yang sama dengan operator lain.
+4. Kongsi di Threads/Facebook/TikTok dengan pautan terus ke listing (kad pratonton sudah ada).
+5. Selepas 1–2 bulan, semak statistik operator. Jika klik WhatsApp bermakna, perkenalkan Ditaja/Pro.
 
 ---
 
 ## 9. Soalan terbuka (perlu jawapan pemilik)
 
-1. **Kawasan pertama:** di mana bisnes kereta sewa anda, dan kawasan kedua mana yang paling mudah untuk dapat operator?
-2. **Homestay atau kereta sewa dulu,** jika perlu pilih satu untuk Fasa 1?
+1. **Kawasan pertama untuk homestay:** di mana? Kawasan pelancongan atau balik kampung yang anda kenal (cth. Kelantan, Terengganu, Langkawi, Cameron)?
+2. **Operator kereta sewa berlesen:** ada kenalan syarikat yang berlesen untuk dijemput awal?
 3. **Harga Ditaja/Pro:** setuju dengan julat RM30–100 sebulan, atau percuma sepenuhnya untuk 3–6 bulan pertama?
-4. **Dokumen wajib:** cukup SSM + lesen, atau perlu salinan insurans kenderaan juga?
+4. **Dokumen homestay:** cukup IC + bukti pemilikan/kebenaran, atau mahu wajibkan pendaftaran PBT/MOTAC juga (lebih selamat, tetapi kurang homestay layak)?
 5. **Nama tab:** "Sewa", "Jom Sewa", atau ikut jenama baru?
 6. **Bila mula:** selepas app native Android (supaya notifikasi operator berfungsi), atau terus Fasa 0–1 dalam versi web?
