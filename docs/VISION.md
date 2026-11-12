@@ -15,16 +15,23 @@ JalanGo is a Malaysia-first navigation app that works for **all** road users: da
 5. **Cost control is a feature.** Every paid call is counted and capped (see the failure policy below).
 6. **Privacy by default.** Collect the minimum. GPS traces stay on the device unless the user chooses to share. Anonymous traffic data is opt-in.
 
+## Priority
+
+JalanGo's core is a **Waze replacement**: navigation, live traffic and community road data. Everything else (marketplace, rentals, homestays) is an add-on and must never slow down, clutter or distract navigation. The biggest gap to Waze is the platform: as a PWA, JalanGo can't run on Android Auto/CarPlay and loses GPS in the background on iPhone, so a native app (Capacitor, Android first) is the next major step for the core.
+
+**Not doing:** direct booking of e-hailing drivers (needs APAD intermediation licensing).
+
 ## Roadmap phases
 
 | Phase | Focus | Status (Nov 2026) |
 |---|---|---|
 | 1. Foundation | Map, search, routing, turn-by-turn in BM, reports, accounts, PWA | ✅ Live |
 | A. Backend hardening | Distributed rate limits, exact usage counting, CI, tests | ✅ Live |
-| 2. Community | Reports with voting/moderation, shortcuts, **Community Routes** (long-distance alternatives), Konvoi, Driver mode, live sharing | ✅ Mostly live; Community Routes in progress |
+| 2. Community | Reports with voting/moderation, shortcuts, **Community Routes** (long-distance alternatives), accident records & black-spot alerts, Konvoi, Driver mode, live sharing, saved routes | ✅ Live |
 | 3. Own data | Anonymous probe data → historical speeds, typical-jam patterns, better ETAs; PostGIS | 🟡 Probe collection running; analysis not built |
 | 4. Intelligence | Predictive "leave at" advice, festive-season (*balik kampung*) planning, smarter rerouting from community data | ⏳ |
 | 5. Business | Fleet & logistics (builds on Driver mode / Konvoi), aggregated data products, partnerships | ⏳ |
+| M. Marketplace (add-on) | Verified homestay and **APAD-licensed, insured** car rental listings with WhatsApp contact (unlicensed operators are not listed), later delivery riders. Plan: [`MARKETPLACE.md`](MARKETPLACE.md) | 📝 Planned |
 
 ## Corrections added in engineering review
 
