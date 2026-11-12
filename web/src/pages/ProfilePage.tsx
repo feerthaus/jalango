@@ -5,7 +5,7 @@ import { AuthForm } from '@/components/auth/AuthForm';
 import { FeedbackSheet } from '@/components/feedback/FeedbackSheet';
 import { OncomingSettings } from '@/components/navigation/OncomingSettings';
 import { DeleteAccount } from '@/components/moderation/DeleteAccount';
-import { isAdmin } from '@/services/moderationService';
+import { fetchAdminStatus } from '@/services/adminAuth';
 import { useEffect, useState } from 'react';
 import { MessageSquareHeart, ShieldCheck } from 'lucide-react';
 import { LogoMark } from '@/components/brand/LogoMark';
@@ -309,7 +309,7 @@ function FeedbackCard() {
 function AccountExtras() {
   const [admin, setAdmin] = useState(false);
   useEffect(() => {
-    void isAdmin().then(setAdmin);
+    void fetchAdminStatus().then((s) => setAdmin(s.admin));
   }, []);
   return (
     <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-ink-100 pt-3 dark:border-ink-800">

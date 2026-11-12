@@ -46,6 +46,7 @@ CI (`.github/workflows/ci.yml`) runs `npm ci`, typecheck, test and build on ever
 - For user content, use a BEFORE INSERT trigger to force server-owned fields (status, counts, timestamps), check ownership against `auth.uid()`, rate-limit (raise with `hint = 'rate_limited'`), and add a restrictive "no posting while banned" policy (`public.is_banned()`).
 - For votes: one row per (item, user); block voting on your own item; let an AFTER trigger recount and auto-hide when downvotes ≥ 5 and > 2× upvotes.
 - Test migrations locally (e.g. PGlite with stubbed `auth.uid()`) before applying them.
+- Admin powers go through `public.is_admin()`, which requires a two-factor session (`aal2` in the JWT). Never add an admin check that bypasses it.
 
 ## Server rules
 

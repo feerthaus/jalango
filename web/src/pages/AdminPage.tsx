@@ -3,6 +3,8 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router';
 import { Wordmark } from '@/components/brand/LogoMark';
 import { PhotoReviewQueue } from '@/components/accidents/PhotoReviewQueue';
+import { AdminTwoFactor } from '@/components/admin/AdminTwoFactor';
+import { fetchAdminStatus } from '@/services/adminAuth';
 import { Button } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { useAuth } from '@/contexts/AuthContext';
@@ -12,7 +14,6 @@ import {
   fetchFeedback,
   fetchFlagQueue,
   FLAG_REASONS,
-  isAdmin,
   moderate,
   setBan,
   setFeedbackStatus,
@@ -26,13 +27,18 @@ import type { ReportType } from '@/types';
 export function AdminPage() {
   const { user, loading } = useAuth();
   const [allowed, setAllowed] = useState<boolean | null>(null);
+  const [needs2fa, setNeeds2fa] = useState(false);
+  const [check, setCheck] = useState(0);
   const [tab, setTab] = useState<'flags' | 'photos' | 'feedback'>('flags');
 
   useEffect(() => {
     if (loading) return;
     if (!user) return setAllowed(false);
-    void isAdmin().then(setAllowed);
-  }, [user, loading]);
+    void fetchAdminStatus().then((s) => {
+      setAllowed(s.admin);
+      setNeeds2fa(s.admin && !s.twoFactor);
+    });
+  }, [user, loading, check]);
 
   return (
     <div className="min-h-dvh overflow-y-auto bg-ink-50 dark:bg-ink-950">
@@ -52,6 +58,8 @@ export function AdminPage() {
           <EmptyState icon={ShieldAlert} title="Admins only">
             This page is for JalanGo moderators.
           </EmptyState>
+        ) : needs2fa ? (
+          <AdminTwoFactor onVerified={() => setCheck((n) => n + 1)} />
         ) : (
           <>
             <div role="tablist" className="mb-4 grid grid-cols-3 gap-1 rounded-2xl bg-ink-100 p-1 dark:bg-ink-900">
