@@ -5,6 +5,7 @@ import { ExplorePage } from '@/pages/ExplorePage';
 import { MapPage } from '@/pages/MapPage';
 import { NotFoundPage } from '@/pages/NotFoundPage';
 import { ProfilePage } from '@/pages/ProfilePage';
+import { BusinessPage } from '@/pages/BusinessPage';
 import { ReportsPage } from '@/pages/ReportsPage';
 import { SavedPage } from '@/pages/SavedPage';
 import { ErrorBoundary } from '@/components/layout/ErrorBoundary';
@@ -30,6 +31,7 @@ const router = createBrowserRouter([
       { path: 'reports', element: <ReportsPage /> },
       { path: 'saved', element: <SavedPage /> },
       { path: 'profile', element: <ProfilePage /> },
+      { path: 'business', element: <BusinessPage /> },
       { path: '*', element: <NotFoundPage /> },
     ],
   },

@@ -33,5 +33,7 @@ export async function fetchAdminStats(): Promise<AdminStats> {
   if (!supabase) throw new Error('Not connected.');
   const { data, error } = await supabase.rpc('admin_stats');
   if (error) throw new Error(error.message);
-  return data as AdminStats;
+  const s = data as AdminStats | null;
+  if (!s || !Array.isArray(s.daily) || s.daily.length === 0) throw new Error('Statistik tidak dapat dibaca. Cuba muat semula.');
+  return s;
 }
