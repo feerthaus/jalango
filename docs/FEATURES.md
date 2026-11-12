@@ -101,6 +101,13 @@ Kemas kini fail ini dalam PR yang sama setiap kali fungsi baru ditambah atau diu
 - **Gambar kemalangan:** Lulus atau Tolak.
 - **Maklum balas:** mesej daripada pengguna.
 
+**Tab Statistik** (tab pertama):
+- **Peranti aktif:** hari ini, 7 hari dan 30 hari, jumlah peranti, berapa yang guna app yang dipasang, dan peranti baru.
+- **Carta harian 30 hari:** tekan sesuatu hari untuk lihat aktif, baru, carian dan laluan pada hari itu. Ada juga paparan jadual.
+- **Komuniti:** akaun, laporan, rekod kemalangan (dan gambar yang menunggu semakan), laluan komuniti, jalan pintas, konvoi, kongsi live dan perjalanan.
+- **Cara kiraan:** setiap peranti ada ID rawak dalam `localStorage`, dan ia "check-in" sekali sehari melalui `ping_activity()`. Tiada akaun, IP atau lokasi disimpan. Jadual `app_activity` tidak boleh dibaca terus. `admin_stats()` hanya untuk admin yang lulus 2FA.
+- **Had:** pelayar berbeza, mod peribadi atau storan yang dipadam dikira sebagai peranti baru. Kiraan peranti bermula selepas ciri ini dilancarkan.
+
 **Siapa admin:** akaun dalam jadual `public.admins` di Supabase. Ditambah oleh pemilik projek.
 
 **Pengesahan dua langkah (2FA):**
@@ -111,7 +118,8 @@ Kemas kini fail ini dalam PR yang sama setiap kali fungsi baru ditambah atau diu
 **Telefon hilang:** pemilik projek boleh padam faktor 2FA akaun itu di Supabase (Authentication → Users → pengguna → MFA), kemudian admin sediakan semula.
 
 **Kod:**
-- Migrasi: `supabase/migrations/20261112000000_admin_2fa.sql` (`is_admin()` perlukan aal2, dan `admin_status()`).
+- Migrasi: `supabase/migrations/20261112000000_admin_2fa.sql` (`is_admin()` perlukan aal2, dan `admin_status()`), dan `20261113000000_admin_stats.sql` (statistik).
+- `web/src/lib/activity.ts`, `web/src/components/admin/StatsPanel.tsx`.
 - `web/src/services/adminAuth.ts`, `web/src/components/admin/AdminTwoFactor.tsx`, `web/src/pages/AdminPage.tsx`.
 
 ---

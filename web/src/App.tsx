@@ -12,6 +12,8 @@ import { PrivacyPage } from '@/pages/legal/PrivacyPage';
 import { TermsPage } from '@/pages/legal/TermsPage';
 import { AdminPage } from '@/pages/AdminPage';
 import { LiveViewPage } from '@/pages/LiveViewPage';
+import { useEffect } from 'react';
+import { pingActivity } from '@/lib/activity';
 
 const router = createBrowserRouter([
   { path: '/privacy', element: <PrivacyPage />, errorElement: <ErrorBoundary /> },
@@ -40,6 +42,13 @@ function ConvoyInvite() {
 }
 
 export function App() {
+  // Anonymous daily check-in for the admin statistics (also when the app comes back on a new day)
+  useEffect(() => {
+    pingActivity();
+    const onVisible = () => document.visibilityState === 'visible' && pingActivity();
+    document.addEventListener('visibilitychange', onVisible);
+    return () => document.removeEventListener('visibilitychange', onVisible);
+  }, []);
   return (
     <AppProviders>
       <RouterProvider router={router} />
