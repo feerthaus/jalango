@@ -165,11 +165,13 @@ Ikut prinsip `docs/VISION.md`: modular monolith, Supabase + RLS, tiada servis ba
 
 ---
 
-## 9. Soalan terbuka (perlu jawapan pemilik)
+## 9. Jawapan pemilik (13 Nov 2026)
 
-1. **Kawasan pertama untuk homestay:** di mana? Kawasan pelancongan atau balik kampung yang anda kenal (cth. Kelantan, Terengganu, Langkawi, Cameron)?
-2. **Operator kereta sewa berlesen:** ada kenalan syarikat yang berlesen untuk dijemput awal?
-3. **Harga Ditaja/Pro:** setuju dengan julat RM30–100 sebulan, atau percuma sepenuhnya untuk 3–6 bulan pertama?
-4. **Dokumen homestay:** cukup IC + bukti pemilikan/kebenaran, atau mahu wajibkan pendaftaran PBT/MOTAC juga (lebih selamat, tetapi kurang homestay layak)?
-5. **Nama tab:** "Sewa", "Jom Sewa", atau ikut jenama baru?
-6. **Bila mula:** selepas app native Android (supaya notifikasi operator berfungsi), atau terus Fasa 0–1 dalam versi web?
+| Soalan | Keputusan |
+|---|---|
+| Kawasan pertama homestay | **Kawasan pelancongan** |
+| Operator kereta sewa berlesen | Pemilik **kenal syarikat berlesen** untuk dijemput awal |
+| Harga | **Percuma 6 bulan pertama** untuk setiap operator (dikira dari tarikh diluluskan). Ditaja/Pro selepas itu. |
+| Dokumen homestay | **IC + bukti pemilikan/kebenaran** sahaja. PBT/MOTAC tidak diwajibkan. |
+| Nama tab | **Tunggu jenama baru.** Guna nama sementara "Sewa" dalam kod. |
+| Bila mula | **Fasa 0–1 dalam versi web dahulu**, mula dengan Fasa 0 |
