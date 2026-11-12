@@ -6,7 +6,7 @@ function read(v: string | undefined): string | null {
 export const LEGAL = {
   operator: read(import.meta.env.VITE_LEGAL_OPERATOR) ?? 'JalanGo',
   contactEmail: read(import.meta.env.VITE_CONTACT_EMAIL),
-  lastUpdated: '11 November 2026',
+  lastUpdated: '13 November 2026',
   /** Region of the Supabase project that stores account and community data */
   dataRegion: 'Sydney, Australia (Supabase ap-southeast-2)',
 } as const;

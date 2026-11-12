@@ -4,6 +4,7 @@ import { Link } from 'react-router';
 import { Wordmark } from '@/components/brand/LogoMark';
 import { PhotoReviewQueue } from '@/components/accidents/PhotoReviewQueue';
 import { AdminTwoFactor } from '@/components/admin/AdminTwoFactor';
+import { StatsPanel } from '@/components/admin/StatsPanel';
 import { AuthForm } from '@/components/auth/AuthForm';
 import { fetchAdminStatus } from '@/services/adminAuth';
 import { Button } from '@/components/ui/Button';
@@ -30,7 +31,7 @@ export function AdminPage() {
   const [allowed, setAllowed] = useState<boolean | null>(null);
   const [needs2fa, setNeeds2fa] = useState(false);
   const [check, setCheck] = useState(0);
-  const [tab, setTab] = useState<'flags' | 'photos' | 'feedback'>('flags');
+  const [tab, setTab] = useState<'stats' | 'flags' | 'photos' | 'feedback'>('stats');
 
   useEffect(() => {
     if (loading) return;
@@ -69,14 +70,14 @@ export function AdminPage() {
           <AdminTwoFactor onVerified={() => setCheck((n) => n + 1)} />
         ) : (
           <>
-            <div role="tablist" className="mb-4 grid grid-cols-3 gap-1 rounded-2xl bg-ink-100 p-1 dark:bg-ink-900">
-              {(['flags', 'photos', 'feedback'] as const).map((t) => (
-                <button key={t} type="button" role="tab" aria-selected={tab === t} onClick={() => setTab(t)} className={cn('rounded-xl py-2 text-sm font-semibold', tab === t ? 'bg-white shadow-sm dark:bg-ink-700' : 'text-ink-500')}>
-                  {t === 'flags' ? 'Reported content' : t === 'photos' ? 'Gambar kemalangan' : 'Feedback'}
+            <div role="tablist" className="mb-4 grid grid-cols-4 gap-1 rounded-2xl bg-ink-100 p-1 dark:bg-ink-900">
+              {(['stats', 'flags', 'photos', 'feedback'] as const).map((t) => (
+                <button key={t} type="button" role="tab" aria-selected={tab === t} onClick={() => setTab(t)} className={cn('rounded-xl px-1 py-2 text-xs font-semibold sm:text-sm', tab === t ? 'bg-white shadow-sm dark:bg-ink-700' : 'text-ink-500')}>
+                  {t === 'stats' ? 'Statistik' : t === 'flags' ? 'Laporan' : t === 'photos' ? 'Gambar' : 'Maklum balas'}
                 </button>
               ))}
             </div>
-            {tab === 'flags' ? <FlagQueue /> : tab === 'photos' ? <PhotoReviewQueue /> : <FeedbackInbox />}
+            {tab === 'stats' ? <StatsPanel /> : tab === 'flags' ? <FlagQueue /> : tab === 'photos' ? <PhotoReviewQueue /> : <FeedbackInbox />}
           </>
         )}
       </main>
