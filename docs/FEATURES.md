@@ -94,6 +94,28 @@ Kemas kini fail ini dalam PR yang sama setiap kali fungsi baru ditambah atau diu
 
 ---
 
+## Admin (dengan 2FA)
+
+**Apa:** halaman `/admin` (pautan di Profil, hanya untuk akaun admin), dengan tiga tab:
+- **Kandungan dilaporkan:** sorok, pulihkan atau abaikan kandungan yang di-flag, dan sekat pengguna.
+- **Gambar kemalangan:** Lulus atau Tolak.
+- **Maklum balas:** mesej daripada pengguna.
+
+**Siapa admin:** akaun dalam jadual `public.admins` di Supabase. Ditambah oleh pemilik projek.
+
+**Pengesahan dua langkah (2FA):**
+- Kali pertama, admin imbas kod QR dengan aplikasi pengesah (Google Authenticator, Microsoft Authenticator, Authy).
+- Selepas itu, setiap kali log masuk perlu kod 6 digit.
+- Ia dikuatkuasakan dalam **pangkalan data**: `public.is_admin()` hanya benar bila sesi ada `aal2`. Kata laluan yang dicuri sahaja tidak cukup untuk lulus gambar, sorok kandungan atau sekat pengguna.
+
+**Telefon hilang:** pemilik projek boleh padam faktor 2FA akaun itu di Supabase (Authentication → Users → pengguna → MFA), kemudian admin sediakan semula.
+
+**Kod:**
+- Migrasi: `supabase/migrations/20261112000000_admin_2fa.sql` (`is_admin()` perlukan aal2, dan `admin_status()`).
+- `web/src/services/adminAuth.ts`, `web/src/components/admin/AdminTwoFactor.tsx`, `web/src/pages/AdminPage.tsx`.
+
+---
+
 ## Navigasi
 
 - **Laluan dan arahan belokan:** laluan Mapbox dengan trafik langsung, beberapa pilihan laluan, dan pilihan **Elak tol**.
