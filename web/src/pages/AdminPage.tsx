@@ -4,6 +4,7 @@ import { Link } from 'react-router';
 import { Wordmark } from '@/components/brand/LogoMark';
 import { PhotoReviewQueue } from '@/components/accidents/PhotoReviewQueue';
 import { AdminTwoFactor } from '@/components/admin/AdminTwoFactor';
+import { AuthForm } from '@/components/auth/AuthForm';
 import { fetchAdminStatus } from '@/services/adminAuth';
 import { Button } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -52,11 +53,17 @@ export function AdminPage() {
         </div>
       </header>
       <main className="mx-auto max-w-3xl px-4 pb-16 pt-6">
-        {allowed === null ? (
+        {loading || (user && allowed === null) ? (
           <Loader2 className="mx-auto mt-10 size-6 animate-spin text-ink-400" />
+        ) : !user ? (
+          <div className="mx-auto max-w-sm rounded-3xl bg-white p-6 shadow-sm ring-1 ring-ink-200 dark:bg-ink-900 dark:ring-ink-800">
+            <h1 className="mb-1 text-center text-xl font-bold">Log masuk admin</h1>
+            <p className="mb-4 text-center text-sm text-ink-500">Log masuk dengan akaun admin anda. Selepas itu buka Profil → Admin.</p>
+            <AuthForm compact />
+          </div>
         ) : !allowed ? (
-          <EmptyState icon={ShieldAlert} title="Admins only">
-            This page is for JalanGo moderators.
+          <EmptyState icon={ShieldAlert} title="Bukan akaun admin">
+            Akaun ini bukan admin JalanGo. Pastikan anda log masuk dengan akaun yang betul (cth. akaun Google yang sama).
           </EmptyState>
         ) : needs2fa ? (
           <AdminTwoFactor onVerified={() => setCheck((n) => n + 1)} />
