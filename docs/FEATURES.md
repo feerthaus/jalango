@@ -218,3 +218,10 @@ Pelan penuh ada dalam `docs/MARKETPLACE.md`. Fasa 0 hanya pendaftaran dan penges
 - **Sejarah perjalanan:** dengan rating perjalanan.
 - **Data trafik tanpa nama:** dengan persetujuan pengguna.
 - **PWA:** boleh dipasang di skrin utama. Mod gelap/cerah. UI dalam BM/EN.
+- **Pasang ke skrin utama:** popup "Pasang JalanGo" ikut jenis telefon dan pelayar.
+  - Android Chrome: satu butang **Pasang**.
+  - iPhone Safari: langkah dengan anak panah ke butang Kongsi di bawah.
+  - iPhone Chrome (iOS 16.4+): anak panah ke ikon Kongsi di bar alamat (atas kanan). iOS lama: salin pautan, buka dalam Safari.
+  - Dalam app lain (WhatsApp, Facebook, Threads, Instagram): Android dapat butang "Buka dalam Chrome"; iPhone dapat arahan buka dalam pelayar dan butang salin pautan.
+  - Muncul sendiri selepas ~30 saat guna peta atau sejurus selepas sampai destinasi. Tak pernah semasa memandu atau bila sudah dipasang. "Nanti dulu" = tanya lagi selepas 3 hari; "Jangan tanya lagi" = berhenti terus.
+  - Juga boleh dibuka dari kad di peta dan di halaman Profil.

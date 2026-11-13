@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { detectInstallEnv, type InstallEnv } from '@/lib/installEnv';
 import { isIos, isStandalone } from '@/lib/pwa';
 
 interface BeforeInstallPromptEvent extends Event {
@@ -28,7 +29,7 @@ export type InstallMode = 'installed' | 'prompt' | 'ios' | 'unavailable';
  *  - Android/desktop Chrome & Edge: native install prompt
  *  - iOS Safari: no prompt API → show Share → Add to Home Screen steps
  */
-export function useInstallPrompt(): { mode: InstallMode; install: () => Promise<boolean> } {
+export function useInstallPrompt(): { mode: InstallMode; env: InstallEnv; install: () => Promise<boolean> } {
   const [, rerender] = useState(0);
   useEffect(() => {
     const l = () => rerender((n) => n + 1);
@@ -50,5 +51,6 @@ export function useInstallPrompt(): { mode: InstallMode; install: () => Promise<
     return outcome === 'accepted';
   }, []);
 
-  return { mode, install };
+  const env = detectInstallEnv(navigator.userAgent, { standalone: isStandalone(), hasPrompt: Boolean(deferred), touchMac: navigator.userAgent.includes('Macintosh') && navigator.maxTouchPoints > 1 });
+  return { mode, env, install };
 }

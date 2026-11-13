@@ -10,7 +10,7 @@ import { TOLL_PAYMENTS, useTollPayment } from '@/lib/tollPayment';
 import { useEffect, useState } from 'react';
 import { MessageSquareHeart, ShieldCheck } from 'lucide-react';
 import { LogoMark } from '@/components/brand/LogoMark';
-import { IosSteps } from '@/components/pwa/InstallBanner';
+import { InstallSheet } from '@/components/pwa/InstallSheet';
 import { useInstallPrompt } from '@/hooks/useInstallPrompt';
 import { ShareAppCard } from '@/components/share/ShareAppCard';
 import { Logo } from '@/components/layout/BottomNav';
@@ -208,26 +208,27 @@ function AccountCard({ favourites, recents }: { favourites: number; recents: num
 }
 
 function InstallCard() {
-  const { mode, install } = useInstallPrompt();
-  if (mode === 'unavailable') return null;
+  const { env } = useInstallPrompt();
+  const [open, setOpen] = useState(false);
+  if (env === 'desktop') return null;
+  const installed = env === 'installed';
   return (
     <div className="mt-3 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-ink-200 dark:bg-ink-900 dark:ring-ink-800">
       <div className="flex items-center gap-3">
         <LogoMark className="size-11" />
         <div className="min-w-0 flex-1">
-          <p className="font-semibold">{mode === 'installed' ? 'JalanGo is installed' : 'Install JalanGo'}</p>
-          <p className="text-xs text-ink-500 dark:text-ink-400">
-            {mode === 'installed' ? 'You’re using the home-screen app.' : 'Add it to your home screen for full-screen navigation.'}
-          </p>
+          <p className="font-semibold">{installed ? 'JalanGo sudah dipasang' : 'Pasang JalanGo'}</p>
+          <p className="text-xs text-ink-500 dark:text-ink-400">{installed ? 'Anda sedang guna app dari skrin utama.' : 'Tambah ke skrin utama untuk navigasi skrin penuh.'}</p>
         </div>
-        {mode === 'prompt' && (
-          <Button className="px-3 py-2 text-xs" onClick={() => void install()}>
-            Install
+        {installed ? (
+          <CheckCircle2 className="size-6 text-jade-500" />
+        ) : (
+          <Button className="px-3 py-2 text-xs" onClick={() => setOpen(true)}>
+            Pasang
           </Button>
         )}
-        {mode === 'installed' && <CheckCircle2 className="size-6 text-jade-500" />}
       </div>
-      {mode === 'ios' && <IosSteps />}
+      {open && <InstallSheet onClose={() => setOpen(false)} />}
     </div>
   );
 }

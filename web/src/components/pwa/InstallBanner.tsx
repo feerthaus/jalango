@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { LogoMark } from '@/components/brand/LogoMark';
 import { Button } from '@/components/ui/Button';
 import { useInstallPrompt } from '@/hooks/useInstallPrompt';
+import { InstallSheet } from './InstallSheet';
 
 const DISMISS_KEY = 'jalango:install-dismissed';
 
@@ -15,12 +16,12 @@ function dismissedRecently(): boolean {
   }
 }
 
-/** Small, dismissible "Install JalanGo" card shown on the map in a phone browser. */
+/** Small, dismissible "Pasang JalanGo" card on the map; opens the full install guide. */
 export function InstallBanner() {
-  const { mode, install } = useInstallPrompt();
+  const { env } = useInstallPrompt();
   const [hidden, setHidden] = useState(dismissedRecently);
-  const [showIosSteps, setShowIosSteps] = useState(false);
-  if (hidden || mode === 'installed' || mode === 'unavailable') return null;
+  const [open, setOpen] = useState(false);
+  if (hidden || env === 'installed' || env === 'desktop') return null;
 
   const dismiss = () => {
     try {
@@ -36,23 +37,17 @@ export function InstallBanner() {
       <div className="flex items-center gap-3">
         <LogoMark className="size-10" />
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-semibold">Install JalanGo</p>
-          <p className="text-xs text-ink-500 dark:text-ink-400">Full screen, one tap from your home screen.</p>
+          <p className="text-sm font-semibold">Pasang JalanGo</p>
+          <p className="text-xs text-ink-500 dark:text-ink-400">Skrin penuh, satu tekan dari skrin utama.</p>
         </div>
-        {mode === 'prompt' ? (
-          <Button className="px-3 py-2 text-xs" onClick={async () => (await install()) && setHidden(true)}>
-            <Download className="size-4" /> Install
-          </Button>
-        ) : (
-          <Button className="px-3 py-2 text-xs" onClick={() => setShowIosSteps((s) => !s)}>
-            How?
-          </Button>
-        )}
-        <button type="button" onClick={dismiss} aria-label="Not now" className="grid size-8 place-items-center rounded-full text-ink-400 hover:bg-ink-100 dark:hover:bg-ink-800">
+        <Button className="px-3 py-2 text-xs" onClick={() => setOpen(true)}>
+          <Download className="size-4" /> Pasang
+        </Button>
+        <button type="button" onClick={dismiss} aria-label="Tutup" className="grid size-8 place-items-center rounded-full text-ink-400 hover:bg-ink-100 dark:hover:bg-ink-800">
           <X className="size-4" />
         </button>
       </div>
-      {mode === 'ios' && showIosSteps && <IosSteps />}
+      {open && <InstallSheet onClose={() => setOpen(false)} />}
     </div>
   );
 }
