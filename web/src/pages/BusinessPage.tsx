@@ -11,7 +11,7 @@ import {
   deleteOperatorDoc,
   docUrls,
   fetchMyOperator,
-  REQUIRED_DOCS,
+  requiredDocs,
   saveOperator,
   uploadOperatorDoc,
   type DocKind,
@@ -21,7 +21,7 @@ import {
   type OperatorKind,
 } from '@/services/operatorService';
 
-const EMPTY: OperatorInput = { kind: 'homestay', business_name: '', state: '', town: '', phone: '', description: '', ssm_no: '', apad_licence_no: '', apad_expires_on: '', insurance_expires_on: '' };
+const EMPTY: OperatorInput = { kind: 'homestay', business_name: '', state: '', town: '', phone: '', description: '', ssm_no: '', apad_licence_no: '', apad_expires_on: '', insurance_expires_on: '', licence_disclaimer_at: null };
 const fmtDate = (iso: string | null) => (iso ? new Date(`${iso.slice(0, 10)}T00:00:00Z`).toLocaleDateString('ms-MY', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' }) : '');
 
 /** Marketplace phase 0: register a business (homestay or licensed car rental) for review. */
@@ -45,7 +45,7 @@ export function BusinessPage() {
   useEffect(load, [load]);
 
   return (
-    <PagePanel title="Bisnes saya" subtitle="Senaraikan homestay atau kereta sewa berlesen anda di JalanGo">
+    <PagePanel title="Bisnes saya" subtitle="Senaraikan homestay atau kereta sewa anda di JalanGo">
       {loading || (user && !loaded) ? (
         <Loader2 className="mx-auto mt-6 size-6 animate-spin text-ink-400" />
       ) : !user ? (
@@ -74,7 +74,7 @@ function Intro() {
         <li>Pelanggan hubungi anda terus melalui WhatsApp. JalanGo tidak mengambil komisen.</li>
         <li>Semua operator disemak dahulu supaya pengguna percaya.</li>
         <li><strong>Homestay:</strong> IC pemilik + bukti pemilikan atau kebenaran.</li>
-        <li><strong>Kereta sewa:</strong> mesti ada SSM, <strong>lesen APAD</strong> dan insurans yang meliputi sewaan. Operator tanpa lesen tidak diterima.</li>
+        <li><strong>Kereta sewa:</strong> SSM + insurans. Lesen APAD digalakkan: operator berlesen mendapat lencana <strong>Berlesen APAD</strong>.</li>
       </ul>
     </div>
   );
@@ -82,7 +82,7 @@ function Intro() {
 
 function StatusCard({ operator, docs }: { operator: Operator; docs: OperatorDocument[] }) {
   const s = STATUS_LABEL[operator.status];
-  const missing = REQUIRED_DOCS[operator.kind].filter((k) => !docs.some((d) => d.kind === k));
+  const missing = requiredDocs(operator).filter((k) => !docs.some((d) => d.kind === k));
   return (
     <div className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-ink-200 dark:bg-ink-900 dark:ring-ink-800">
       <div className="flex items-center gap-2">
@@ -114,6 +114,7 @@ function DetailsForm({ userId, operator, onSaved }: { userId: string; operator: 
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
+  const [agreed, setAgreed] = useState(Boolean(operator?.licence_disclaimer_at));
   const locked = operator?.status === 'suspended';
   const car = f.kind === 'car_rental';
   const set = <K extends keyof OperatorInput>(k: K, v: OperatorInput[K]) => {
@@ -126,7 +127,10 @@ function DetailsForm({ userId, operator, onSaved }: { userId: string; operator: 
     setError(null);
     const phone = normalizePhone(f.phone);
     if (!phone || !phone.startsWith('60')) return setError('Masukkan nombor telefon/WhatsApp Malaysia, cth. 012-345 6789.');
-    if (car && (!f.ssm_no || !f.apad_licence_no || !f.apad_expires_on || !f.insurance_expires_on)) return setError('Kereta sewa perlu SSM, lesen APAD dan tarikh tamat insurans.');
+    const licensed = car && Boolean(f.apad_licence_no?.trim());
+    if (car && (!f.ssm_no || !f.insurance_expires_on)) return setError('Kereta sewa perlu No. SSM dan tarikh tamat insurans.');
+    if (licensed && !f.apad_expires_on) return setError('Masukkan tarikh tamat lesen APAD.');
+    if (car && !licensed && !agreed) return setError('Sila baca dan tandakan penafian tentang lesen APAD.');
     setBusy(true);
     try {
       const clean: OperatorInput = {
@@ -135,8 +139,10 @@ function DetailsForm({ userId, operator, onSaved }: { userId: string; operator: 
         description: f.description?.trim() || null,
         ssm_no: f.ssm_no?.trim() || null,
         apad_licence_no: car ? f.apad_licence_no?.trim() || null : null,
-        apad_expires_on: car ? f.apad_expires_on || null : null,
+        apad_expires_on: licensed ? f.apad_expires_on || null : null,
         insurance_expires_on: car ? f.insurance_expires_on || null : null,
+        // the server records the time; we only say it was accepted
+        licence_disclaimer_at: car && !licensed ? new Date().toISOString() : null,
       };
       onSaved(await saveOperator(userId, clean, operator?.id));
       setSaved(true);
@@ -174,11 +180,22 @@ function DetailsForm({ userId, operator, onSaved }: { userId: string; operator: 
         <label className="block text-sm font-semibold">No. SSM {car ? '' : '(jika ada)'}<input className={input} value={f.ssm_no ?? ''} maxLength={30} required={car} onChange={(e) => set('ssm_no', e.target.value)} /></label>
         {car && (
           <>
-            <label className="block text-sm font-semibold">No. lesen APAD<input className={input} value={f.apad_licence_no ?? ''} maxLength={40} required onChange={(e) => set('apad_licence_no', e.target.value)} /></label>
-            <div className="grid grid-cols-2 gap-2">
+            <label className="block text-sm font-semibold">Insurans tamat<input className={input} type="date" value={f.insurance_expires_on ?? ''} required onChange={(e) => set('insurance_expires_on', e.target.value)} /></label>
+            <label className="block text-sm font-semibold">No. lesen APAD (jika ada)<input className={input} value={f.apad_licence_no ?? ''} maxLength={40} onChange={(e) => set('apad_licence_no', e.target.value)} /></label>
+            {f.apad_licence_no?.trim() ? (
               <label className="block text-sm font-semibold">Lesen APAD tamat<input className={input} type="date" value={f.apad_expires_on ?? ''} required onChange={(e) => set('apad_expires_on', e.target.value)} /></label>
-              <label className="block text-sm font-semibold">Insurans tamat<input className={input} type="date" value={f.insurance_expires_on ?? ''} required onChange={(e) => set('insurance_expires_on', e.target.value)} /></label>
-            </div>
+            ) : (
+              <div className="rounded-xl bg-amber-400/15 p-3 text-xs leading-relaxed text-amber-900 dark:text-amber-100">
+                <p className="font-bold">Penafian: tanpa lesen APAD</p>
+                <p className="mt-1">
+                  Lesen APAD tidak diwajibkan di JalanGo buat masa ini. Namun undang-undang Malaysia mungkin mewajibkan lesen untuk menyewakan kereta, dan insurans kereta persendirian biasanya tidak melindungi kegunaan sewa. Anda bertanggungjawab sepenuhnya untuk mematuhi undang-undang, insurans dan semua tuntutan berkaitan sewaan. JalanGo hanya menyenaraikan bisnes anda, tidak mengesahkan pematuhan anda, dan boleh mengubah syarat ini atau menggantung penyenaraian pada bila-bila masa. Pelanggan akan dimaklumkan bahawa anda tiada lesen APAD.
+                </p>
+                <label className="mt-2 flex items-start gap-2 font-semibold">
+                  <input type="checkbox" checked={agreed} onChange={(e) => { setAgreed(e.target.checked); setError(null); }} className="mt-0.5 size-4 accent-amber-600" />
+                  Saya faham dan bersetuju dengan penafian ini.
+                </label>
+              </div>
+            )}
           </>
         )}
         <label className="block text-sm font-semibold">Penerangan ringkas (pilihan)<textarea className={cn(input, 'resize-none')} rows={3} maxLength={500} value={f.description ?? ''} onChange={(e) => set('description', e.target.value)} /></label>
@@ -199,7 +216,7 @@ function Documents({ userId, operator, docs, onChange }: { userId: string; opera
   const [busy, setBusy] = useState<DocKind | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [urls, setUrls] = useState<Record<string, string>>({});
-  const kinds = useMemo<DocKind[]>(() => [...REQUIRED_DOCS[operator.kind], 'other'], [operator.kind]);
+  const kinds = useMemo<DocKind[]>(() => [...requiredDocs(operator), 'other'], [operator]);
   const locked = operator.status === 'suspended';
 
   const pathsKey = docs.map((d) => d.path).join('|');
@@ -283,5 +300,6 @@ function toInput(o: Operator): OperatorInput {
     apad_licence_no: o.apad_licence_no ?? '',
     apad_expires_on: o.apad_expires_on ?? '',
     insurance_expires_on: o.insurance_expires_on ?? '',
+    licence_disclaimer_at: o.licence_disclaimer_at,
   };
 }

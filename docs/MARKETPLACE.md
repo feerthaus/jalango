@@ -1,7 +1,9 @@
 # Pelan Marketplace JalanGo
 
 **Status:** draf untuk semakan pemilik. Tiada kod lagi.
-**Dikemas kini:** Fasa 1 = homestay + kereta sewa **berlesen APAD sahaja** (keputusan pemilik, 13 Nov 2026).
+**Dikemas kini:** Fasa 1 = homestay + kereta sewa (keputusan pemilik, 13 Nov 2026).
+
+> **Perubahan sementara (keputusan pemilik, 13 Nov 2026):** lesen APAD **tidak diwajibkan** buat masa ini. Operator tanpa lesen mesti menerima **penafian** (direkod dengan tarikh), dan masih wajib ada **SSM + insurans**. Hanya operator berlesen yang sah mendapat lencana **"Berlesen APAD"**. Pada Fasa 1, pelanggan akan dimaklumkan bila operator tiada lesen. Risiko yang dicatat semasa perbincangan: penguatkuasaan APAD/JPJ, insurans persendirian biasanya tidak meliputi sewaan, dan reputasi JalanGo. Keputusan ini patut disemak semula sebelum Fasa 1 dilancarkan.
 **Kedudukan:** JalanGo ialah **pengganti Waze**, dan itu teras produk. Marketplace ialah **tambahan**. Ia tidak boleh melambatkan, mengganggu atau melemahkan navigasi.
 
 ---
@@ -11,7 +13,7 @@
 | Perkara | Keputusan |
 |---|---|
 | Kategori pertama | **Homestay / rumah sewa** dan **kereta sewa berlesen sahaja** |
-| Syarat kereta sewa | Operator **wajib** ada **lesen APAD** (kereta sewa pandu sendiri) dan **insurans komersial/sewa** yang sah. Operator tanpa lesen **tidak** disenaraikan, walaupun dengan label. Ramai operator tiada lesen, tetapi insurans kereta persendirian biasanya tidak melindungi kegunaan sewa (risiko kepada pelanggan), dan JalanGo tidak boleh mempromosikan aktiviti tanpa lesen. |
+| Syarat kereta sewa (asal) | Operator **wajib** ada **lesen APAD** (kereta sewa pandu sendiri) dan **insurans komersial/sewa** yang sah. Operator tanpa lesen **tidak** disenaraikan, walaupun dengan label. Ramai operator tiada lesen, tetapi insurans kereta persendirian biasanya tidak melindungi kegunaan sewa (risiko kepada pelanggan), dan JalanGo tidak boleh mempromosikan aktiviti tanpa lesen. |
 | Kemudian | Rider penghantaran (makanan, barang, dokumen); hotel/chalet |
 | Tidak dibuat | **Pemandu e-hailing**. Mereka perlu lesen APAD dan hanya boleh beroperasi melalui syarikat pengantara berlesen. Menghubungkan pelanggan terus kepada pemandu berisiko menjadikan JalanGo pengantara tanpa lesen. Mungkin melalui kerjasama dengan syarikat berlesen pada masa depan. |
 | Siapa sahkan operator | Pemilik (admin), melalui halaman Admin dengan 2FA |
