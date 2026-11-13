@@ -19,6 +19,8 @@ export interface Operator {
   apad_licence_no: string | null;
   apad_expires_on: string | null;
   insurance_expires_on: string | null;
+  /** set when a car rental operator without an APAD licence accepted the disclaimer */
+  licence_disclaimer_at: string | null;
   status: OperatorStatus;
   review_note: string | null;
   reviewed_at: string | null;
@@ -36,16 +38,20 @@ export interface OperatorDocument {
   created_at: string;
 }
 
-export type OperatorInput = Pick<Operator, 'kind' | 'business_name' | 'state' | 'town' | 'phone' | 'description' | 'ssm_no' | 'apad_licence_no' | 'apad_expires_on' | 'insurance_expires_on'>;
+export type OperatorInput = Pick<Operator, 'kind' | 'business_name' | 'state' | 'town' | 'phone' | 'description' | 'ssm_no' | 'apad_licence_no' | 'apad_expires_on' | 'insurance_expires_on' | 'licence_disclaimer_at'>;
 
 export const DOCS_BUCKET = 'operator-docs';
-const COLS = 'id,user_id,kind,business_name,state,town,phone,description,ssm_no,apad_licence_no,apad_expires_on,insurance_expires_on,status,review_note,reviewed_at,approved_at,free_until,created_at,updated_at';
+const COLS = 'id,user_id,kind,business_name,state,town,phone,description,ssm_no,apad_licence_no,apad_expires_on,insurance_expires_on,licence_disclaimer_at,status,review_note,reviewed_at,approved_at,free_until,created_at,updated_at';
 
-/** Documents each kind must upload before review. */
-export const REQUIRED_DOCS: Record<OperatorKind, DocKind[]> = {
-  homestay: ['ic', 'ownership'],
-  car_rental: ['ssm', 'apad_licence', 'insurance'],
-};
+/** Documents an operator must upload before review (the APAD licence only if they have one). */
+export function requiredDocs(o: Pick<Operator, 'kind' | 'apad_licence_no'>): DocKind[] {
+  if (o.kind === 'homestay') return ['ic', 'ownership'];
+  return o.apad_licence_no ? ['ssm', 'apad_licence', 'insurance'] : ['ssm', 'insurance'];
+}
+
+/** Licensed car rental: has an APAD licence that is still valid. */
+export const isApadLicensed = (o: Pick<Operator, 'kind' | 'apad_licence_no' | 'apad_expires_on'>, today = new Date().toISOString().slice(0, 10)) =>
+  o.kind === 'car_rental' && Boolean(o.apad_licence_no) && (o.apad_expires_on ?? '') > today;
 
 function client() {
   if (!supabase) throw new Error('Not connected.');

@@ -40,10 +40,10 @@ Kemas kini fail ini dalam PR yang sama setiap kali fungsi baru ditambah atau diu
 Pelan penuh ada dalam `docs/MARKETPLACE.md`. Fasa 0 hanya pendaftaran dan pengesahan. **Belum ada listing awam.**
 
 - **Profil → "Ada homestay atau kereta sewa?"** membuka `/business` (halaman Bisnes saya):
-  1. **Maklumat bisnes:** jenis (Homestay / Kereta sewa), nama, negeri, bandar, telefon/WhatsApp, SSM, penerangan. Kereta sewa wajib ada **no. lesen APAD + tarikh tamat** dan **tarikh tamat insurans**, dan kedua-duanya mesti masih sah.
+  1. **Maklumat bisnes:** jenis (Homestay / Kereta sewa), nama, negeri, bandar, telefon/WhatsApp, SSM, penerangan. Kereta sewa wajib ada **SSM** dan **tarikh tamat insurans** (masih sah). **Lesen APAD adalah pilihan** (keputusan sementara pemilik). Jika diisi, ia mesti masih sah. Jika tidak, operator mesti tanda **penafian**, yang direkod dengan masa pelayan (`licence_disclaimer_at`).
   2. **Dokumen pengesahan** (gambar atau PDF, maksimum 5 MB):
      - homestay: IC + bukti pemilikan/kebenaran;
-     - kereta sewa: SSM + lesen APAD + insurans.
+     - kereta sewa: SSM + insurans (+ lesen APAD jika ada).
      Disimpan dalam bucket **peribadi** `operator-docs`, dan hanya boleh dilihat oleh pemilik dan admin (dengan 2FA).
   3. **Status:** Menunggu semakan, Perlu maklumat tambahan (dengan nota admin), Disahkan (percuma 6 bulan, tarikh dipaparkan), Ditolak, atau Digantung. Sebarang perubahan oleh operator menghantar bisnes untuk **disemak semula**.
 - **Admin → Operator:** senarai "Perlu semakan" dan "Semua".

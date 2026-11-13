@@ -31,7 +31,7 @@ JalanGo's core is a **Waze replacement**: navigation, live traffic and community
 | 3. Own data | Anonymous probe data → historical speeds, typical-jam patterns, better ETAs; PostGIS | 🟡 Probe collection running; analysis not built |
 | 4. Intelligence | Predictive "leave at" advice, festive-season (*balik kampung*) planning, smarter rerouting from community data | ⏳ |
 | 5. Business | Fleet & logistics (builds on Driver mode / Konvoi), aggregated data products, partnerships | ⏳ |
-| M. Marketplace (add-on) | Verified homestay and **APAD-licensed, insured** car rental listings with WhatsApp contact (unlicensed operators are not listed), later delivery riders. Plan: [`MARKETPLACE.md`](MARKETPLACE.md) | 📝 Planned |
+| M. Marketplace (add-on) | Verified homestay and insured car rental listings with WhatsApp contact (APAD licence optional for now by the owner's decision; licensed operators get a badge, unlicensed ones accept a disclaimer and customers are told), later delivery riders. Plan: [`MARKETPLACE.md`](MARKETPLACE.md) | 📝 Planned |
 
 ## Corrections added in engineering review
 

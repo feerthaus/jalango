@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { cn } from '@/lib/cn';
 import { DOC_LABEL, KIND_LABEL, STATUS_LABEL } from '@/lib/operatorLabels';
-import { docUrls, fetchOperatorsForReview, REQUIRED_DOCS, reviewOperator, type OperatorStatus, type OperatorWithDocs } from '@/services/operatorService';
+import { docUrls, fetchOperatorsForReview, isApadLicensed, requiredDocs, reviewOperator, type OperatorStatus, type OperatorWithDocs } from '@/services/operatorService';
 
 const ORDER: OperatorStatus[] = ['pending', 'needs_info', 'approved', 'suspended', 'rejected'];
 const fmt = (iso: string | null) => (iso ? new Date(`${iso.slice(0, 10)}T00:00:00Z`).toLocaleDateString('ms-MY', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' }) : '–');
@@ -61,9 +61,9 @@ function OperatorCard({ o, urls, onDone }: { o: OperatorWithDocs; urls: Record<s
   const [note, setNote] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const missing = REQUIRED_DOCS[o.kind].filter((k) => !o.documents.some((d) => d.kind === k));
+  const missing = requiredDocs(o).filter((k) => !o.documents.some((d) => d.kind === k));
   const today = new Date().toISOString().slice(0, 10);
-  const expired = o.kind === 'car_rental' && ((o.apad_expires_on ?? '') <= today || (o.insurance_expires_on ?? '') <= today);
+  const expired = o.kind === 'car_rental' && ((o.apad_licence_no ? (o.apad_expires_on ?? '') <= today : false) || (o.insurance_expires_on ?? '') <= today);
   const s = STATUS_LABEL[o.status];
 
   const decide = async (d: 'approved' | 'needs_info' | 'rejected' | 'suspended') => {
@@ -85,7 +85,7 @@ function OperatorCard({ o, urls, onDone }: { o: OperatorWithDocs; urls: Record<s
       <div className="flex items-start gap-2">
         <div className="min-w-0 flex-1">
           <p className="font-bold">{o.business_name}</p>
-          <p className="text-xs text-ink-500">{KIND_LABEL[o.kind]} · {o.town}, {o.state}</p>
+          <p className="text-xs text-ink-500">{KIND_LABEL[o.kind]}{isApadLicensed(o) && ' · ✓ Berlesen APAD'} · {o.town}, {o.state}</p>
         </div>
         <span className={cn('shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold', s.tone)}>{s.text}</span>
       </div>
@@ -97,7 +97,7 @@ function OperatorCard({ o, urls, onDone }: { o: OperatorWithDocs; urls: Record<s
         {o.kind === 'car_rental' && (
           <>
             <dt className="text-ink-500">Lesen APAD</dt>
-            <dd>{o.apad_licence_no} · tamat {fmt(o.apad_expires_on)}</dd>
+            <dd>{o.apad_licence_no ? `${o.apad_licence_no} · tamat ${fmt(o.apad_expires_on)}` : <span className="font-semibold text-amber-600">Tiada · akui penafian {fmt(o.licence_disclaimer_at)}</span>}</dd>
             <dt className="text-ink-500">Insurans tamat</dt>
             <dd>{fmt(o.insurance_expires_on)}</dd>
           </>
@@ -112,7 +112,7 @@ function OperatorCard({ o, urls, onDone }: { o: OperatorWithDocs; urls: Record<s
         )}
       </dl>
       {o.description && <p className="mt-2 text-xs italic text-ink-600 dark:text-ink-300">“{o.description}”</p>}
-      {expired && <p className="mt-2 text-xs font-semibold text-red-600">⚠ Lesen APAD atau insurans sudah tamat.</p>}
+      {expired && <p className="mt-2 text-xs font-semibold text-red-600">⚠ Insurans atau lesen APAD sudah tamat.</p>}
       {missing.length > 0 && <p className="mt-2 text-xs font-semibold text-amber-600">Dokumen belum ada: {missing.map((k) => DOC_LABEL[k]).join('; ')}</p>}
       <ul className="mt-2 space-y-1">
         {o.documents.map((d) => (

@@ -68,7 +68,7 @@ const ms: LegalSection[] = [
         <p>Jika anda mendaftar sebagai operator di JalanGo:</p>
         <Ul>
           <li>maklumat dan dokumen yang anda berikan mestilah benar dan milik anda atau syarikat anda;</li>
-          <li>operator kereta sewa mesti mempunyai lesen APAD yang sah dan insurans yang meliputi kegunaan sewa, dan memaklumkan JalanGo jika lesen atau insurans tamat atau ditarik balik;</li>
+          <li>operator kereta sewa mesti mempunyai insurans yang sah. Lesen APAD tidak diwajibkan di JalanGo buat masa ini, tetapi operator tanpa lesen bertanggungjawab sepenuhnya untuk mematuhi undang-undang dan semua tuntutan berkaitan sewaan, dan pelanggan akan dimaklumkan. Maklumkan JalanGo jika lesen atau insurans tamat atau ditarik balik;</li>
           <li>anda bertanggungjawab sepenuhnya atas perkhidmatan anda: harga, deposit, keadaan rumah atau kenderaan, keselamatan, insurans, dan semua urusan serta pertikaian dengan pelanggan;</li>
           <li>JalanGo hanya menyenaraikan dan menghubungkan. JalanGo bukan pihak dalam kontrak sewaan, dan tidak menerima bayaran bagi pihak anda melainkan dinyatakan kemudian;</li>
           <li>JalanGo boleh menolak, meminta maklumat tambahan, menggantung atau membuang pendaftaran pada bila-bila masa, termasuk jika terdapat aduan pengguna.</li>
@@ -180,7 +180,7 @@ const en: LegalSection[] = [
         <p>If you register as an operator on JalanGo:</p>
         <Ul>
           <li>the details and documents you give must be true and belong to you or your company;</li>
-          <li>car rental operators must hold a valid APAD licence and insurance that covers rental use, and tell JalanGo if either expires or is withdrawn;</li>
+          <li>car rental operators must hold valid insurance. An APAD licence is not required on JalanGo for now, but operators without one are fully responsible for complying with the law and for all rental-related claims, and customers will be told. Tell JalanGo if a licence or insurance expires or is withdrawn;</li>
           <li>you are fully responsible for your service: prices, deposits, the condition of the home or vehicle, safety, insurance, and all dealings and disputes with customers;</li>
           <li>JalanGo only lists and connects. JalanGo is not a party to the rental contract and does not take payment on your behalf unless stated later;</li>
           <li>JalanGo may refuse, ask for more information, suspend or remove a registration at any time, including after customer complaints.</li>

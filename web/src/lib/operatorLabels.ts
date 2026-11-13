@@ -1,6 +1,6 @@
 import type { DocKind, OperatorKind, OperatorStatus } from '@/services/operatorService';
 
-export const KIND_LABEL: Record<OperatorKind, string> = { homestay: 'Homestay / rumah sewa', car_rental: 'Kereta sewa (berlesen APAD)' };
+export const KIND_LABEL: Record<OperatorKind, string> = { homestay: 'Homestay / rumah sewa', car_rental: 'Kereta sewa' };
 
 export const DOC_LABEL: Record<DocKind, string> = {
   ic: 'Kad pengenalan (IC) pemilik',
