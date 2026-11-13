@@ -62,6 +62,22 @@ const ms: LegalSection[] = [
     ),
   },
   {
+    title: 'Operator bisnes (homestay & kereta sewa)',
+    body: (
+      <>
+        <p>Jika anda mendaftar sebagai operator di JalanGo:</p>
+        <Ul>
+          <li>maklumat dan dokumen yang anda berikan mestilah benar dan milik anda atau syarikat anda;</li>
+          <li>operator kereta sewa mesti mempunyai lesen APAD yang sah dan insurans yang meliputi kegunaan sewa, dan memaklumkan JalanGo jika lesen atau insurans tamat atau ditarik balik;</li>
+          <li>anda bertanggungjawab sepenuhnya atas perkhidmatan anda: harga, deposit, keadaan rumah atau kenderaan, keselamatan, insurans, dan semua urusan serta pertikaian dengan pelanggan;</li>
+          <li>JalanGo hanya menyenaraikan dan menghubungkan. JalanGo bukan pihak dalam kontrak sewaan, dan tidak menerima bayaran bagi pihak anda melainkan dinyatakan kemudian;</li>
+          <li>JalanGo boleh menolak, meminta maklumat tambahan, menggantung atau membuang pendaftaran pada bila-bila masa, termasuk jika terdapat aduan pengguna.</li>
+        </Ul>
+        <p>Penyenaraian adalah percuma selama 6 bulan pertama selepas diluluskan. Sebarang yuran selepas itu akan dimaklumkan lebih awal dan memerlukan persetujuan anda.</p>
+      </>
+    ),
+  },
+  {
     title: 'Perkhidmatan pihak ketiga',
     body: (
       <p>
@@ -156,6 +172,22 @@ const en: LegalSection[] = [
   {
     title: 'Accounts',
     body: <p>You are responsible for keeping your account and password secure. One person, one account. Don’t impersonate others or use the service through automation (bots, scraping).</p>,
+  },
+  {
+    title: 'Business operators (homestay & car rental)',
+    body: (
+      <>
+        <p>If you register as an operator on JalanGo:</p>
+        <Ul>
+          <li>the details and documents you give must be true and belong to you or your company;</li>
+          <li>car rental operators must hold a valid APAD licence and insurance that covers rental use, and tell JalanGo if either expires or is withdrawn;</li>
+          <li>you are fully responsible for your service: prices, deposits, the condition of the home or vehicle, safety, insurance, and all dealings and disputes with customers;</li>
+          <li>JalanGo only lists and connects. JalanGo is not a party to the rental contract and does not take payment on your behalf unless stated later;</li>
+          <li>JalanGo may refuse, ask for more information, suspend or remove a registration at any time, including after customer complaints.</li>
+        </Ul>
+        <p>Listing is free for the first 6 months after approval. Any later fee will be announced in advance and needs your agreement.</p>
+      </>
+    ),
   },
   {
     title: 'Third-party services',

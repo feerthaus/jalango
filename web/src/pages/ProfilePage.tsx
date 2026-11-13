@@ -58,6 +58,7 @@ export function ProfilePage() {
       <AccountCard favourites={favourites.length} recents={recents.length} />
 
       <ShareAppCard />
+      <BusinessCard />
       <InstallCard />
       <FeedbackCard />
 
@@ -322,5 +323,22 @@ function AccountExtras() {
       )}
       <DeleteAccount />
     </div>
+  );
+}
+
+/** Entry to the marketplace operator sign-up (homestay / licensed car rental). */
+function BusinessCard() {
+  const [t] = useT();
+  return (
+    <Link to="/business" className="mt-3 flex items-center gap-3 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-ink-200 dark:bg-ink-900 dark:ring-ink-800">
+      <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-sky-500/15 text-xl" aria-hidden>
+        🏡
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block font-semibold">{t('Ada homestay atau kereta sewa?', 'Own a homestay or rental car?')}</span>
+        <span className="block text-xs text-ink-500 dark:text-ink-400">{t('Daftar bisnes anda di JalanGo, percuma 6 bulan pertama', 'List your business on JalanGo, free for the first 6 months')}</span>
+      </span>
+      <span className="text-sm font-semibold text-jade-600 dark:text-jade-400">{t('Daftar', 'Join')} →</span>
+    </Link>
   );
 }

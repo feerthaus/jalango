@@ -35,6 +35,28 @@ Kemas kini fail ini dalam PR yang sama setiap kali fungsi baru ditambah atau diu
 
 ---
 
+## Marketplace Fasa 0: daftar operator (homestay & kereta sewa berlesen)
+
+Pelan penuh ada dalam `docs/MARKETPLACE.md`. Fasa 0 hanya pendaftaran dan pengesahan. **Belum ada listing awam.**
+
+- **Profil → "Ada homestay atau kereta sewa?"** membuka `/business` (halaman Bisnes saya):
+  1. **Maklumat bisnes:** jenis (Homestay / Kereta sewa), nama, negeri, bandar, telefon/WhatsApp, SSM, penerangan. Kereta sewa wajib ada **no. lesen APAD + tarikh tamat** dan **tarikh tamat insurans**, dan kedua-duanya mesti masih sah.
+  2. **Dokumen pengesahan** (gambar atau PDF, maksimum 5 MB):
+     - homestay: IC + bukti pemilikan/kebenaran;
+     - kereta sewa: SSM + lesen APAD + insurans.
+     Disimpan dalam bucket **peribadi** `operator-docs`, dan hanya boleh dilihat oleh pemilik dan admin (dengan 2FA).
+  3. **Status:** Menunggu semakan, Perlu maklumat tambahan (dengan nota admin), Disahkan (percuma 6 bulan, tarikh dipaparkan), Ditolak, atau Digantung. Sebarang perubahan oleh operator menghantar bisnes untuk **disemak semula**.
+- **Admin → Operator:** senarai "Perlu semakan" dan "Semua".
+  - Setiap operator menunjukkan butiran, dokumen (pautan sementara), dokumen yang belum ada, dan amaran lesen/insurans tamat.
+  - Butang **Lulus** (dimatikan jika dokumen belum lengkap atau lesen tamat), **Minta maklumat**, **Tolak** dan **Gantung**. Tiga yang terakhir wajib dengan nota.
+  - Kelulusan memulakan **6 bulan percuma** (`free_until`).
+  - Setiap keputusan direkod dalam jadual `admin_actions`.
+- **Kod:**
+  - Migrasi: `supabase/migrations/20261114000000_marketplace_operators.sql`.
+  - `web/src/services/operatorService.ts`, `web/src/pages/BusinessPage.tsx`, `web/src/components/admin/OperatorReview.tsx`, `web/src/lib/operatorLabels.ts`.
+
+---
+
 ## Rekod kemalangan dan amaran kawasan kerap kemalangan
 
 **Apa:** sejarah kemalangan di sesuatu lokasi, dipaparkan di peta dengan gambar. Pemandu diberi amaran bila menghampiri kawasan yang kerap berlaku kemalangan ("titik hitam"). Idea ini datang dari senarai kemalangan di Simpang Taman Seri Dagang yang dikongsi di Facebook.
