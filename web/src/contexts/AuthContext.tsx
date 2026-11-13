@@ -14,6 +14,7 @@ interface AuthValue {
   signOut: () => Promise<void>;
   /** Google / Facebook sign-in (redirects away and back) */
   signInWithProvider: (provider: OAuthProvider) => Promise<void>;
+  signInWithGoogleToken: (token: string, nonce: string) => Promise<void>;
   /** Error returned by a social sign-in redirect, if any */
   authError: string | null;
   clearAuthError: () => void;
@@ -92,6 +93,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (error) throw new Error(friendly(error.message));
   }, []);
 
+  /** Google ID token from our own "Sign in with Google" button. */
+  const signInWithGoogleToken = useCallback(async (token: string, nonce: string) => {
+    if (!supabase) throw new Error('Accounts are not available yet.');
+    const { error } = await supabase.auth.signInWithIdToken({ provider: 'google', token, nonce });
+    if (error) throw new Error(friendly(error.message));
+  }, []);
+
   const signOut = useCallback(async () => {
     await supabase?.auth.signOut();
   }, []);
@@ -106,10 +114,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       signUp,
       signOut,
       signInWithProvider,
+      signInWithGoogleToken,
       authError,
       clearAuthError: () => setAuthError(null),
     }),
-    [loading, session, signIn, signUp, signOut, signInWithProvider, authError],
+    [loading, session, signIn, signUp, signOut, signInWithProvider, signInWithGoogleToken, authError],
   );
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
