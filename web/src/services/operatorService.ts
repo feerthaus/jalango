@@ -43,10 +43,10 @@ export type OperatorInput = Pick<Operator, 'kind' | 'business_name' | 'state' | 
 export const DOCS_BUCKET = 'operator-docs';
 const COLS = 'id,user_id,kind,business_name,state,town,phone,description,ssm_no,apad_licence_no,apad_expires_on,insurance_expires_on,licence_disclaimer_at,status,review_note,reviewed_at,approved_at,free_until,created_at,updated_at';
 
-/** Documents an operator must upload before review (the APAD licence only if they have one). */
-export function requiredDocs(o: Pick<Operator, 'kind' | 'apad_licence_no'>): DocKind[] {
+/** Documents an operator must upload before review (APAD licence and insurance only if given). */
+export function requiredDocs(o: Pick<Operator, 'kind' | 'apad_licence_no' | 'insurance_expires_on'>): DocKind[] {
   if (o.kind === 'homestay') return ['ic', 'ownership'];
-  return o.apad_licence_no ? ['ssm', 'apad_licence', 'insurance'] : ['ssm', 'insurance'];
+  return ['ssm', ...(o.apad_licence_no ? (['apad_licence'] as DocKind[]) : []), ...(o.insurance_expires_on ? (['insurance'] as DocKind[]) : [])];
 }
 
 /** Licensed car rental: has an APAD licence that is still valid. */

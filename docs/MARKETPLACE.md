@@ -3,7 +3,7 @@
 **Status:** draf untuk semakan pemilik. Tiada kod lagi.
 **Dikemas kini:** Fasa 1 = homestay + kereta sewa (keputusan pemilik, 13 Nov 2026).
 
-> **Perubahan sementara (keputusan pemilik, 13 Nov 2026):** lesen APAD **tidak diwajibkan** buat masa ini. Operator tanpa lesen mesti menerima **penafian** (direkod dengan tarikh), dan masih wajib ada **SSM + insurans**. Hanya operator berlesen yang sah mendapat lencana **"Berlesen APAD"**. Pada Fasa 1, pelanggan akan dimaklumkan bila operator tiada lesen. Risiko yang dicatat semasa perbincangan: penguatkuasaan APAD/JPJ, insurans persendirian biasanya tidak meliputi sewaan, dan reputasi JalanGo. Keputusan ini patut disemak semula sebelum Fasa 1 dilancarkan.
+> **Perubahan sementara (keputusan pemilik, 13 Nov 2026):** lesen APAD **tidak diwajibkan** buat masa ini. **Insurans juga tidak diwajibkan** (keputusan pemilik, 13 Nov 2026). Operator tanpa lesen **atau** tanpa maklumat insurans mesti menerima **penafian** (direkod dengan tarikh). Hanya **SSM** masih wajib. Hanya operator berlesen yang sah mendapat lencana **"Berlesen APAD"**. Pada Fasa 1, pelanggan akan dimaklumkan bila operator tiada lesen. Risiko yang dicatat semasa perbincangan: penguatkuasaan APAD/JPJ, insurans persendirian biasanya tidak meliputi sewaan, dan reputasi JalanGo. Keputusan ini patut disemak semula sebelum Fasa 1 dilancarkan.
 **Kedudukan:** JalanGo ialah **pengganti Waze**, dan itu teras produk. Marketplace ialah **tambahan**. Ia tidak boleh melambatkan, mengganggu atau melemahkan navigasi.
 
 ---
