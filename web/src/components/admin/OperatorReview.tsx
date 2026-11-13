@@ -63,7 +63,7 @@ function OperatorCard({ o, urls, onDone }: { o: OperatorWithDocs; urls: Record<s
   const [error, setError] = useState<string | null>(null);
   const missing = requiredDocs(o).filter((k) => !o.documents.some((d) => d.kind === k));
   const today = new Date().toISOString().slice(0, 10);
-  const expired = o.kind === 'car_rental' && ((o.apad_licence_no ? (o.apad_expires_on ?? '') <= today : false) || (o.insurance_expires_on ?? '') <= today);
+  const expired = o.kind === 'car_rental' && ((o.apad_licence_no ? (o.apad_expires_on ?? '') <= today : false) || (o.insurance_expires_on ? o.insurance_expires_on <= today : false));
   const s = STATUS_LABEL[o.status];
 
   const decide = async (d: 'approved' | 'needs_info' | 'rejected' | 'suspended') => {
@@ -99,7 +99,7 @@ function OperatorCard({ o, urls, onDone }: { o: OperatorWithDocs; urls: Record<s
             <dt className="text-ink-500">Lesen APAD</dt>
             <dd>{o.apad_licence_no ? `${o.apad_licence_no} · tamat ${fmt(o.apad_expires_on)}` : <span className="font-semibold text-amber-600">Tiada · akui penafian {fmt(o.licence_disclaimer_at)}</span>}</dd>
             <dt className="text-ink-500">Insurans tamat</dt>
-            <dd>{fmt(o.insurance_expires_on)}</dd>
+            <dd>{o.insurance_expires_on ? fmt(o.insurance_expires_on) : <span className="font-semibold text-amber-600">Tiada · akui penafian {fmt(o.licence_disclaimer_at)}</span>}</dd>
           </>
         )}
         <dt className="text-ink-500">Didaftar / dikemas kini</dt>

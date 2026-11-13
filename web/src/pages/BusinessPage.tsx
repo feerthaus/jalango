@@ -74,7 +74,7 @@ function Intro() {
         <li>Pelanggan hubungi anda terus melalui WhatsApp. JalanGo tidak mengambil komisen.</li>
         <li>Semua operator disemak dahulu supaya pengguna percaya.</li>
         <li><strong>Homestay:</strong> IC pemilik + bukti pemilikan atau kebenaran.</li>
-        <li><strong>Kereta sewa:</strong> SSM + insurans. Lesen APAD digalakkan: operator berlesen mendapat lencana <strong>Berlesen APAD</strong>.</li>
+        <li><strong>Kereta sewa:</strong> SSM. Lesen APAD dan insurans digalakkan: operator berlesen mendapat lencana <strong>Berlesen APAD</strong>.</li>
       </ul>
     </div>
   );
@@ -128,9 +128,10 @@ function DetailsForm({ userId, operator, onSaved }: { userId: string; operator: 
     const phone = normalizePhone(f.phone);
     if (!phone || !phone.startsWith('60')) return setError('Masukkan nombor telefon/WhatsApp Malaysia, cth. 012-345 6789.');
     const licensed = car && Boolean(f.apad_licence_no?.trim());
-    if (car && (!f.ssm_no || !f.insurance_expires_on)) return setError('Kereta sewa perlu No. SSM dan tarikh tamat insurans.');
+    const insured = car && Boolean(f.insurance_expires_on);
+    if (car && !f.ssm_no) return setError('Kereta sewa perlu No. SSM.');
     if (licensed && !f.apad_expires_on) return setError('Masukkan tarikh tamat lesen APAD.');
-    if (car && !licensed && !agreed) return setError('Sila baca dan tandakan penafian tentang lesen APAD.');
+    if (car && (!licensed || !insured) && !agreed) return setError('Sila baca dan tandakan penafian.');
     setBusy(true);
     try {
       const clean: OperatorInput = {
@@ -142,7 +143,7 @@ function DetailsForm({ userId, operator, onSaved }: { userId: string; operator: 
         apad_expires_on: licensed ? f.apad_expires_on || null : null,
         insurance_expires_on: car ? f.insurance_expires_on || null : null,
         // the server records the time; we only say it was accepted
-        licence_disclaimer_at: car && !licensed ? new Date().toISOString() : null,
+        licence_disclaimer_at: car && (!licensed || !insured) ? new Date().toISOString() : null,
       };
       onSaved(await saveOperator(userId, clean, operator?.id));
       setSaved(true);
@@ -180,15 +181,16 @@ function DetailsForm({ userId, operator, onSaved }: { userId: string; operator: 
         <label className="block text-sm font-semibold">No. SSM {car ? '' : '(jika ada)'}<input className={input} value={f.ssm_no ?? ''} maxLength={30} required={car} onChange={(e) => set('ssm_no', e.target.value)} /></label>
         {car && (
           <>
-            <label className="block text-sm font-semibold">Insurans tamat<input className={input} type="date" value={f.insurance_expires_on ?? ''} required onChange={(e) => set('insurance_expires_on', e.target.value)} /></label>
+            <label className="block text-sm font-semibold">Insurans kenderaan tamat (jika ada)<span className="block text-xs font-normal text-ink-500">Jika banyak kereta, isi tarikh yang paling awal tamat.</span><input className={input} type="date" value={f.insurance_expires_on ?? ''} onChange={(e) => set('insurance_expires_on', e.target.value)} /></label>
             <label className="block text-sm font-semibold">No. lesen APAD (jika ada)<input className={input} value={f.apad_licence_no ?? ''} maxLength={40} onChange={(e) => set('apad_licence_no', e.target.value)} /></label>
-            {f.apad_licence_no?.trim() ? (
+            {f.apad_licence_no?.trim() && (
               <label className="block text-sm font-semibold">Lesen APAD tamat<input className={input} type="date" value={f.apad_expires_on ?? ''} required onChange={(e) => set('apad_expires_on', e.target.value)} /></label>
-            ) : (
+            )}
+            {(!f.apad_licence_no?.trim() || !f.insurance_expires_on) && (
               <div className="rounded-xl bg-amber-400/15 p-3 text-xs leading-relaxed text-amber-900 dark:text-amber-100">
-                <p className="font-bold">Penafian: tanpa lesen APAD</p>
+                <p className="font-bold">Penafian: {!f.apad_licence_no?.trim() && !f.insurance_expires_on ? 'tanpa lesen APAD dan insurans' : !f.apad_licence_no?.trim() ? 'tanpa lesen APAD' : 'tanpa maklumat insurans'}</p>
                 <p className="mt-1">
-                  Lesen APAD tidak diwajibkan di JalanGo buat masa ini. Namun undang-undang Malaysia mungkin mewajibkan lesen untuk menyewakan kereta, dan insurans kereta persendirian biasanya tidak melindungi kegunaan sewa. Anda bertanggungjawab sepenuhnya untuk mematuhi undang-undang, insurans dan semua tuntutan berkaitan sewaan. JalanGo hanya menyenaraikan bisnes anda, tidak mengesahkan pematuhan anda, dan boleh mengubah syarat ini atau menggantung penyenaraian pada bila-bila masa. Pelanggan akan dimaklumkan bahawa anda tiada lesen APAD.
+                  Lesen APAD dan maklumat insurans tidak diwajibkan di JalanGo buat masa ini. Namun undang-undang Malaysia mungkin mewajibkan lesen untuk menyewakan kereta, dan insurans kereta persendirian biasanya tidak melindungi kegunaan sewa. Anda bertanggungjawab sepenuhnya untuk mematuhi undang-undang, insurans dan semua tuntutan berkaitan sewaan, termasuk kemalangan dan tuntutan pihak ketiga. JalanGo hanya menyenaraikan bisnes anda, tidak mengesahkan pematuhan anda, dan boleh mengubah syarat ini atau menggantung penyenaraian pada bila-bila masa. Pelanggan akan dimaklumkan jika anda tiada lesen APAD atau maklumat insurans.
                 </p>
                 <label className="mt-2 flex items-start gap-2 font-semibold">
                   <input type="checkbox" checked={agreed} onChange={(e) => { setAgreed(e.target.checked); setError(null); }} className="mt-0.5 size-4 accent-amber-600" />
