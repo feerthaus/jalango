@@ -10,7 +10,7 @@ import { useRouting } from '@/contexts/RoutingContext';
 import { useConvoy } from '@/contexts/ConvoyContext';
 import { useItinerary } from '@/contexts/ItineraryContext';
 import { useState } from 'react';
-import { spotUrl } from '@/components/live/ShareSpotButton';
+import { placeUrl } from '@/utils/placeLink';
 import { ShareSheet } from '@/components/share/ShareSheet';
 import { Button } from '@/components/ui/Button';
 import { DemoBadge } from '@/components/ui/DemoBadge';
@@ -162,7 +162,7 @@ export function PlaceCard({ place, onClose }: { place: Place; onClose: () => voi
       {sharing && (
         <ShareSheet
           heading={t('Kongsi tempat ini', 'Share this place')}
-          content={{ title: place.name, text: `📍 ${place.name}${place.address ? ` — ${place.address}` : ''}`, url: spotUrl(place.coordinates.lat, place.coordinates.lng) }}
+          content={{ title: place.name, text: `📍 ${place.name}${place.address ? ` — ${place.address}` : ''}`, url: placeUrl(place) }}
           onClose={() => setSharing(false)}
         />
       )}
