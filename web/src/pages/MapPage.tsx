@@ -14,6 +14,7 @@ import { ShareSpotButton } from '@/components/live/ShareSpotButton';
 import { useCallback, useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router';
 import { InstallBanner } from '@/components/pwa/InstallBanner';
+import { InstallNudge } from '@/components/pwa/InstallNudge';
 import { DemoModeBanner } from '@/components/layout/DemoModeBanner';
 import { LocateButton, MapControls } from '@/components/map/MapControls';
 import { LocationStatusBanner } from '@/components/map/LocationStatusBanner';
@@ -168,6 +169,7 @@ export function MapPage() {
         )}
       </div>
 
+      <InstallNudge />
       {reportOpen && <ReportSheet onClose={() => setReportOpen(false)} />}
       {shareOpen && <ShareLiveSheet onClose={() => setShareOpen(false)} />}
       {convoyOpen && <ConvoySheet joinCode={convoyOpen.code} onClose={() => setConvoyOpen(null)} />}
