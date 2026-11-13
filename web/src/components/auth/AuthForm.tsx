@@ -1,3 +1,4 @@
+import { GoogleButton } from './GoogleButton';
 import { Loader2, MailCheck } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
 import { Link } from 'react-router';
@@ -77,16 +78,22 @@ export function AuthForm({ compact = false, onDone }: { compact?: boolean; onDon
   return (
     <form onSubmit={submit} className="space-y-2.5" noValidate>
       {anySocial && (
-        <div className={providers?.google && providers?.facebook ? 'grid grid-cols-2 gap-2' : 'grid gap-2'}>
+        <div className={'grid gap-2'}>
           {providers?.google && (
-        <button
-          type="button"
-          onClick={() => void social('google')}
-          disabled={busy}
-          className="flex items-center justify-center gap-2 rounded-xl bg-white px-3 py-2.5 text-sm font-semibold text-ink-900 ring-1 ring-ink-200 hover:bg-ink-50 disabled:opacity-50 dark:ring-ink-600"
-        >
-          <GoogleIcon /> Google
-        </button>
+            <GoogleButton
+              onError={setError}
+              onBusy={setBusy}
+              fallback={
+                <button
+                  type="button"
+                  onClick={() => void social('google')}
+                  disabled={busy}
+                  className="flex items-center justify-center gap-2 rounded-xl bg-white px-3 py-2.5 text-sm font-semibold text-ink-900 ring-1 ring-ink-200 hover:bg-ink-50 disabled:opacity-50 dark:ring-ink-600"
+                >
+                  <GoogleIcon /> Google
+                </button>
+              }
+            />
           )}
           {providers?.facebook && (
         <button
