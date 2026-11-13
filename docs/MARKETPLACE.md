@@ -201,3 +201,22 @@ Ikut prinsip `docs/VISION.md`: modular monolith, Supabase + RLS, tiada servis ba
 | Dokumen homestay | **IC + bukti pemilikan/kebenaran** sahaja. PBT/MOTAC tidak diwajibkan. |
 | Nama tab | **Tunggu jenama baru.** Guna nama sementara "Sewa" dalam kod. |
 | Bila mula | **Fasa 0–1 dalam versi web dahulu**, mula dengan Fasa 0 |
+
+## 10. Keputusan reka bentuk Fasa 1 (pemilik, 13 Nov 2026)
+
+| Perkara | Keputusan |
+|---|---|
+| Lokasi homestay | **Lokasi tepat** dipaparkan (sudah ada di Google Maps) |
+| Lokasi kereta sewa | **Tiada titik serahan tetap.** Listing ada lokasi pangkalan + kawasan servis (radius). **Penyewa hantar lokasi pickup/drop** kepada operator. Butang WhatsApp menyertakan pautan lokasi penyewa. |
+| Semakan gambar | **Pilihan B: setiap gambar disemak admin** sebelum dipaparkan |
+| Tempahan | Fasa 1 = **WhatsApp + kalendar tarikh penuh**. Permintaan tempahan dalam app kemudian (Fasa 3). |
+| Had listing | **10 listing** setiap operator semasa tempoh percuma |
+
+**Pembinaan:**
+- **1a:** operator dan admin: listing (maklumat, lokasi, gambar, kalendar), semakan admin.
+- **1b:** pengguna: tab Sewa, halaman listing, WhatsApp dengan lokasi.
+
+**Peraturan semakan listing:**
+- Listing baru dan **setiap perubahan kandungan** pada listing yang sudah siar dihantar untuk semakan.
+- Operator boleh **jeda** dan **siar semula** tanpa semakan, jika kandungan tidak berubah sejak diluluskan.
+- Gambar baru pada listing yang sudah siar tersembunyi sehingga diluluskan; listing itu kekal siar.

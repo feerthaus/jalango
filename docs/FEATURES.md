@@ -35,6 +35,28 @@ Kemas kini fail ini dalam PR yang sama setiap kali fungsi baru ditambah atau diu
 
 ---
 
+## Marketplace Fasa 1a: listing, gambar, kalendar (operator & admin)
+
+Selepas bisnes diluluskan, **Bisnes saya** menunjukkan **Kereta saya / Unit homestay saya (n/10)**.
+
+- **Tambah / sunting listing** (`/business/listings/:id`):
+  - **Kereta:** jenama, model, tahun, tempat duduk, transmisi, bahan api, harga/hari, harga hujung minggu, deposit, insurans kereta itu (pilihan).
+  - **Homestay:** jenis, tetamu maksimum, bilik tidur, bilik air, waktu daftar masuk/keluar, kemudahan, peraturan rumah, harga/malam, harga hujung minggu, deposit.
+- **Lokasi:** butang **"Lokasi saya"** (GPS di premis), carian alamat atau tampal link Google Maps, atau seret pin di peta kecil. Nama kawasan diisi automatik.
+  - **Homestay:** lokasi tepat.
+  - **Kereta sewa:** lokasi pangkalan + **kawasan servis (km)**. Penyewa hantar lokasi ambil/hantar melalui WhatsApp (Fasa 1b).
+- **Gambar:** kereta maksimum 8, homestay maksimum 12. Dikecilkan dan EXIF dibuang. **Setiap gambar disemak admin** sebelum dipaparkan. Gambar pertama ialah gambar utama (★ untuk tukar).
+- **Kalendar kekosongan:** tekan tarikh untuk tanda **penuh** (12 bulan ke hadapan).
+- **Status:** Draf, Menunggu semakan, Disiarkan, Dijeda, Ditolak (dengan nota).
+  - Setiap perubahan maklumat dihantar untuk semakan semula.
+  - **Jeda / Siar semula** tanpa semakan jika kandungan tidak berubah (hash kandungan semasa diluluskan).
+- **Admin → Listing:** listing baru/berubah dan gambar baru. **Lulus / Tolak setiap gambar**, kemudian **Lulus & siar** (gambar yang menunggu turut diluluskan) atau **Tolak** (wajib nota). Semua tindakan direkod.
+- **Pangkalan data:**
+  - Migrasi: `20261117000000_marketplace_listings.sql`.
+  - Jadual: `listings`, `listing_photos`, `listing_blocks`; bucket peribadi `listing-photos`.
+  - Hanya listing **live** daripada operator **approved** dan gambar **approved** boleh dilihat orang awam.
+- **Kod:** `services/listingService.ts`, `pages/ListingEditorPage.tsx`, `components/business/` (`MyListings`, `LocationPicker`, `AvailabilityCalendar`), `components/admin/ListingReview.tsx`.
+
 ## Marketplace Fasa 0: daftar operator (homestay & kereta sewa berlesen)
 
 Pelan penuh ada dalam `docs/MARKETPLACE.md`. Fasa 0 hanya pendaftaran dan pengesahan. **Belum ada listing awam.**

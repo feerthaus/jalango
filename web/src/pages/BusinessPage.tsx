@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { AuthForm } from '@/components/auth/AuthForm';
 import { Button } from '@/components/ui/Button';
 import { PagePanel } from '@/components/ui/PagePanel';
+import { MyListings } from '@/components/business/MyListings';
 import { useAuth } from '@/contexts/AuthContext';
 import { normalizePhone } from '@/lib/driverProfile';
 import { cn } from '@/lib/cn';
@@ -57,6 +58,7 @@ export function BusinessPage() {
         <div className="space-y-3">
           {error && <p role="alert" className="text-sm text-red-600">{error}</p>}
           {operator ? <StatusCard operator={operator} docs={docs} /> : <Intro />}
+          {operator?.status === 'approved' && <MyListings operator={operator} />}
           <DetailsForm userId={user.id} operator={operator} onSaved={(o) => setOperator(o)} />
           {operator && <Documents userId={user.id} operator={operator} docs={docs} onChange={setDocs} />}
         </div>
@@ -102,7 +104,7 @@ function StatusCard({ operator, docs }: { operator: Operator; docs: OperatorDocu
       )}
       {operator.status === 'approved' && (
         <p className="mt-2 flex items-start gap-1.5 text-sm text-jade-700 dark:text-jade-300">
-          <CheckCircle2 className="mt-0.5 size-4 shrink-0" /> Bisnes anda disahkan.{operator.free_until && ` Percuma sehingga ${fmtDate(operator.free_until)}.`} Penyenaraian dibuka tidak lama lagi.
+          <CheckCircle2 className="mt-0.5 size-4 shrink-0" /> Bisnes anda disahkan.{operator.free_until && ` Percuma sehingga ${fmtDate(operator.free_until)}.`}
         </p>
       )}
     </div>

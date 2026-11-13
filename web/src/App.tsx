@@ -6,6 +6,7 @@ import { MapPage } from '@/pages/MapPage';
 import { NotFoundPage } from '@/pages/NotFoundPage';
 import { ProfilePage } from '@/pages/ProfilePage';
 import { BusinessPage } from '@/pages/BusinessPage';
+import { ListingEditorPage } from '@/pages/ListingEditorPage';
 import { ReportsPage } from '@/pages/ReportsPage';
 import { SavedPage } from '@/pages/SavedPage';
 import { ErrorBoundary } from '@/components/layout/ErrorBoundary';
@@ -32,6 +33,7 @@ const router = createBrowserRouter([
       { path: 'saved', element: <SavedPage /> },
       { path: 'profile', element: <ProfilePage /> },
       { path: 'business', element: <BusinessPage /> },
+      { path: 'business/listings/:id', element: <ListingEditorPage /> },
       { path: '*', element: <NotFoundPage /> },
     ],
   },
