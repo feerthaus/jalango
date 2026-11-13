@@ -6,6 +6,7 @@ import { FeedbackSheet } from '@/components/feedback/FeedbackSheet';
 import { OncomingSettings } from '@/components/navigation/OncomingSettings';
 import { DeleteAccount } from '@/components/moderation/DeleteAccount';
 import { fetchAdminStatus } from '@/services/adminAuth';
+import { TOLL_PAYMENTS, useTollPayment } from '@/lib/tollPayment';
 import { useEffect, useState } from 'react';
 import { MessageSquareHeart, ShieldCheck } from 'lucide-react';
 import { LogoMark } from '@/components/brand/LogoMark';
@@ -63,6 +64,7 @@ export function ProfilePage() {
       <FeedbackCard />
 
       <VoiceSettings />
+      <TollPaymentSetting />
       <OncomingSettings />
 
       <Heading>{t('Paparan peta', 'Map appearance')}</Heading>
@@ -281,6 +283,34 @@ function VoiceSettings() {
             install Malay). Until then your default voice is used.
           </p>
         )}
+      </div>
+    </>
+  );
+}
+
+/** Profile → Cara bayar tol: used for toll plaza tips while navigating. */
+function TollPaymentSetting() {
+  const [t, lang] = useT();
+  const [pay, setPay] = useTollPayment();
+  return (
+    <>
+      <Heading>{t('Cara bayar tol', 'Toll payment')}</Heading>
+      <div className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-ink-200 dark:bg-ink-900 dark:ring-ink-800">
+        <p className="mb-2 text-xs text-ink-500 dark:text-ink-400">{t('Semasa navigasi, JalanGo beri amaran sebelum plaza tol dan ingatkan lorong yang sesuai.', 'While navigating, JalanGo warns you before toll plazas and reminds you which lanes to use.')}</p>
+        <div role="radiogroup" aria-label={t('Cara bayar tol', 'Toll payment')} className="grid grid-cols-2 gap-1.5">
+          {TOLL_PAYMENTS.map((p) => (
+            <button
+              key={p.id}
+              type="button"
+              role="radio"
+              aria-checked={pay === p.id}
+              onClick={() => setPay(pay === p.id ? null : p.id)}
+              className={cn('rounded-xl px-2 py-2.5 text-sm font-semibold ring-1', pay === p.id ? 'bg-sky-600 text-white ring-sky-600' : 'ring-ink-200 dark:ring-ink-700')}
+            >
+              {lang === 'en' ? p.en : p.ms}
+            </button>
+          ))}
+        </div>
       </div>
     </>
   );

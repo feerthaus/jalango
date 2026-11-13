@@ -92,6 +92,15 @@ export interface RouteStep {
   destinations?: string;
   /** lanes at this maneuver, left to right; `valid` = lanes you can use */
   lanes?: { indications: string[]; valid: boolean }[];
+  /** motorway exit number(s) signposted for this maneuver, e.g. "111" */
+  exits?: string;
+}
+
+/** A toll plaza (booth) or open-road gantry the route passes. */
+export interface TollPoint {
+  type: 'booth' | 'gantry';
+  name?: string;
+  location: Coordinates;
 }
 
 export interface Route {
@@ -103,6 +112,8 @@ export interface Route {
   summary: string;
   steps: RouteStep[];
   hasTolls: boolean;
+  /** toll plazas / gantries along the route, in order */
+  tollPoints?: TollPoint[];
   hasMotorway: boolean;
   congestion?: Congestion[];
   /** speed limit (km/h) per geometry segment, null where unknown */

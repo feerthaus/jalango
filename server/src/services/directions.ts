@@ -1,7 +1,7 @@
 import { config } from '../config.js';
 import { HttpError } from '../lib/errors.js';
 import { guardUsage } from '../lib/usageGuard.js';
-import type { Congestion, Coordinates, Route, RouteStep } from '../types.js';
+import type { Congestion, Coordinates, Route, RouteStep, TollPoint } from '../types.js';
 
 const DIRECTIONS_TRAFFIC = 'https://api.mapbox.com/directions/v5/mapbox/driving-traffic';
 // driving-traffic accepts at most 3 coordinates; routes through a shortcut need more
@@ -10,7 +10,9 @@ export const MAX_VIA = 20;
 const TIMEOUT_MS = 8000;
 
 interface MbIntersection {
+  location?: [number, number];
   classes?: string[];
+  toll_collection?: { type?: string; name?: string };
   lanes?: { indications?: string[]; valid?: boolean }[];
 }
 interface MbMaxspeed {
@@ -25,6 +27,7 @@ interface MbStep {
   name?: string;
   ref?: string;
   destinations?: string;
+  exits?: string;
   maneuver: { type: string; modifier?: string; instruction?: string; location: [number, number]; bearing_after?: number; exit?: number };
   intersections?: MbIntersection[];
 }
@@ -55,6 +58,7 @@ export function normalizeRoute(r: MbRoute, index: number): Route {
   const congestion: Congestion[] = [];
   const summaries: string[] = [];
   const maxspeeds: (number | null)[] = [];
+  const tollPoints: TollPoint[] = [];
 
   for (const leg of r.legs ?? []) {
     if (leg.summary) summaries.push(leg.summary);
@@ -68,6 +72,11 @@ export function normalizeRoute(r: MbRoute, index: number): Route {
       let stepMotorway = false;
       for (const i of s.intersections ?? []) {
         if (i.classes?.includes('toll')) hasTolls = true;
+        const tc = i.toll_collection;
+        if (tc && i.location) {
+          tollPoints.push({ type: tc.type === 'toll_gantry' ? 'gantry' : 'booth', name: tc.name || undefined, location: { lng: i.location[0], lat: i.location[1] } });
+          hasTolls = true;
+        }
         if (i.classes?.includes('motorway')) {
           hasMotorway = true;
           stepMotorway = true;
@@ -89,6 +98,7 @@ export function normalizeRoute(r: MbRoute, index: number): Route {
         motorway: stepMotorway || undefined,
         destinations: s.destinations || undefined,
         lanes: lanesOf(s.intersections?.[0]),
+        exits: s.exits || undefined,
       });
     }
   }
@@ -102,6 +112,7 @@ export function normalizeRoute(r: MbRoute, index: number): Route {
     summary: summaries.join(' · '),
     steps,
     hasTolls,
+    tollPoints: tollPoints.length ? tollPoints : undefined,
     hasMotorway,
     congestion: congestion.length === r.geometry.coordinates.length - 1 ? congestion : undefined,
     maxspeeds: maxspeeds.length === r.geometry.coordinates.length - 1 && maxspeeds.some((v) => v !== null) ? maxspeeds : undefined,

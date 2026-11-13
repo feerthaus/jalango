@@ -148,6 +148,14 @@ Pelan penuh ada dalam `docs/MARKETPLACE.md`. Fasa 0 hanya pendaftaran dan penges
 
 ## Navigasi
 
+- **Lencana lebuh raya dan nombor exit:** nombor laluan dipaparkan seperti papan tanda (E1, E2, E6 kuning; laluan persekutuan/negeri putih), bersama **"Exit 111"** bila Mapbox menyediakannya (`web/src/components/navigation/RoadShields.tsx`, `utils/roadShields.ts`).
+- **Ayat lorong:** "Guna 2 lorong kiri" / "Guna lorong paling kanan" dipaparkan dalam 2 km sebelum simpang, dan disebut bersama arahan suara ("Dalam 600 meter, ikut sebelah kiri… Guna dua lorong kiri."). Dikira daripada data lorong Mapbox (`utils/laneSentence.ts`).
+- **Amaran plaza tol:**
+  - Plaza tol dan gantri di laluan (dari `toll_collection` Mapbox) dipaparkan sebagai banner biru dalam 2 km, dan disebut sekali pada ~1 km: *"Plaza Tol Bukit Lanjan dalam 900 meter. Guna lorong RFID. Pastikan baki mencukupi."*
+  - Tip ikut **Profil → Cara bayar tol** (RFID / Kad Touch 'n Go / SmartTAG / Kad debit-kredit).
+  - **Had:** lokasi lorong RFID/TnG di setiap plaza belum ada (Mapbox/OSM tiada data ini). Dirancang sebagai sumbangan komuniti kemudian.
+  - Kod: `utils/tollAlerts.ts`, `hooks/useTollAlerts.ts`, `components/navigation/TollBanner.tsx`, `lib/tollPayment.ts`.
+
 - **Laluan dan arahan belokan:** laluan Mapbox dengan trafik langsung, beberapa pilihan laluan, dan pilihan **Elak tol**.
 - **Panduan suara BM/EN:** arahan dalam Bahasa Melayu atau Inggeris, dengan had laju dan nombor jalan.
 - **Laluan semula automatik:** bila pemandu tersasar dari laluan, laluan baru dicari secara automatik.
