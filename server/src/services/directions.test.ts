@@ -84,6 +84,38 @@ describe('normalizeRoute', () => {
     expect(r.steps[0].lanes).toEqual([{ indications: ['left'], valid: true }, { indications: ['straight'], valid: false }]);
     expect(r.steps[1].lanes).toBeUndefined();
   });
+
+  it('keeps motorway exit numbers and toll plazas / gantries in order', () => {
+    const leg = fixture.legs[0];
+    const r = normalizeRoute(
+      {
+        ...fixture,
+        legs: [
+          {
+            ...leg,
+            steps: [
+              {
+                ...leg.steps![0],
+                exits: '111',
+                intersections: [
+                  { location: [101.7, 3.0], classes: ['motorway'] },
+                  { location: [101.71, 3.05], classes: ['toll', 'motorway'], toll_collection: { type: 'toll_booth', name: 'Plaza Tol Sungai Besi' } },
+                ],
+              },
+              { ...leg.steps![1], intersections: [{ location: [101.72, 3.1], toll_collection: { type: 'toll_gantry' } }] },
+            ],
+          },
+        ],
+      },
+      0,
+    );
+    expect(r.steps[0].exits).toBe('111');
+    expect(r.tollPoints).toEqual([
+      { type: 'booth', name: 'Plaza Tol Sungai Besi', location: { lng: 101.71, lat: 3.05 } },
+      { type: 'gantry', name: undefined, location: { lng: 101.72, lat: 3.1 } },
+    ]);
+    expect(r.hasTolls).toBe(true);
+  });
 });
 
 describe('buildDirectionsUrl', () => {

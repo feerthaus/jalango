@@ -1,6 +1,10 @@
 import { ChevronDown, ChevronUp, Flag, ListOrdered, LocateFixed, Loader2, Volume2, VolumeX, X } from 'lucide-react';
 import { useRouteAlerts } from '@/hooks/useRouteAlerts';
 import { useAccidentAlerts } from '@/hooks/useAccidentAlerts';
+import { useTollAlerts } from '@/hooks/useTollAlerts';
+import { laneSentence } from '@/utils/laneSentence';
+import { RoadShields } from './RoadShields';
+import { TollBanner } from './TollBanner';
 import { AccidentAlertBanner } from '@/components/accidents/AccidentAlertBanner';
 import { useVoiceAlerts, useVoiceLang } from '@/hooks/useVoiceAlerts';
 import { useSpeedAlert } from '@/hooks/useSpeedLimit';
@@ -50,6 +54,7 @@ export function NavigationHud() {
   const [alongOpen, setAlongOpen] = useState(false);
   const alerts = useRouteAlerts();
   const accidentAlert = useAccidentAlerts();
+  const tollAlert = useTollAlerts();
   useWakeLock(status === 'navigating');
   useVoiceGuidance();
   const oncoming = useOncomingAlerts();
@@ -94,7 +99,7 @@ export function NavigationHud() {
   const remainingSeconds = progress?.remainingSeconds ?? route.durationSeconds;
   const remainingMeters = progress?.remainingMeters ?? route.distanceMeters;
   const demo = route.source === 'demo';
-  const road = next.roadRef && next.roadName ? `${next.roadRef} · ${next.roadName}` : (next.roadRef ?? next.roadName);
+  const lanesText = progress && progress.distanceToManeuver < 2000 ? laneSentence(next.lanes, lang) : null;
 
   return (
     <>
@@ -108,7 +113,13 @@ export function NavigationHud() {
             <span className="min-w-0 flex-1">
               <span className="block text-3xl font-black tabular-nums leading-none">{progress ? formatDistance(progress.distanceToManeuver) : '–'}</span>
               <span className="mt-1 line-clamp-2 block text-base font-semibold leading-snug">{displayInstruction(next, lang)}</span>
-              {road && <span className="mt-0.5 block truncate text-sm text-ink-300">{road}</span>}
+              {lanesText && <span className="mt-1 block text-sm font-bold text-jade-300">{lanesText}</span>}
+              {(next.roadRef || next.exits || next.roadName) && (
+                <span className="mt-1 flex min-w-0 items-center gap-1.5 text-sm text-ink-300">
+                  <RoadShields roadRef={next.roadRef} exits={next.exits} className="shrink-0" />
+                  {next.roadName && <span className="truncate">{next.roadName}</span>}
+                </span>
+              )}
             </span>
             {showSteps ? <ChevronUp className="size-5 text-ink-300" /> : <ChevronDown className="size-5 text-ink-300" />}
           </button>
@@ -138,7 +149,12 @@ export function NavigationHud() {
                   <ManeuverIcon step={s} className="size-5 shrink-0" />
                   <span className="min-w-0 flex-1">
                     <span className="block">{displayInstruction(s, lang)}</span>
-                    {(s.roadRef || s.roadName) && <span className="block truncate text-xs text-ink-400">{s.roadRef ? `${s.roadRef} ${s.roadName ?? ''}` : s.roadName}</span>}
+                    {(s.roadRef || s.roadName || s.exits) && (
+                      <span className="mt-0.5 flex min-w-0 items-center gap-1 text-xs text-ink-400">
+                        <RoadShields roadRef={s.roadRef} exits={s.exits} className="shrink-0" />
+                        {s.roadName && <span className="truncate">{s.roadName}</span>}
+                      </span>
+                    )}
                   </span>
                   {s.distanceMeters > 0 && <span className="shrink-0 text-xs tabular-nums text-ink-400">{formatDistance(s.distanceMeters)}</span>}
                 </li>
@@ -155,6 +171,7 @@ export function NavigationHud() {
         {!showSteps && <AlongLayerChip onOpen={() => setAlongOpen(true)} />}
         {!showSteps && <ResumeToast />}
         {!showSteps && accidentAlert && <AccidentAlertBanner alert={accidentAlert} />}
+        {!showSteps && tollAlert && <TollBanner alert={tollAlert} />}
         {!showSteps && <RouteAlerts alerts={alerts} />}
       </div>
 
