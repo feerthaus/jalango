@@ -7,6 +7,20 @@ let sending = false;
 /** Today in Malaysia (YYYY-MM-DD). */
 const todayMY = () => new Date(Date.now() + 8 * 3600_000).toISOString().slice(0, 10);
 
+/** This phone's random ID (made here, never linked to an account). Null if storage is blocked. */
+export function deviceId(): string | null {
+  try {
+    let id = localStorage.getItem(DEVICE_KEY);
+    if (!id) {
+      id = crypto.randomUUID();
+      localStorage.setItem(DEVICE_KEY, id);
+    }
+    return id;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Count this device once a day for the admin statistics. The ID is random,
  * made on this phone, and never linked to an account, IP or location.
@@ -17,11 +31,8 @@ export function pingActivity(): void {
     const today = todayMY();
     if (sending || localStorage.getItem(DAY_KEY) === today) return;
     sending = true;
-    let id = localStorage.getItem(DEVICE_KEY);
-    if (!id) {
-      id = crypto.randomUUID();
-      localStorage.setItem(DEVICE_KEY, id);
-    }
+    const id = deviceId();
+    if (!id) return;
     const installed = window.matchMedia?.('(display-mode: standalone)').matches || (navigator as Navigator & { standalone?: boolean }).standalone === true;
     void supabase.rpc('ping_activity', { p_device: id, p_installed: Boolean(installed) }).then(({ error }) => {
       if (!error) localStorage.setItem(DAY_KEY, today);

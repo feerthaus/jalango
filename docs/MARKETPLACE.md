@@ -214,7 +214,7 @@ Ikut prinsip `docs/VISION.md`: modular monolith, Supabase + RLS, tiada servis ba
 
 **Pembinaan:**
 - **1a:** operator dan admin: listing (maklumat, lokasi, gambar, kalendar), semakan admin.
-- **1b:** pengguna: tab Sewa, halaman listing, WhatsApp dengan lokasi.
+- **1b:** pengguna: tab Sewa, halaman listing, WhatsApp dengan lokasi. *(Dibina: pintu masuk dari Teroka, bukan tab bawah ke-6, supaya navigasi kekal fokus. Lencana menunjukkan apa yang disemak: ✓/✗ SSM, Lesen APAD, Insurans. Statistik: paparan, WhatsApp, panggilan, arah, 30 hari, dikira sekali sehari setiap peranti.)*
 
 **Peraturan semakan listing:**
 - Listing baru dan **setiap perubahan kandungan** pada listing yang sudah siar dihantar untuk semakan.
