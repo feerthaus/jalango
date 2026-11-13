@@ -79,6 +79,30 @@
 ### Kemudian: Rider penghantaran
 Direktori rider bebas atau runner ikut kawasan: servis, kawasan liputan, harga asas, WhatsApp. Pengesahan: IC + lesen memandu yang sesuai (GDL untuk p-hailing, perlu disahkan) + insurans.
 
+### Kemudian: Pemandu & Transfer (airport transfer, private driver)
+Dicadangkan oleh pemilik (13 Nov 2026). **Tidak dibuat dalam Fasa 1.**
+
+**Kenapa berasingan daripada kereta sewa:** pemandu operator **membawa penumpang**. Dari segi undang-undang, ini pengangkutan penumpang berbayar, sama kategori dengan e-hailing, bukan kereta sewa pandu sendiri. Risiko keselamatan juga lebih tinggi: orang asing membawa penumpang, termasuk wanita dan pelancong, kadang-kadang lewat malam.
+
+**Syarat (lesen penuh wajib, tiada pilihan penafian):**
+- Lesen operator yang sesuai, iaitu kereta sewa berpemandu/limosin atau setara (APAD). Perlu disahkan.
+- **Setiap pemandu didaftar dan disahkan:** IC, gambar wajah terkini, lesen memandu + **lesen PSV**. Pemilik semak setiap pemandu.
+- Insurans yang meliputi **penumpang**.
+- **Permit lapangan terbang** jika mengambil penumpang di lapangan terbang (cth. KLIA/klia2). Perlu disahkan dengan pengendali lapangan terbang.
+- Tarikh tamat lesen, PSV dan insurans disimpan. Listing atau pemandu dijeda automatik bila tamat.
+
+**Ciri yang dirancang:**
+- Listing servis: airport transfer (dari/ke lapangan terbang, harga tetap ikut kawasan), private driver (harga sejam/sehari), jenis kenderaan dan bilangan penumpang.
+- **"Pemandu wanita tersedia"** dan tapisan **"Pemandu wanita sahaja"**:
+  - hanya untuk pemandu yang identitinya sudah disahkan (IC + gambar), supaya tiada yang menyamar;
+  - jantina hanya dipaparkan sebagai tanda "Pemandu wanita", dengan persetujuan pemandu (data peribadi, PDPA).
+- Hubungi melalui WhatsApp (seperti Fasa 1). Tempahan dan bayaran dalam app hanya selepas Fasa 3–4.
+- Butang **Kongsi perjalanan live** (ciri sedia ada) dicadangkan kepada penumpang semasa menaiki kenderaan.
+
+**Jadual tambahan (bila dibina):**
+- `operator_drivers`: `operator_id`, nama, gambar, jantina (pilihan), no. PSV + tarikh tamat, status semakan;
+- `driver_documents` (bucket peribadi, seperti dokumen operator).
+
 ---
 
 ## 4. Peraturan susunan dan "Ditaja"
