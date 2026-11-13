@@ -222,6 +222,7 @@ Pelan penuh ada dalam `docs/MARKETPLACE.md`. Fasa 0 hanya pendaftaran dan penges
 - **Kongsi JalanGo:** kad di bahagian atas Profil.
 - **Kongsi lokasi live:** dengan mod Driver (kenderaan, plat, WhatsApp, hentian seterusnya).
 - **Kongsi lokasi ini:** pin sekali, bukan live.
+- **Pautan tempat JalanGo:** "Kongsi tempat ini" dan "Kongsi lokasi ini" menghantar pautan JalanGo (`/?tempat=lat,lng&n=nama&a=alamat`), bukan Google Maps. Penerima buka JalanGo dengan tempat itu terpilih di peta, terus boleh tekan Arah. Setiap pautan yang dikongsi membawa orang baru ke JalanGo.
 - **Konvoi:** kereta dan motosikal.
 - **Kad pratonton link:** tag Open Graph dan `web/public/og-image.jpg`.
 

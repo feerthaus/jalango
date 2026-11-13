@@ -13,6 +13,7 @@ import { ShareLiveSheet } from '@/components/live/ShareLiveSheet';
 import { ShareSpotButton } from '@/components/live/ShareSpotButton';
 import { useCallback, useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router';
+import { placeFromParams } from '@/utils/placeLink';
 import { InstallBanner } from '@/components/pwa/InstallBanner';
 import { InstallNudge } from '@/components/pwa/InstallNudge';
 import { DemoModeBanner } from '@/components/layout/DemoModeBanner';
@@ -61,6 +62,14 @@ export function MapPage() {
       setParams({}, { replace: true });
     }
   }, [params, setParams]);
+  // Shared place links (/?tempat=lat,lng&n=name&a=address): select it once the map is ready
+  const { map: mapReady, selectPlace: selectShared } = useMapContext();
+  useEffect(() => {
+    if (!mapReady || !params.get('tempat')) return;
+    const shared = placeFromParams(params);
+    setParams({}, { replace: true });
+    if (shared) selectShared(shared);
+  }, [params, setParams, mapReady, selectShared]);
   const onSearchOpenChange = useCallback((open: boolean) => setSearchOpen(open), []);
 
   const reportButton = (
