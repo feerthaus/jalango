@@ -35,6 +35,20 @@ Kemas kini fail ini dalam PR yang sama setiap kali fungsi baru ditambah atau diu
 
 ---
 
+## Marketplace Fasa 1b: Sewa (untuk pengguna)
+
+- **Pintu masuk:** kad **"Sewa kereta & homestay"** di atas halaman Teroka, atau terus ke `/sewa`.
+- **Senarai:** kereta sewa dan homestay yang disiarkan (operator diluluskan sahaja), paling dekat dahulu. Tapis Semua / Kereta sewa / Homestay. Setiap kad: gambar utama, harga, kawasan, jarak, fakta ringkas dan lencana.
+- **Peta:** butang **Peta** menunjukkan pin harga pada peta; tekan pin untuk kad listing.
+- **Halaman listing (`/sewa/:id`):** galeri gambar, harga biasa dan hujung minggu, deposit, fakta (kereta: jenama, transmisi, tempat duduk, bahan api; homestay: jenis, bilik, tetamu, masa masuk/keluar, kemudahan, peraturan), kawasan servis kereta.
+  - **Kalendar:** tarikh penuh dikelabukan; pilih tarikh mula dan akhir. Amaran jika julat termasuk tarikh penuh. Anggaran harga mengikut harga hujung minggu (homestay: malam Jumaat & Sabtu; kereta: Sabtu & Ahad).
+  - **Lencana semakan:** kereta: ✓/✗ SSM, ✓/✗ Lesen APAD, ✓/✗ Insurans, dengan nota jika tiada lesen APAD. Homestay: "IC & pemilikan disemak".
+  - **WhatsApp:** mesej siap dengan nama listing, tarikh dan pautan. Untuk kereta, pilihan **hantar lokasi saya** (pautan Google Maps) untuk ambil/hantar kereta.
+  - Butang **telefon**, **arah** (buka di peta JalanGo) dan **kongsi**.
+- **Tidak dipaparkan semasa memandu.**
+- **Statistik untuk operator:** di Bisnes saya, setiap listing menunjukkan paparan, WhatsApp dan panggilan untuk 30 hari lepas. Dikira sekali sehari setiap peranti (ID rawak, tanpa akaun, IP atau lokasi).
+- **Privasi:** jadual operator kekal tertutup; orang awam hanya nampak nama bisnes, bandar, nombor telefon dan lencana untuk operator yang diluluskan.
+
 ## Marketplace Fasa 1a: listing, gambar, kalendar (operator & admin)
 
 Selepas bisnes diluluskan, **Bisnes saya** menunjukkan **Kereta saya / Unit homestay saya (n/10)**.

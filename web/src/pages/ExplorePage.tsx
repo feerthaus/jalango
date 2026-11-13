@@ -1,4 +1,4 @@
-import { AlertTriangle, BatteryCharging, Coffee, Fuel, Hospital, MapPinned, ParkingSquare, RefreshCw, type LucideIcon } from 'lucide-react';
+import { AlertTriangle, BatteryCharging, ChevronRight, KeyRound, Coffee, Fuel, Hospital, MapPinned, ParkingSquare, RefreshCw, type LucideIcon } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { PlaceRow } from '@/components/places/PlaceRow';
 import { Button } from '@/components/ui/Button';
@@ -12,7 +12,7 @@ import { DEMO_PLACES, STATE_CAPITALS } from '@/data/demoPlaces';
 import { useShowOnMap } from '@/hooks/useShowOnMap';
 import { useShortcuts } from '@/contexts/ShortcutsContext';
 import { CommunityPicks } from '@/components/community/CommunityPicks';
-import { useNavigate } from 'react-router';
+import { Link, useNavigate } from 'react-router';
 import { formatDistance } from '@/utils/geo';
 import { cn } from '@/lib/cn';
 import { searchNearbyCategory } from '@/services/geocodingService';
@@ -63,6 +63,14 @@ export function ExplorePage() {
 
   return (
     <PagePanel title={t('Teroka', 'Explore')} subtitle={t('Tempat di Malaysia sepanjang perjalanan anda', 'Malaysia-first places along your way')}>
+      <Link to="/sewa" className="mb-3 flex items-center gap-3 rounded-2xl bg-gradient-to-r from-jade-500 to-jade-600 p-4 text-white shadow-sm">
+        <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-white/20"><KeyRound className="size-6" /></span>
+        <span className="min-w-0 flex-1">
+          <span className="block font-bold">{t('Sewa kereta & homestay', 'Car rental & homestay')}</span>
+          <span className="block text-xs text-white/85">{t('Operator yang disemak JalanGo, terus WhatsApp pemilik', 'Operators checked by JalanGo, WhatsApp the owner')}</span>
+        </span>
+        <ChevronRight className="size-5" />
+      </Link>
       <h2 className="px-1 pb-2 pt-2 text-xs font-semibold uppercase tracking-wider text-ink-400">{t('Berhampiran', 'Nearby')}</h2>
       <div className="flex gap-2 overflow-x-auto pb-2" role="tablist" aria-label="Nearby categories">
         {CATEGORIES.map(({ id, label, icon: Icon }) => (

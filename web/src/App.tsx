@@ -1,6 +1,8 @@
 import { createBrowserRouter, Navigate, RouterProvider, useParams } from 'react-router';
 import { AppProviders } from '@/contexts/AppProviders';
 import { AppLayout } from '@/layouts/AppLayout';
+import { ListingPage } from '@/pages/ListingPage';
+import { SewaPage } from '@/pages/SewaPage';
 import { ExplorePage } from '@/pages/ExplorePage';
 import { MapPage } from '@/pages/MapPage';
 import { NotFoundPage } from '@/pages/NotFoundPage';
@@ -29,6 +31,8 @@ const router = createBrowserRouter([
     children: [
       { index: true, element: <MapPage /> },
       { path: 'explore', element: <ExplorePage /> },
+      { path: 'sewa', element: <SewaPage /> },
+      { path: 'sewa/:id', element: <ListingPage /> },
       { path: 'reports', element: <ReportsPage /> },
       { path: 'saved', element: <SavedPage /> },
       { path: 'profile', element: <ProfilePage /> },
