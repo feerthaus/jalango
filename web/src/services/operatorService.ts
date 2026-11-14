@@ -1,3 +1,4 @@
+import { adminChanged } from './adminCounts';
 import { supabase } from '@/lib/supabase';
 import { preparePhoto } from './accidentService';
 import { toReportError } from './reportsService';
@@ -122,4 +123,5 @@ export async function fetchOperatorsForReview(): Promise<OperatorWithDocs[]> {
 export async function reviewOperator(id: string, decision: 'approved' | 'needs_info' | 'rejected' | 'suspended', note?: string): Promise<void> {
   const { error } = await client().rpc('admin_review_operator', { p_operator: id, p_decision: decision, p_note: note ?? null });
   if (error) throw toReportError(error);
+  adminChanged();
 }

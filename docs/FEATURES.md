@@ -159,6 +159,13 @@ Pelan penuh ada dalam `docs/MARKETPLACE.md`. Fasa 0 hanya pendaftaran dan penges
 - **Gambar kemalangan:** Lulus atau Tolak.
 - **Maklum balas:** mesej daripada pengguna.
 
+**Notifikasi admin:**
+- Setiap tab Admin menunjukkan **nombor merah** untuk perkara yang menunggu: operator baru, listing (baru, berubah atau gambar baru), laporan pengguna, gambar kemalangan dan mesej baru.
+- **Loceng** di atas halaman Admin menunjukkan jumlah.
+- Di luar halaman Admin: nombor merah pada tab **Profil** di bawah, dan kad merah **"n perkara menunggu semakan"** di atas Profil yang terus membuka Admin.
+- Jika JalanGo dipasang di skrin utama, nombor juga muncul pada **ikon app** (Android Chrome, iPhone iOS 16.4+), jika telefon menyokong.
+- Dikemas kini setiap minit, bila app dibuka semula dan selepas setiap tindakan admin. Hanya untuk admin dengan sesi 2FA (`admin_counts()`); pengguna lain tidak nampak apa-apa.
+
 **Tab Statistik** (tab pertama):
 - **Peranti aktif:** hari ini, 7 hari dan 30 hari, jumlah peranti, berapa yang guna app yang dipasang, dan peranti baru.
 - **Carta harian 30 hari:** tekan sesuatu hari untuk lihat aktif, baru, carian dan laluan pada hari itu. Ada juga paparan jadual.

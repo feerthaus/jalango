@@ -1,6 +1,8 @@
 import { Compass, Map, Megaphone, Star, UserRound, type LucideIcon } from 'lucide-react';
 import { NavLink } from 'react-router';
 import { LogoMark, Wordmark } from '@/components/brand/LogoMark';
+import { CountBadge } from '@/components/admin/CountBadge';
+import { useAdminCounts } from '@/hooks/useAdminCounts';
 import { cn } from '@/lib/cn';
 import { useT } from '@/lib/i18n';
 
@@ -15,6 +17,7 @@ const ITEMS: { to: string; label: [ms: string, en: string]; icon: LucideIcon }[]
 /** Bottom tab bar on mobile, left rail on desktop. */
 export function BottomNav() {
   const [t] = useT();
+  const admin = useAdminCounts();
   return (
     <nav
       aria-label="Main"
@@ -38,8 +41,9 @@ export function BottomNav() {
             >
               {({ isActive }) => (
                 <>
-                  <span className={cn('grid h-7 w-12 place-items-center rounded-full transition', isActive && 'bg-jade-500/15')}>
+                  <span className={cn('relative grid h-7 w-12 place-items-center rounded-full transition', isActive && 'bg-jade-500/15')}>
                     <Icon className="size-5" strokeWidth={isActive ? 2.5 : 2} />
+                    {to === '/profile' && admin && admin.total > 0 && <CountBadge n={admin.total} className="absolute -right-0.5 -top-1.5" />}
                   </span>
                   {t(label[0], label[1])}
                 </>
