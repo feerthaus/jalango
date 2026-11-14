@@ -108,6 +108,38 @@ describe('upstream request counting', () => {
     expect(counts.geo).toBe(2);
   });
 
+  it('homestay: name search kept to ~25 km, widened to 80 km when few, each call counted', async () => {
+    const counts = countingCounter();
+    const boxes: string[] = [];
+    vi.stubGlobal('fetch', async (input: string | URL) => {
+      const url = new URL(String(input));
+      boxes.push(`${url.pathname}|${url.searchParams.get('q')}|${url.searchParams.get('bbox')}`);
+      const wide = boxes.length > 1;
+      const body = { features: wide ? [feature('Homestay A'), feature('Homestay B'), feature('Homestay C')] : [feature('Homestay A')] };
+      return new Response(JSON.stringify(body), { status: 200, headers: { 'content-type': 'application/json' } });
+    });
+    const r = await mapbox.searchCategory('homestay', { lng: 102.24, lat: 6.12 });
+    expect(r).toHaveLength(3);
+    expect(boxes).toHaveLength(2);
+    expect(boxes[0]).toMatch(/\/forward\|homestay\|/);
+    const w = (b: string) => { const [minLng, , maxLng] = b.split('|')[2].split(',').map(Number); return maxLng - minLng; };
+    expect(w(boxes[1])).toBeGreaterThan(w(boxes[0]) * 3);
+    expect(counts.geo).toBe(2);
+  });
+
+  it('car rental: category id first, "kereta sewa" text when empty', async () => {
+    const calls = mockUpstream((u) => (u.pathname.includes('/category/car_rental') ? { features: [] } : { features: [feature('Kereta Sewa Maju')] }));
+    const r = await mapbox.searchCategory('car_rental', { lng: 102.24, lat: 6.12 });
+    expect(r[0].name).toBe('Kereta Sewa Maju');
+    expect(calls).toEqual(['api.mapbox.com/search/searchbox/v1/category/car_rental', 'api.mapbox.com/search/searchbox/v1/forward']);
+  });
+
+  it('boxAround is about the asked size', () => {
+    const [minLng, minLat, maxLng, maxLat] = mapbox.boxAround({ lng: 101.7, lat: 3.1 }, 25).split(',').map(Number);
+    expect((maxLat - minLat) * 111).toBeCloseTo(50, 0);
+    expect((maxLng - minLng) * 111 * Math.cos((3.1 * Math.PI) / 180)).toBeCloseTo(50, 0);
+  });
+
   it('directions retry without heading: both attempts counted', async () => {
     const counts = countingCounter();
     let n = 0;

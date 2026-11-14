@@ -38,6 +38,7 @@ Kemas kini fail ini dalam PR yang sama setiap kali fungsi baru ditambah atau diu
 ## Marketplace Fasa 1b: Sewa (untuk pengguna)
 
 - **Pintu masuk:** kad **"Sewa kereta & homestay"** di atas halaman Teroka, atau terus ke `/sewa`.
+- **Berhampiran (Teroka):** butang **Homestay** dan **Kereta sewa**. Listing JalanGo yang disemak dalam 80 km dipaparkan dahulu (kotak "Disemak JalanGo", maksimum 5, pautan ke halaman listing). Di bawahnya, tempat dari data peta Mapbox yang **belum disemak JalanGo**. Homestay dicari ikut nama dalam ~25 km (dilebarkan ke 80 km jika kurang 3 hasil); kereta sewa ikut kategori Mapbox `car_rental`, kemudian teks "kereta sewa" jika kosong.
 - **Senarai:** kereta sewa dan homestay yang disiarkan (operator diluluskan sahaja), paling dekat dahulu. Tapis Semua / Kereta sewa / Homestay. Setiap kad: gambar utama, harga, kawasan, jarak, fakta ringkas dan lencana.
 - **Peta:** butang **Peta** menunjukkan pin harga pada peta; tekan pin untuk kad listing.
 - **Halaman listing (`/sewa/:id`):** galeri gambar, harga biasa dan hujung minggu, deposit, fakta (kereta: jenama, transmisi, tempat duduk, bahan api; homestay: jenis, bilik, tetamu, masa masuk/keluar, kemudahan, peraturan), kawasan servis kereta.

@@ -19,8 +19,9 @@ export const CATEGORY_MAP = {
   food: 'restaurant',
   cafe: 'cafe',
   attraction: 'tourist_attraction',
+  car_rental: 'car_rental',
 } as const;
-export type CategoryId = keyof typeof CATEGORY_MAP | 'rnr';
+export type CategoryId = keyof typeof CATEGORY_MAP | 'rnr' | 'homestay';
 
 interface MapboxFeature {
   id?: string;
@@ -299,7 +300,25 @@ export async function searchAlong(category: CategoryId, points: Coordinates[], p
 const FALLBACK_QUERY: Partial<Record<CategoryId, string>> = {
   rnr: 'rest area',
   ev: 'EV charging station',
+  car_rental: 'kereta sewa',
 };
+
+/**
+ * Categories searched by name only, kept to a box around the user (forward
+ * search ranks by relevance, not distance). Malaysian homestays are mostly
+ * named "Homestay …" and have no reliable category id.
+ */
+const NAME_SEARCH: Partial<Record<CategoryId, string>> = {
+  homestay: 'homestay',
+};
+
+/** A box of about `km` around a point, for keeping forward search local. */
+export function boxAround(near: Coordinates, km: number): string {
+  const dLat = km / 111;
+  const dLng = km / (111 * Math.max(0.2, Math.cos((near.lat * Math.PI) / 180)));
+  const r = (n: number) => n.toFixed(4);
+  return `${r(near.lng - dLng)},${r(near.lat - dLat)},${r(near.lng + dLng)},${r(near.lat + dLat)}`;
+}
 
 /** Canonical ids tried first (Search Box category endpoint). */
 const CANONICAL: Partial<Record<CategoryId, string>> = {
@@ -307,8 +326,9 @@ const CANONICAL: Partial<Record<CategoryId, string>> = {
   ev: 'charging_station',
 };
 
-async function forwardPoi(q: string, near: Coordinates, limit: number): Promise<Place[]> {
+async function forwardPoi(q: string, near: Coordinates, limit: number, withinKm?: number): Promise<Place[]> {
   const url = new URL(`${SEARCHBOX}/forward`);
+  if (withinKm) url.searchParams.set('bbox', boxAround(near, withinKm));
   url.searchParams.set('q', q);
   url.searchParams.set('types', 'poi');
   url.searchParams.set('country', 'my');
@@ -319,7 +339,12 @@ async function forwardPoi(q: string, near: Coordinates, limit: number): Promise<
 }
 
 export async function searchCategory(category: CategoryId, near: Coordinates, limit = 10): Promise<Place[]> {
-  const id = CANONICAL[category] ?? CATEGORY_MAP[category as keyof typeof CATEGORY_MAP];
+  const name = NAME_SEARCH[category];
+  if (name) {
+    const close = await forwardPoi(name, near, limit, 25);
+    return close.length >= 3 ? close : forwardPoi(name, near, limit, 80);
+  }
+  const id = CANONICAL[category] ?? CATEGORY_MAP[category as keyof typeof CATEGORY_MAP] ?? String(category);
   const url = new URL(`${SEARCHBOX}/category/${id}`);
   url.searchParams.set('proximity', `${near.lng},${near.lat}`);
   url.searchParams.set('country', 'my');

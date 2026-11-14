@@ -17,7 +17,7 @@ const searchQuery = z.object({
 const reverseQuery = z.object({ lng, lat });
 
 const categoryQuery = z.object({
-  category: z.enum([...(Object.keys(CATEGORY_MAP) as (keyof typeof CATEGORY_MAP)[]), 'rnr']),
+  category: z.enum([...(Object.keys(CATEGORY_MAP) as (keyof typeof CATEGORY_MAP)[]), 'rnr', 'homestay']),
   lng,
   lat,
   limit: z.coerce.number().int().min(1).max(25).optional(),

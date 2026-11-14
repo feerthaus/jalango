@@ -72,7 +72,7 @@ export interface SearchResponse {
   notice?: string;
 }
 
-export type ExploreCategory = 'petrol' | 'rnr' | 'ev' | 'parking' | 'hospital' | 'food';
+export type ExploreCategory = 'petrol' | 'rnr' | 'ev' | 'parking' | 'hospital' | 'food' | 'homestay' | 'car_rental';
 
 /* ─── Routing ─────────────────────────────────────────────────────── */
 
