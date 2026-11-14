@@ -1,4 +1,4 @@
-import { AlertTriangle, ArrowLeft, Coins, Megaphone, Gauge, LocateFixed, Navigation, RefreshCw, Route as RouteIcon, ShieldCheck, Utensils } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, BadgeCheck, Coins, Megaphone, Gauge, LocateFixed, Navigation, RefreshCw, Route as RouteIcon, ShieldCheck, Utensils } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { DemoBadge } from '@/components/ui/DemoBadge';
 import { useReports } from '@/contexts/ReportsContext';
@@ -10,6 +10,8 @@ import { reportsOnRoute } from '@/utils/routeAlerts';
 import { buildRouteIndex } from '@/utils/routeProgress';
 import { useMemo, useState } from 'react';
 import { AlongRouteSheet } from '@/components/along/AlongRouteSheet';
+import { useAlong } from '@/contexts/AlongContext';
+import { useVerifiedFoodOnRoute } from '@/hooks/useVerifiedFoodOnRoute';
 import { useProbeConsent } from '@/hooks/useProbeConsent';
 import { primeSpeech } from '@/hooks/useVoiceAlerts';
 import { cn } from '@/lib/cn';
@@ -23,6 +25,8 @@ import { useT } from '@/lib/i18n';
 export function RoutePanel() {
   const [t] = useT();
   const [alongOpen, setAlongOpen] = useState(false);
+  const verifiedFood = useVerifiedFoodOnRoute();
+  const { setCategory: setAlongCategory } = useAlong();
   const { status, destination, routes, selectedIndex, selectRoute, mode, notice, error, avoidTolls, setAvoidTolls, startNavigation, clearRoute, retry } = useRouting();
   if (!destination) return null;
 
@@ -103,6 +107,22 @@ export function RoutePanel() {
       {status === 'ready' && (
         <footer className="space-y-2 p-3 pt-1">
           <ProbeConsentPrompt />
+          {verifiedFood.length > 0 && (
+            <button
+              type="button"
+              onClick={() => {
+                setAlongCategory('food');
+                setAlongOpen(true);
+              }}
+              className="flex w-full items-center gap-2 rounded-xl bg-jade-500/10 px-3 py-2 text-left text-sm font-semibold text-jade-800 dark:text-jade-200"
+            >
+              <BadgeCheck className="size-4 shrink-0" />
+              <span className="min-w-0 flex-1 truncate">
+                {t(`${verifiedFood.length} kedai makan disemak JalanGo sepanjang laluan`, `${verifiedFood.length} JalanGo-checked food spots on this route`)}
+              </span>
+              <span className="shrink-0 text-xs">{t('Lihat', 'See')}</span>
+            </button>
+          )}
           <Button variant="secondary" className="w-full" onClick={() => setAlongOpen(true)}>
             <Utensils className="size-4" /> {t('Tempat makan & menarik sepanjang laluan', 'Food & sights along the route')}
           </Button>

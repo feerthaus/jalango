@@ -220,3 +220,13 @@ Ikut prinsip `docs/VISION.md`: modular monolith, Supabase + RLS, tiada servis ba
 - Listing baru dan **setiap perubahan kandungan** pada listing yang sudah siar dihantar untuk semakan.
 - Operator boleh **jeda** dan **siar semula** tanpa semakan, jika kandungan tidak berubah sejak diluluskan.
 - Gambar baru pada listing yang sudah siar tersembunyi sehingga diluluskan; listing itu kekal siar.
+
+## 11. Kedai makan: restoran, warung dan gerai (pemilik, 14 Nov 2026)
+
+| Perkara | Keputusan |
+|---|---|
+| Fungsi | **Direktori + WhatsApp**: gambar, menu ringkas & harga, waktu buka, servis (makan di kedai, tapau, hantar), lokasi. Tempah/tapau terus dengan peniaga melalui WhatsApp atau telefon. Pesanan dalam app kemudian. |
+| Dokumen wajib | **IC + gambar premis.** Pilihan: SSM, lesen PBT, sijil pengendali makanan, sijil Halal JAKIM/JAIN. |
+| Halal | Lencana **"Halal JAKIM"** hanya selepas admin menyemak sijil (`operators.halal_verified_at`, `admin_set_halal`). Tanpa sijil, peniaga hanya boleh pilih "Pemilik Muslim" atau "Tiada daging babi". Perkataan halal tanpa sijil adalah kesalahan di Malaysia. |
+| Paparan | **Tiada laluan:** butang **Makan** di Teroka (disemak JalanGo dahulu, kemudian data peta). **Ada laluan (sebelum mula):** "n kedai makan disemak JalanGo sepanjang laluan" di panel laluan. **Semasa navigasi:** hanya dalam senarai "Sepanjang laluan" yang dibuka sendiri oleh pengguna (tiada iklan atau popup semasa memandu). |
+| Had | 10 kedai/cawangan setiap peniaga, 12 gambar, 25 hidangan dalam menu ringkas. Percuma 6 bulan pertama seperti kategori lain. |

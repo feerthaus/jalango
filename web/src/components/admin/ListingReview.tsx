@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { cn } from '@/lib/cn';
-import { AMENITIES, FUELS, HOMESTAY_TYPES, LISTING_STATUS, PHOTO_STATUS, rm } from '@/lib/listingLabels';
+import { AMENITIES, DAYS_MS, FOOD_SERVICES, FOOD_TYPES, FUELS, HALAL_LABEL, HOMESTAY_TYPES, LISTING_STATUS, PHOTO_STATUS, rm } from '@/lib/listingLabels';
 import { fetchListingsForReview, listingPhotoUrls, reviewListing, reviewListingPhoto, type ListingForReview, type ListingPhoto } from '@/services/listingService';
 
 /** Admin: review new / changed listings and every new photo before anyone sees them. */
@@ -48,6 +48,7 @@ function Card({ l, urls, onDone }: { l: ListingForReview; urls: Record<string, s
   const [photos, setPhotos] = useState<ListingPhoto[]>(l.photos ?? []);
   const [error, setError] = useState<string | null>(null);
   const car = l.kind === 'car_rental';
+  const food = l.kind === 'food';
   const d = l.details;
   const s = LISTING_STATUS[l.status];
 
@@ -69,7 +70,15 @@ function Card({ l, urls, onDone }: { l: ListingForReview; urls: Record<string, s
       setPhotos((x) => x.map((y) => (y.id === p.id ? { ...y, status: approve ? 'approved' : 'rejected' } : y)));
     }, false);
 
-  const facts = car
+  const facts = food
+    ? [
+        FOOD_TYPES.find((x) => x.id === d.food_type)?.label,
+        d.opens && d.closes ? `${d.opens}–${d.closes}` : 'waktu buka tiada',
+        (d.closed_days ?? []).length ? `cuti ${(d.closed_days ?? []).map((i) => DAYS_MS[i]).join(', ')}` : null,
+        FOOD_SERVICES.filter((x) => d.services?.includes(x.id)).map((x) => x.label).join(', ') || null,
+        d.halal ? `dakwaan: ${HALAL_LABEL[d.halal]}` : null,
+      ]
+    : car
     ? [d.brand && d.model ? `${d.brand} ${d.model}` : null, d.year, d.transmission === 'manual' ? 'Manual' : 'Auto', d.seats ? `${d.seats} tempat duduk` : null, FUELS.find((x) => x.id === d.fuel)?.label, l.service_radius_km ? `servis ${l.service_radius_km} km` : null, l.insurance_expires_on ? `insurans tamat ${l.insurance_expires_on}` : 'tiada maklumat insurans']
     : [HOMESTAY_TYPES.find((x) => x.id === d.type)?.label, d.bedrooms !== undefined ? `${d.bedrooms} bilik` : null, d.max_guests ? `${d.max_guests} tetamu` : null, (d.amenities ?? []).map((a) => AMENITIES.find((x) => x.id === a)?.label).filter(Boolean).join(', ') || null];
 
@@ -78,18 +87,22 @@ function Card({ l, urls, onDone }: { l: ListingForReview; urls: Record<string, s
       <div className="flex items-start gap-2">
         <div className="min-w-0 flex-1">
           <p className="font-bold">{l.title}</p>
-          <p className="text-xs text-ink-500">{l.operator?.business_name} · {car ? 'Kereta sewa' : 'Homestay'}</p>
+          <p className="text-xs text-ink-500">{l.operator?.business_name} · {car ? 'Kereta sewa' : food ? 'Kedai makan' : 'Homestay'}</p>
         </div>
         <span className={cn('shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold', s.tone)}>{s.text}</span>
       </div>
       <p className="mt-2 text-sm">
-        <strong>{rm(l.price)}</strong>/{car ? 'hari' : 'malam'}
+        {food ? <>± <strong>{rm(l.price)}</strong> seorang</> : <><strong>{rm(l.price)}</strong>/{car ? 'hari' : 'malam'}</>}
         {l.weekend_price ? ` · hujung minggu ${rm(l.weekend_price)}` : ''}
         {l.deposit ? ` · deposit ${rm(l.deposit)}` : ''}
       </p>
       <p className="text-xs text-ink-600 dark:text-ink-300">{facts.filter(Boolean).join(' · ')}</p>
       {l.description && <p className="mt-1 text-xs italic text-ink-600 dark:text-ink-300">“{l.description}”</p>}
       {d.rules && <p className="mt-1 text-xs text-ink-500">Peraturan: {d.rules}</p>}
+      {food && d.halal === 'jakim' && <p className="mt-1 text-xs font-semibold text-amber-600">Mendakwa Halal JAKIM: lencana hanya dipaparkan jika sijil operator sudah disahkan di tab Operator.</p>}
+      {food && (d.menu ?? []).length > 0 && (
+        <p className="mt-1 text-xs text-ink-600 dark:text-ink-300">Menu: {(d.menu ?? []).map((m) => (m.price != null ? `${m.name} ${rm(m.price)}` : m.name)).join(' · ')}</p>
+      )}
       <a className="mt-1 inline-flex items-center gap-1 text-xs text-sky-600" href={`https://www.google.com/maps/search/?api=1&query=${l.latitude},${l.longitude}`} target="_blank" rel="noreferrer">
         <MapPin className="size-3.5" /> {l.area_label} · lihat lokasi
       </a>

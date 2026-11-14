@@ -1,10 +1,12 @@
-import { Loader2, MapPinPlus, Star, ThumbsUp, Volume2, VolumeX, X, type LucideIcon } from 'lucide-react';
+import { BadgeCheck, Loader2, MapPinPlus, Star, ThumbsUp, Volume2, VolumeX, X, type LucideIcon } from 'lucide-react';
 import { useEffect } from 'react';
 import { Sheet } from '@/components/ui/Sheet';
 import { useAlong, type AlongRow } from '@/contexts/AlongContext';
 import { useRouting } from '@/contexts/RoutingContext';
 import { ALONG_CATEGORIES, alongMeta } from '@/lib/alongCategories';
 import { cn } from '@/lib/cn';
+import { FOOD_TYPES, rm } from '@/lib/listingLabels';
+import { isOpenNow } from '@/utils/openingHours';
 import { formatDistance } from '@/utils/geo';
 import { googleMapsReviewsUrl } from '@/utils/googleMapsLink';
 import { FuelPriceCard } from '@/components/fuel/FuelPriceCard';
@@ -17,8 +19,9 @@ export function AlongRouteSheet({ onClose }: { onClose: () => void }) {
     if (!category) setCategory('food');
   }, [category, setCategory]);
   const meta = alongMeta(category ?? 'food');
+  const verified = (rows ?? []).filter((r) => r.listing);
   const picks = (rows ?? []).filter((r) => r.pick).sort((a, b) => b.pick!.recommend_count - a.pick!.recommend_count);
-  const others = (rows ?? []).filter((r) => !r.pick);
+  const others = (rows ?? []).filter((r) => !r.pick && !r.listing);
   const doStop = (r: AlongRow) => {
     addStop(r.place);
     onClose();
@@ -84,6 +87,16 @@ export function AlongRouteSheet({ onClose }: { onClose: () => void }) {
         <>
           {error && <p role="alert" className="mb-2 text-sm text-red-600">{error}</p>}
           {rows.length === 0 && !error && <p className="py-4 text-sm text-ink-500">Tiada {meta.label.toLowerCase()} dijumpai berhampiran laluan di depan.</p>}
+          {verified.length > 0 && (
+            <>
+              <h3 className="mb-1 flex items-center gap-1 text-xs font-bold uppercase tracking-wide text-jade-600"><BadgeCheck className="size-3.5" /> Kedai disemak JalanGo</h3>
+              <ul className="mb-3 divide-y divide-ink-100 dark:divide-ink-800">
+                {verified.map((r) => (
+                  <PlaceItem key={r.place.id} r={r} icon={meta.icon} color={meta.color} current={stop?.id === r.place.id} onStop={() => doStop(r)} />
+                ))}
+              </ul>
+            </>
+          )}
           {picks.length > 0 && (
             <>
               <h3 className="mb-1 text-xs font-bold uppercase tracking-wide text-jade-600">Disyorkan pengguna JalanGo</h3>
@@ -96,7 +109,7 @@ export function AlongRouteSheet({ onClose }: { onClose: () => void }) {
           )}
           {others.length > 0 && (
             <>
-              {picks.length > 0 && <h3 className="mb-1 text-xs font-bold uppercase tracking-wide text-ink-500">Lain-lain di depan</h3>}
+              {(picks.length > 0 || verified.length > 0) && <h3 className="mb-1 text-xs font-bold uppercase tracking-wide text-ink-500">Lain-lain di depan</h3>}
               <ul className="divide-y divide-ink-100 dark:divide-ink-800">
                 {others.slice(0, 30).map((r) => (
                   <PlaceItem key={r.place.id} r={r} icon={meta.icon} color={meta.color} current={stop?.id === r.place.id} onStop={() => doStop(r)} />
@@ -105,7 +118,7 @@ export function AlongRouteSheet({ onClose }: { onClose: () => void }) {
             </>
           )}
           <p className="mt-3 text-xs text-ink-400">
-            Senarai tempat daripada Mapbox. Tekan ⭐ Review untuk baca review di Google Maps. 👍 = disyorkan pengguna JalanGo.{category === 'rnr' && ' Pastikan R&R berada di arah perjalanan anda.'}
+            {verified.length > 0 && 'Kedai disemak JalanGo: IC dan premis peniaga telah disemak. '}Senarai tempat daripada Mapbox. Tekan ⭐ Review untuk baca review di Google Maps. 👍 = disyorkan pengguna JalanGo.{category === 'rnr' && ' Pastikan R&R berada di arah perjalanan anda.'}
           </p>
         </>
       )}
@@ -122,12 +135,16 @@ export function aheadText(r: AlongRow): string {
 function PlaceItem({ r, icon: Icon, color, current, onStop }: { r: AlongRow; icon: LucideIcon; color: string; current: boolean; onStop: () => void }) {
   return (
     <li className="flex items-center gap-3 py-3">
-      <span className="grid size-10 shrink-0 place-items-center rounded-xl text-white" style={{ background: r.pick ? '#10b981' : color }}>
+      <span className="grid size-10 shrink-0 place-items-center rounded-xl text-white" style={{ background: r.pick || r.listing ? '#10b981' : color }}>
         <Icon className="size-5" />
       </span>
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-semibold">{r.place.name}</p>
-        {r.pick?.description ? (
+        {r.listing ? (
+          <p className="truncate text-xs text-ink-500">
+            <ListingLine l={r.listing} />
+          </p>
+        ) : r.pick?.description ? (
           <p className="truncate text-xs italic text-ink-500">“{r.pick.description}”</p>
         ) : (
           r.place.address && <p className="truncate text-xs text-ink-500">{r.place.address}</p>
@@ -145,6 +162,13 @@ function PlaceItem({ r, icon: Icon, color, current, onStop }: { r: AlongRow; ico
       <StopReviewButtons r={r} current={current} onStop={onStop} />
     </li>
   );
+}
+
+/** "Warung · Buka sekarang · ± RM10" for a checked food business. */
+function ListingLine({ l }: { l: NonNullable<AlongRow['listing']> }) {
+  const open = isOpenNow(l.details);
+  const type = FOOD_TYPES.find((x) => x.id === l.details.food_type)?.label;
+  return <>{[type, open === true ? 'Buka sekarang' : open === false ? 'Tutup' : null, `± ${rm(l.price)}`].filter(Boolean).join(' · ')}</>;
 }
 
 export function StopReviewButtons({ r, current, onStop }: { r: AlongRow; current: boolean; onStop: () => void }) {

@@ -7,19 +7,24 @@ import { Button } from '@/components/ui/Button';
 import { PagePanel } from '@/components/ui/PagePanel';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/cn';
-import { AMENITIES, FUELS, HOMESTAY_TYPES, LISTING_STATUS, PHOTO_STATUS } from '@/lib/listingLabels';
+import { AMENITIES, DAYS_MS, FOOD_SERVICES, FOOD_TYPES, FUELS, HOMESTAY_TYPES, LISTING_STATUS, PHOTO_STATUS } from '@/lib/listingLabels';
 import {
   deleteListing,
   deleteListingPhoto,
   fetchMyListings,
   listingPhotoUrls,
   makeCover,
+  MENU_LIMIT,
   PHOTO_LIMIT,
   saveListing,
   setBlocked,
   uploadListingPhoto,
   type CarDetails,
+  type FoodDetails,
+  type FoodType,
+  type HalalClaim,
   type HomestayDetails,
+  type MenuItem,
   type Listing,
   type ListingInput,
   type ListingPhoto,
@@ -72,7 +77,7 @@ export function ListingEditorPage() {
   if (id !== 'new' && !listing) return <PagePanel title="Listing">{back}<p className="text-sm text-ink-500">{error ?? 'Listing tidak dijumpai.'}</p></PagePanel>;
 
   return (
-    <PagePanel title={listing ? listing.title : operator.kind === 'car_rental' ? 'Tambah kereta' : 'Tambah unit homestay'}>
+    <PagePanel title={listing ? listing.title : operator.kind === 'car_rental' ? 'Tambah kereta' : operator.kind === 'food' ? 'Tambah kedai makan' : 'Tambah unit homestay'}>
       {back}
       <Editor key={listing?.id ?? 'new'} userId={user.id} operator={operator} listing={listing} onSaved={(l) => { setListing(l); if (id === 'new') navigate(`/business/listings/${l.id}`, { replace: true }); }} onDeleted={() => navigate('/business')} />
     </PagePanel>
@@ -81,6 +86,7 @@ export function ListingEditorPage() {
 
 function Editor({ userId, operator, listing, onSaved, onDeleted }: { userId: string; operator: Operator; listing: Listing | null; onSaved: (l: Listing) => void; onDeleted: () => void }) {
   const car = operator.kind === 'car_rental';
+  const food = operator.kind === 'food';
   const [f, setF] = useState<Form>(() => ({
     title: listing?.title ?? '',
     description: listing?.description ?? '',
@@ -91,25 +97,32 @@ function Editor({ userId, operator, listing, onSaved, onDeleted }: { userId: str
     deposit: null,
     area_label: listing?.area_label ?? operator.town,
     service_radius_km: listing?.service_radius_km ?? (car ? 30 : null),
-    details: listing?.details ?? (car ? { transmission: 'auto', seats: 5, fuel: 'petrol' } : { type: 'house', amenities: [] }),
+    details:
+      listing?.details ??
+      (car
+        ? { transmission: 'auto', seats: 5, fuel: 'petrol' }
+        : food
+          ? { food_type: 'warung', opens: '07:00', closes: '14:00', closed_days: [], halal: null, services: ['dine_in', 'takeaway'], menu: [] }
+          : { type: 'house', amenities: [] }),
     insurance_expires_on: listing?.insurance_expires_on ?? null,
     at: listing ? { lat: listing.latitude, lng: listing.longitude } : null,
   }));
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
-  const d = f.details as CarDetails & HomestayDetails;
+  const d = f.details as CarDetails & HomestayDetails & FoodDetails;
   const set = <K extends keyof Form>(k: K, v: Form[K]) => {
     setF((x) => ({ ...x, [k]: v }));
     setSaved(false);
   };
-  const setD = (patch: Partial<CarDetails & HomestayDetails>) => set('details', { ...f.details, ...patch });
+  const setD = (patch: Partial<CarDetails & HomestayDetails & FoodDetails>) => set('details', { ...f.details, ...patch });
 
   const save = async (status: 'draft' | 'pending' | 'live' | 'paused') => {
     setError(null);
     if (f.title.trim().length < 3) return setError('Tajuk sekurang-kurangnya 3 aksara.');
     const price = Number(f.price);
-    if (!(price >= 1)) return setError(car ? 'Masukkan harga sehari.' : 'Masukkan harga semalam.');
+    if (!(price >= 1)) return setError(car ? 'Masukkan harga sehari.' : food ? 'Masukkan anggaran harga makan seorang.' : 'Masukkan harga semalam.');
+    if (food && (d.menu ?? []).some((m) => !m.name.trim())) return setError('Isi nama setiap hidangan dalam menu, atau buang baris kosong.');
     if (!f.at) return setError('Tetapkan lokasi di peta.');
     setBusy(status);
     try {
@@ -117,8 +130,8 @@ function Editor({ userId, operator, listing, onSaved, onDeleted }: { userId: str
         title: f.title,
         description: f.description?.trim() || null,
         price,
-        weekend_price: f.weekend ? Number(f.weekend) : null,
-        deposit: f.depositText ? Number(f.depositText) : null,
+        weekend_price: !food && f.weekend ? Number(f.weekend) : null,
+        deposit: !food && f.depositText ? Number(f.depositText) : null,
         latitude: f.at.lat,
         longitude: f.at.lng,
         area_label: f.area_label.trim() || operator.town,
@@ -148,7 +161,7 @@ function Editor({ userId, operator, listing, onSaved, onDeleted }: { userId: str
 
       <section className="space-y-3 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-ink-200 dark:bg-ink-900 dark:ring-ink-800">
         <p className="font-bold">Maklumat</p>
-        <label className={label}>Tajuk<input className={input} value={f.title} maxLength={80} onChange={(e) => set('title', e.target.value)} placeholder={car ? 'cth. Perodua Myvi 1.5 AV 2022' : 'cth. Homestay Kayu 3 Bilik dekat Pantai'} /></label>
+        <label className={label}>Tajuk<input className={input} value={f.title} maxLength={80} onChange={(e) => set('title', e.target.value)} placeholder={car ? 'cth. Perodua Myvi 1.5 AV 2022' : food ? 'cth. Warung Mak Teh Nasi Kerabu' : 'cth. Homestay Kayu 3 Bilik dekat Pantai'} /></label>
         {car ? (
           <>
             <div className="grid grid-cols-2 gap-2">
@@ -170,6 +183,8 @@ function Editor({ userId, operator, listing, onSaved, onDeleted }: { userId: str
             </div>
             <label className={label}>Insurans kereta ini tamat (jika ada)<input className={input} type="date" value={f.insurance_expires_on ?? ''} onChange={(e) => set('insurance_expires_on', e.target.value || null)} /></label>
           </>
+        ) : food ? (
+          <FoodFields d={d} setD={setD} halalVerified={Boolean(operator.halal_verified_at)} />
         ) : (
           <>
             <div className="grid grid-cols-2 gap-2">
@@ -200,17 +215,21 @@ function Editor({ userId, operator, listing, onSaved, onDeleted }: { userId: str
             <label className={label}>Peraturan rumah (pilihan)<textarea className={cn(input, 'resize-none')} rows={2} maxLength={300} value={d.rules ?? ''} onChange={(e) => setD({ rules: e.target.value })} placeholder="cth. Tiada merokok, tiada haiwan peliharaan" /></label>
           </>
         )}
-        <div className="grid grid-cols-3 gap-2">
-          <label className={label}>{car ? 'Harga/hari (RM)' : 'Harga/malam (RM)'}<input className={input} type="number" inputMode="decimal" min={1} value={f.price} onChange={(e) => set('price', e.target.value)} /></label>
-          <label className={label}>Hujung minggu<input className={input} type="number" inputMode="decimal" min={1} value={f.weekend} onChange={(e) => set('weekend', e.target.value)} placeholder="sama" /></label>
-          <label className={label}>Deposit<input className={input} type="number" inputMode="decimal" min={0} value={f.depositText} onChange={(e) => set('depositText', e.target.value)} /></label>
-        </div>
+        {food ? (
+          <label className={label}>Anggaran harga makan seorang (RM)<span className="block text-xs font-normal text-ink-500">Dipaparkan sebagai "± RM… seorang".</span><input className={input} type="number" inputMode="decimal" min={1} value={f.price} onChange={(e) => set('price', e.target.value)} placeholder="cth. 10" /></label>
+        ) : (
+          <div className="grid grid-cols-3 gap-2">
+            <label className={label}>{car ? 'Harga/hari (RM)' : 'Harga/malam (RM)'}<input className={input} type="number" inputMode="decimal" min={1} value={f.price} onChange={(e) => set('price', e.target.value)} /></label>
+            <label className={label}>Hujung minggu<input className={input} type="number" inputMode="decimal" min={1} value={f.weekend} onChange={(e) => set('weekend', e.target.value)} placeholder="sama" /></label>
+            <label className={label}>Deposit<input className={input} type="number" inputMode="decimal" min={0} value={f.depositText} onChange={(e) => set('depositText', e.target.value)} /></label>
+          </div>
+        )}
         <label className={label}>Penerangan (pilihan)<textarea className={cn(input, 'resize-none')} rows={3} maxLength={1000} value={f.description ?? ''} onChange={(e) => set('description', e.target.value)} /></label>
       </section>
 
       <section className="space-y-2 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-ink-200 dark:bg-ink-900 dark:ring-ink-800">
-        <p className="font-bold">{car ? 'Lokasi pangkalan kereta' : 'Lokasi homestay'}</p>
-        <p className="text-xs text-ink-500">{car ? 'Penyewa akan menghantar lokasi ambil/hantar mereka kepada anda melalui WhatsApp. Lokasi ini untuk carian "berdekatan".' : 'Lokasi tepat homestay, dipaparkan kepada pengguna dengan butang Navigasi.'}</p>
+        <p className="font-bold">{car ? 'Lokasi pangkalan kereta' : food ? 'Lokasi kedai / gerai' : 'Lokasi homestay'}</p>
+        <p className="text-xs text-ink-500">{car ? 'Penyewa akan menghantar lokasi ambil/hantar mereka kepada anda melalui WhatsApp. Lokasi ini untuk carian "berdekatan".' : food ? 'Letak pin tepat di kedai atau gerai. Pemandu akan nampak kedai anda bila laluan mereka melaluinya.' : 'Lokasi tepat homestay, dipaparkan kepada pengguna dengan butang Navigasi.'}</p>
         <LocationPicker value={f.at} onChange={(c, area) => { set('at', c); if (area) setF((x) => ({ ...x, at: c, area_label: area })); }} />
         <label className={label}>Nama kawasan<input className={input} value={f.area_label} maxLength={80} onChange={(e) => set('area_label', e.target.value)} placeholder="cth. Kota Bharu, Kelantan" /></label>
         {car && (
@@ -232,10 +251,12 @@ function Editor({ userId, operator, listing, onSaved, onDeleted }: { userId: str
       {listing ? (
         <>
           <Photos userId={userId} listing={listing} onChange={(photos) => onSaved({ ...listing, photos })} />
-          <section className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-ink-200 dark:bg-ink-900 dark:ring-ink-800">
-            <p className="mb-2 font-bold">Kalendar kekosongan</p>
-            <Calendar listing={listing} onChange={(blocks) => onSaved({ ...listing, blocks })} />
-          </section>
+          {!food && (
+            <section className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-ink-200 dark:bg-ink-900 dark:ring-ink-800">
+              <p className="mb-2 font-bold">Kalendar kekosongan</p>
+              <Calendar listing={listing} onChange={(blocks) => onSaved({ ...listing, blocks })} />
+            </section>
+          )}
           <div className="grid grid-cols-2 gap-2">
             {listing.status === 'live' && (
               <Button variant="secondary" onClick={() => void save('paused')}><Pause className="size-4" /> Jeda listing</Button>
@@ -350,6 +371,86 @@ function Calendar({ listing, onChange }: { listing: Listing; onChange: (b: { day
         }}
       />
       {error && <p role="alert" className="mt-1 text-sm text-red-600">{error}</p>}
+    </>
+  );
+}
+
+/** Food business: type, opening hours, services, halal claim and a short menu. */
+function FoodFields({ d, setD, halalVerified }: { d: FoodDetails; setD: (p: Partial<FoodDetails>) => void; halalVerified: boolean }) {
+  const menu = d.menu ?? [];
+  const closed = new Set(d.closed_days ?? []);
+  const setMenu = (next: MenuItem[]) => setD({ menu: next });
+  return (
+    <>
+      <div className="grid grid-cols-2 gap-2">
+        <label className={label}>Jenis
+          <select className={input} value={d.food_type ?? 'warung'} onChange={(e) => setD({ food_type: e.target.value as FoodType })}>
+            {FOOD_TYPES.map((x) => <option key={x.id} value={x.id}>{x.label}</option>)}
+          </select>
+        </label>
+        <span />
+        <label className={label}>Buka<input className={input} type="time" value={d.opens ?? ''} onChange={(e) => setD({ opens: e.target.value })} /></label>
+        <label className={label}>Tutup<input className={input} type="time" value={d.closes ?? ''} onChange={(e) => setD({ closes: e.target.value })} /></label>
+      </div>
+      <fieldset>
+        <legend className={label}>Hari cuti (tutup)</legend>
+        <div className="mt-1 flex flex-wrap gap-1.5">
+          {DAYS_MS.map((name, i) => {
+            const on = closed.has(i);
+            return (
+              <button key={name} type="button" aria-pressed={on} onClick={() => setD({ closed_days: on ? [...closed].filter((x) => x !== i) : [...closed, i].sort() })} className={cn('rounded-full px-3 py-1.5 text-xs font-semibold', on ? 'bg-red-600 text-white' : 'bg-ink-100 dark:bg-ink-800')}>
+                {name}
+              </button>
+            );
+          })}
+        </div>
+      </fieldset>
+      <fieldset>
+        <legend className={label}>Servis</legend>
+        <div className="mt-1 flex flex-wrap gap-1.5">
+          {FOOD_SERVICES.map((x) => {
+            const on = (d.services ?? []).includes(x.id);
+            return (
+              <button key={x.id} type="button" aria-pressed={on} onClick={() => setD({ services: on ? (d.services ?? []).filter((y) => y !== x.id) : [...(d.services ?? []), x.id] })} className={cn('rounded-full px-3 py-1.5 text-xs font-semibold', on ? 'bg-jade-500 text-white' : 'bg-ink-100 dark:bg-ink-800')}>
+                {x.label}
+              </button>
+            );
+          })}
+        </div>
+      </fieldset>
+      <label className={label}>Status halal
+        <select className={input} value={d.halal ?? ''} onChange={(e) => setD({ halal: (e.target.value || null) as HalalClaim | null })}>
+          <option value="">Tidak dinyatakan</option>
+          <option value="muslim_owner">Pemilik Muslim</option>
+          <option value="no_pork">Tiada daging babi</option>
+          <option value="jakim" disabled={!halalVerified}>Halal JAKIM{halalVerified ? '' : ' (sijil belum disemak)'}</option>
+        </select>
+        <span className="mt-1 block text-xs font-normal text-ink-500">
+          {halalVerified
+            ? 'Sijil Halal JAKIM anda sudah disemak.'
+            : 'Lencana "Halal JAKIM" hanya selepas anda muat naik sijil di Bisnes saya dan admin menyemaknya. Menggunakan perkataan halal tanpa sijil adalah kesalahan di Malaysia.'}
+        </span>
+      </label>
+      <fieldset>
+        <legend className={label}>Menu ringkas ({menu.length}/{MENU_LIMIT})</legend>
+        <ul className="mt-1 space-y-1.5">
+          {menu.map((m, i) => (
+            <li key={i} className="flex gap-1.5">
+              <input className={cn(input, 'mt-0 flex-1')} value={m.name} maxLength={50} placeholder="cth. Nasi kerabu ayam" aria-label={`Hidangan ${i + 1}`} onChange={(e) => setMenu(menu.map((x, j) => (j === i ? { ...x, name: e.target.value } : x)))} />
+              <input className={cn(input, 'mt-0 w-24')} type="number" inputMode="decimal" min={0} value={m.price ?? ''} placeholder="RM" aria-label={`Harga hidangan ${i + 1}`} onChange={(e) => setMenu(menu.map((x, j) => (j === i ? { ...x, price: e.target.value ? Number(e.target.value) : undefined } : x)))} />
+              <button type="button" aria-label={`Buang hidangan ${i + 1}`} onClick={() => setMenu(menu.filter((_, j) => j !== i))} className="grid w-10 shrink-0 place-items-center rounded-xl text-ink-500 hover:bg-ink-100 dark:hover:bg-ink-800">
+                <Trash2 className="size-4" />
+              </button>
+            </li>
+          ))}
+        </ul>
+        {menu.length < MENU_LIMIT && (
+          <button type="button" onClick={() => setMenu([...menu, { name: '' }])} className="mt-1.5 rounded-lg bg-ink-100 px-3 py-1.5 text-xs font-semibold dark:bg-ink-800">
+            + Tambah hidangan
+          </button>
+        )}
+        <span className="mt-1 block text-xs font-normal text-ink-500">Gambar menu penuh boleh dimuat naik di bahagian Gambar.</span>
+      </fieldset>
     </>
   );
 }

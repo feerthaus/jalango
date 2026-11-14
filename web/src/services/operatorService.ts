@@ -3,9 +3,9 @@ import { supabase } from '@/lib/supabase';
 import { preparePhoto } from './accidentService';
 import { toReportError } from './reportsService';
 
-export type OperatorKind = 'homestay' | 'car_rental';
+export type OperatorKind = 'homestay' | 'car_rental' | 'food';
 export type OperatorStatus = 'pending' | 'needs_info' | 'approved' | 'rejected' | 'suspended';
-export type DocKind = 'ic' | 'ownership' | 'ssm' | 'apad_licence' | 'insurance' | 'other';
+export type DocKind = 'ic' | 'ownership' | 'ssm' | 'apad_licence' | 'insurance' | 'other' | 'premises' | 'pbt_licence' | 'food_handler' | 'halal_jakim';
 
 export interface Operator {
   id: string;
@@ -22,6 +22,8 @@ export interface Operator {
   insurance_expires_on: string | null;
   /** set when a car rental operator without an APAD licence accepted the disclaimer */
   licence_disclaimer_at: string | null;
+  /** food only: set by an admin after checking the JAKIM halal certificate */
+  halal_verified_at?: string | null;
   status: OperatorStatus;
   review_note: string | null;
   reviewed_at: string | null;
@@ -42,12 +44,18 @@ export interface OperatorDocument {
 export type OperatorInput = Pick<Operator, 'kind' | 'business_name' | 'state' | 'town' | 'phone' | 'description' | 'ssm_no' | 'apad_licence_no' | 'apad_expires_on' | 'insurance_expires_on' | 'licence_disclaimer_at'>;
 
 export const DOCS_BUCKET = 'operator-docs';
-const COLS = 'id,user_id,kind,business_name,state,town,phone,description,ssm_no,apad_licence_no,apad_expires_on,insurance_expires_on,licence_disclaimer_at,status,review_note,reviewed_at,approved_at,free_until,created_at,updated_at';
+const COLS = 'id,user_id,kind,business_name,state,town,phone,description,ssm_no,apad_licence_no,apad_expires_on,insurance_expires_on,licence_disclaimer_at,halal_verified_at,status,review_note,reviewed_at,approved_at,free_until,created_at,updated_at';
 
 /** Documents an operator must upload before review (APAD licence and insurance only if given). */
 export function requiredDocs(o: Pick<Operator, 'kind' | 'apad_licence_no' | 'insurance_expires_on'>): DocKind[] {
   if (o.kind === 'homestay') return ['ic', 'ownership'];
+  if (o.kind === 'food') return ['ic', 'premises'];
   return ['ssm', ...(o.apad_licence_no ? (['apad_licence'] as DocKind[]) : []), ...(o.insurance_expires_on ? (['insurance'] as DocKind[]) : [])];
+}
+
+/** Documents an operator may add (not required). A JAKIM certificate unlocks the "Halal JAKIM" badge once checked. */
+export function optionalDocs(o: Pick<Operator, 'kind'>): DocKind[] {
+  return o.kind === 'food' ? ['ssm', 'pbt_licence', 'food_handler', 'halal_jakim'] : [];
 }
 
 /** Licensed car rental: has an APAD licence that is still valid. */
@@ -118,6 +126,17 @@ export async function fetchOperatorsForReview(): Promise<OperatorWithDocs[]> {
     .limit(200);
   if (error) throw toReportError(error);
   return (data ?? []) as OperatorWithDocs[];
+}
+
+/** Food business: a JAKIM certificate uploaded but not yet checked by an admin. */
+export const halalWaiting = (o: Pick<Operator, 'kind' | 'halal_verified_at' | 'status'> & { documents?: { kind: DocKind }[] }) =>
+  o.kind === 'food' && !o.halal_verified_at && (o.documents ?? []).some((d) => d.kind === 'halal_jakim');
+
+/** Admin: mark the JAKIM halal certificate as checked, or withdraw it. */
+export async function setHalalVerified(id: string, verified: boolean, note?: string): Promise<void> {
+  const { error } = await client().rpc('admin_set_halal', { p_operator: id, p_verified: verified, p_note: note ?? null });
+  if (error) throw toReportError(error);
+  adminChanged();
 }
 
 export async function reviewOperator(id: string, decision: 'approved' | 'needs_info' | 'rejected' | 'suspended', note?: string): Promise<void> {

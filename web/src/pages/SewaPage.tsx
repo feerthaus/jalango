@@ -1,5 +1,5 @@
 import mapboxgl from 'mapbox-gl';
-import { Car, Home, List, Map as MapIcon, Store } from 'lucide-react';
+import { Car, Home, List, Map as MapIcon, Store, Utensils } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Link, useSearchParams } from 'react-router';
@@ -21,9 +21,10 @@ const KINDS: { id: OperatorKind | 'all'; label: string; icon?: typeof Car }[] = 
   { id: 'all', label: 'Semua' },
   { id: 'car_rental', label: 'Kereta sewa', icon: Car },
   { id: 'homestay', label: 'Homestay', icon: Home },
+  { id: 'food', label: 'Makan', icon: Utensils },
 ];
 
-/** "Sewa": verified car rentals and homestays, nearest first. Never shown while driving. */
+/** "Sewa & Makan": verified car rentals, homestays and food businesses, nearest first. Never shown while driving. */
 export function SewaPage() {
   const navigating = useIsNavigating();
   const [params, setParams] = useSearchParams();
@@ -102,7 +103,7 @@ export function SewaPage() {
   }
 
   return (
-    <PagePanel title="Sewa" subtitle="Kereta sewa & homestay yang disemak JalanGo" action={viewSwitch}>
+    <PagePanel title="Sewa & Makan" subtitle="Kereta sewa, homestay & kedai makan yang disemak JalanGo" action={viewSwitch}>
       {toggles}
       {!supabase && <EmptyState icon={Store} title="Belum bersambung">Senarai sewaan perlukan sambungan ke pelayan.</EmptyState>}
       {error && <p role="alert" className="py-4 text-sm text-red-600">{error}</p>}
@@ -118,7 +119,7 @@ export function SewaPage() {
         ))}
       </ul>
       <p className="mt-6 text-center text-xs text-ink-500">
-        Ada kereta sewa atau homestay? <Link to="/business" className="font-semibold text-jade-600 underline">Daftar perniagaan</Link>
+        Ada kereta sewa, homestay atau kedai makan? <Link to="/business" className="font-semibold text-jade-600 underline">Daftar perniagaan</Link>
       </p>
     </PagePanel>
   );

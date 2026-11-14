@@ -26,6 +26,25 @@ export interface HomestayDetails {
   rules?: string;
 }
 
+export type FoodType = 'restoran' | 'warung' | 'gerai' | 'kafe' | 'food_truck';
+/** 'jakim' only counts when the operator's certificate was checked by an admin */
+export type HalalClaim = 'jakim' | 'muslim_owner' | 'no_pork';
+export interface MenuItem {
+  name: string;
+  price?: number;
+}
+export interface FoodDetails {
+  food_type?: FoodType;
+  menu?: MenuItem[];
+  /** "HH:MM", local time */
+  opens?: string;
+  closes?: string;
+  /** 0 = Sunday … 6 = Saturday */
+  closed_days?: number[];
+  halal?: HalalClaim | null;
+  services?: ('dine_in' | 'takeaway' | 'delivery')[];
+}
+
 export interface ListingPhoto {
   id: string;
   listing_id: string;
@@ -49,7 +68,7 @@ export interface Listing {
   longitude: number;
   area_label: string;
   service_radius_km: number | null;
-  details: CarDetails & HomestayDetails;
+  details: CarDetails & HomestayDetails & FoodDetails;
   insurance_expires_on: string | null;
   status: ListingStatus;
   review_note: string | null;
@@ -63,7 +82,8 @@ export interface Listing {
 
 export type ListingInput = Pick<Listing, 'title' | 'description' | 'price' | 'weekend_price' | 'deposit' | 'latitude' | 'longitude' | 'area_label' | 'service_radius_km' | 'details' | 'insurance_expires_on'>;
 
-export const PHOTO_LIMIT: Record<OperatorKind, number> = { car_rental: 8, homestay: 12 };
+export const PHOTO_LIMIT: Record<OperatorKind, number> = { car_rental: 8, homestay: 12, food: 12 };
+export const MENU_LIMIT = 25;
 export const LISTING_LIMIT = 10;
 export const LISTINGS_BUCKET = 'listing-photos';
 const COLS = 'id,operator_id,user_id,kind,title,description,price,weekend_price,deposit,latitude,longitude,area_label,service_radius_km,details,insurance_expires_on,status,review_note,reviewed_at,approved_hash,created_at,updated_at';

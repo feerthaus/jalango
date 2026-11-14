@@ -14,6 +14,7 @@ export function MyListings({ operator }: { operator: Operator }) {
   const [error, setError] = useState<string | null>(null);
   const [stats, setStats] = useState<Record<string, ListingStats>>({});
   const car = operator.kind === 'car_rental';
+  const food = operator.kind === 'food';
 
   useEffect(() => {
     fetchMyListings(operator.id)
@@ -29,16 +30,16 @@ export function MyListings({ operator }: { operator: Operator }) {
   return (
     <section className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-ink-200 dark:bg-ink-900 dark:ring-ink-800">
       <div className="mb-2 flex items-center justify-between">
-        <p className="font-bold">{car ? 'Kereta saya' : 'Unit homestay saya'} ({items?.length ?? 0}/{LISTING_LIMIT})</p>
+        <p className="font-bold">{car ? 'Kereta saya' : food ? 'Kedai / cawangan saya' : 'Unit homestay saya'} ({items?.length ?? 0}/{LISTING_LIMIT})</p>
         {!full && (
           <Link to="/business/listings/new" className="flex items-center gap-1 rounded-lg bg-jade-500 px-3 py-1.5 text-xs font-semibold text-white">
-            <Plus className="size-3.5" /> {car ? 'Tambah kereta' : 'Tambah unit'}
+            <Plus className="size-3.5" /> {car ? 'Tambah kereta' : food ? 'Tambah kedai' : 'Tambah unit'}
           </Link>
         )}
       </div>
       {error && <p role="alert" className="text-sm text-red-600">{error}</p>}
       {items && items.length === 0 && (
-        <p className="py-3 text-sm text-ink-500">{car ? 'Belum ada kereta. Tambah kereta pertama anda: maklumat, lokasi pangkalan dan gambar.' : 'Belum ada unit. Tambah homestay pertama anda: maklumat, lokasi dan gambar.'}</p>
+        <p className="py-3 text-sm text-ink-500">{car ? 'Belum ada kereta. Tambah kereta pertama anda: maklumat, lokasi pangkalan dan gambar.' : food ? 'Belum ada kedai. Tambah kedai anda: menu, waktu buka, lokasi dan gambar.' : 'Belum ada unit. Tambah homestay pertama anda: maklumat, lokasi dan gambar.'}</p>
       )}
       {Object.keys(stats).length > 0 && <p className="mb-1 text-[11px] text-ink-500">30 hari lepas: <Eye className="inline size-3" /> paparan · <MessageCircle className="inline size-3" /> WhatsApp · <Phone className="inline size-3" /> panggilan</p>}
       <ul className="space-y-2">
@@ -54,7 +55,7 @@ export function MyListings({ operator }: { operator: Operator }) {
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className="block truncate font-semibold">{l.title}</span>
-                  <span className="block text-xs text-ink-500">{rm(l.price)}/{car ? 'hari' : 'malam'} · {l.area_label}</span>
+                  <span className="block text-xs text-ink-500">{food ? `± ${rm(l.price)} seorang` : `${rm(l.price)}/${car ? 'hari' : 'malam'}`} · {l.area_label}</span>
                   {stats[l.id] && (l.status === 'live' || stats[l.id].views > 0) && (
                     <span className="mt-0.5 flex gap-2.5 text-[11px] text-ink-500" title="30 hari lepas">
                       <span className="flex items-center gap-0.5"><Eye className="size-3" /> {stats[l.id].views}</span>

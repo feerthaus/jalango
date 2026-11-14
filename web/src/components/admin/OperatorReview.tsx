@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { cn } from '@/lib/cn';
 import { DOC_LABEL, KIND_LABEL, STATUS_LABEL } from '@/lib/operatorLabels';
-import { docUrls, fetchOperatorsForReview, isApadLicensed, requiredDocs, reviewOperator, type OperatorStatus, type OperatorWithDocs } from '@/services/operatorService';
+import { docUrls, fetchOperatorsForReview, halalWaiting, isApadLicensed, requiredDocs, reviewOperator, setHalalVerified, type OperatorStatus, type OperatorWithDocs } from '@/services/operatorService';
 
 const ORDER: OperatorStatus[] = ['pending', 'needs_info', 'approved', 'suspended', 'rejected'];
 const fmt = (iso: string | null) => (iso ? new Date(`${iso.slice(0, 10)}T00:00:00Z`).toLocaleDateString('ms-MY', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' }) : '–');
@@ -28,7 +28,7 @@ export function OperatorReview() {
   useEffect(load, [load]);
 
   const shown = useMemo(
-    () => (items ?? []).filter((o) => filter === 'all' || o.status === 'pending').sort((a, b) => ORDER.indexOf(a.status) - ORDER.indexOf(b.status)),
+    () => (items ?? []).filter((o) => filter === 'all' || o.status === 'pending' || halalWaiting(o)).sort((a, b) => ORDER.indexOf(a.status) - ORDER.indexOf(b.status)),
     [items, filter],
   );
 
@@ -39,7 +39,7 @@ export function OperatorReview() {
       <div className="mb-3 flex items-center gap-2">
         {(['todo', 'all'] as const).map((f) => (
           <button key={f} type="button" onClick={() => setFilter(f)} aria-pressed={filter === f} className={cn('rounded-full px-3 py-1 text-xs font-semibold', filter === f ? 'bg-ink-900 text-white dark:bg-white dark:text-ink-900' : 'bg-ink-100 dark:bg-ink-800')}>
-            {f === 'todo' ? `Perlu semakan (${items.filter((o) => o.status === 'pending').length})` : `Semua (${items.length})`}
+            {f === 'todo' ? `Perlu semakan (${items.filter((o) => o.status === 'pending' || halalWaiting(o)).length})` : `Semua (${items.length})`}
           </button>
         ))}
         <Button variant="ghost" className="ml-auto px-2 py-1 text-xs" onClick={load}>
@@ -80,6 +80,19 @@ function OperatorCard({ o, urls, onDone }: { o: OperatorWithDocs; urls: Record<s
     }
   };
 
+  const halal = async (verified: boolean) => {
+    setBusy(true);
+    setError(null);
+    try {
+      await setHalalVerified(o.id, verified, note.trim() || undefined);
+      onDone();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Gagal.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
   return (
     <li className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-ink-200 dark:bg-ink-900 dark:ring-ink-800">
       <div className="flex items-start gap-2">
@@ -102,6 +115,20 @@ function OperatorCard({ o, urls, onDone }: { o: OperatorWithDocs; urls: Record<s
             <dd>{o.insurance_expires_on ? fmt(o.insurance_expires_on) : <span className="font-semibold text-amber-600">Tiada · akui penafian {fmt(o.licence_disclaimer_at)}</span>}</dd>
           </>
         )}
+        {o.kind === 'food' && (
+          <>
+            <dt className="text-ink-500">Halal JAKIM</dt>
+            <dd>
+              {o.halal_verified_at ? (
+                <span className="font-semibold text-jade-600">✓ Disahkan {fmt(o.halal_verified_at)}</span>
+              ) : o.documents.some((d) => d.kind === 'halal_jakim') ? (
+                <span className="font-semibold text-amber-600">Sijil dimuat naik, belum disemak</span>
+              ) : (
+                'Tiada sijil'
+              )}
+            </dd>
+          </>
+        )}
         <dt className="text-ink-500">Didaftar / dikemas kini</dt>
         <dd>{fmt(o.created_at)} / {fmt(o.updated_at)}</dd>
         {o.free_until && (
@@ -122,6 +149,16 @@ function OperatorCard({ o, urls, onDone }: { o: OperatorWithDocs; urls: Record<s
           </li>
         ))}
       </ul>
+      {o.kind === 'food' && o.documents.some((d) => d.kind === 'halal_jakim') && (
+        <div className="mt-2 rounded-xl bg-ink-100 p-2 text-xs dark:bg-ink-800">
+          <p className="mb-1.5">Semak sijil Halal: nama premis sama, nombor sijil sah di laman Halal JAKIM, dan belum tamat tempoh.</p>
+          {o.halal_verified_at ? (
+            <Button variant="secondary" className="px-2 py-1.5 text-xs" disabled={busy} onClick={() => void halal(false)}>Tarik balik Halal JAKIM</Button>
+          ) : (
+            <Button className="px-2 py-1.5 text-xs" disabled={busy} onClick={() => void halal(true)}><Check className="size-4" /> Sahkan Halal JAKIM</Button>
+          )}
+        </div>
+      )}
       {o.review_note && <p className="mt-2 rounded-lg bg-ink-100 p-2 text-xs dark:bg-ink-800">Nota terakhir: {o.review_note}</p>}
       <textarea value={note} onChange={(e) => setNote(e.target.value)} maxLength={500} rows={2} placeholder="Nota untuk operator (wajib untuk Minta maklumat / Tolak / Gantung)" aria-label="Nota untuk operator" className="mt-3 w-full resize-none rounded-xl bg-ink-100 px-3 py-2 text-sm dark:bg-ink-800" />
       {error && <p role="alert" className="mt-1 text-xs text-red-600">{error}</p>}

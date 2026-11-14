@@ -61,3 +61,8 @@ export function estimateTotal(from: string, to: string, price: number, weekend: 
   }
   return { units: n, total };
 }
+
+/** WhatsApp message to a food business: ask, book a table or order takeaway. */
+export function foodEnquiryText(title: string, url: string): string {
+  return [`Salam, saya nampak "${title}" di JalanGo.`, 'Nak tanya / tempah:', '', url].join('\n');
+}
