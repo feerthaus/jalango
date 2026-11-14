@@ -3,7 +3,7 @@ import { z } from 'zod';
 import type { Place } from '../types.js';
 import { withUsagePolicy } from '../lib/usageGuard.js';
 import { placeFromMapsLink } from '../services/mapsLink.js';
-import { googleCarRentals, googleHomestays, googlePlacesEnabled, mergeWithGoogle } from '../services/googlePlaces.js';
+import { googleCarRentals, googleHomestays, googlePlacesEnabled, isGenericName, mergeWithGoogle } from '../services/googlePlaces.js';
 import { CATEGORY_MAP, reverseGeocode, searchAlong, searchCategory, searchPlaces } from '../services/mapbox.js';
 
 const lng = z.coerce.number().min(-180).max(180);
@@ -84,7 +84,7 @@ export const GOOGLE_FILL_BELOW = 5;
 
 /**
  * Homestays and car rentals: Mapbox first; Google Places only when Mapbox
- * finds few, so most searches cost nothing on Google. Either side failing
+ * finds few with a real name, so most searches cost nothing on Google. Either side failing
  * still returns what the other found.
  */
 export async function searchRentals(category: 'homestay' | 'car_rental', near: { lng: number; lat: number }, limit?: number): Promise<Place[]> {
@@ -95,7 +95,9 @@ export async function searchRentals(category: 'homestay' | 'car_rental', near: {
   } catch (err) {
     mapboxError = err;
   }
-  if (mapbox.length >= GOOGLE_FILL_BELOW || !googlePlacesEnabled()) {
+  // Entries named only "homestay" don't count as real results
+  const useful = mapbox.filter((p) => !isGenericName(p.name)).length;
+  if (useful >= GOOGLE_FILL_BELOW || !googlePlacesEnabled()) {
     if (mapboxError) throw mapboxError;
     return mapbox;
   }

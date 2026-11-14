@@ -68,12 +68,17 @@ export async function googleHomestays(near: Coordinates, limit = 10): Promise<Pl
     await post('searchText', {
       textQuery: 'homestay',
       pageSize: Math.min(limit, 20),
+      rankPreference: 'DISTANCE',
       locationRestriction: { rectangle: { low: { latitude: minLat, longitude: minLng }, high: { latitude: maxLat, longitude: maxLng } } },
       languageCode: 'ms',
       regionCode: 'MY',
     }),
   );
 }
+
+/** Map entries named only "homestay" / "kereta sewa" etc. are not useful to a renter. */
+const GENERIC = new Set(['homestay', 'homestays', 'home stay', 'kereta sewa', 'car rental', 'rental', 'sewa kereta']);
+export const isGenericName = (name: string) => GENERIC.has(name.toLowerCase().replace(/[^a-z0-9 ]+/g, ' ').replace(/\s+/g, ' ').trim());
 
 const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
 const closeBy = (a: Coordinates, b: Coordinates) => Math.abs(a.lat - b.lat) < 0.002 && Math.abs(a.lng - b.lng) < 0.002; // ~200 m
