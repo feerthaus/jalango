@@ -8,8 +8,9 @@ import { initMonitoring } from './lib/monitoring';
 initMonitoring();
 registerServiceWorker();
 
-// Free-tier hosts may inject a floating badge at the bottom of the page; keep our
-// critical driving controls (End, directions) clear of it.
+// TEMPORARY (Netlify Free plan): Netlify injects a floating "Powered by Netlify"
+// badge at the bottom right. Keep the tab bar, sheets and driving controls clear
+// of it. Remove after upgrading the Netlify plan (AGENTS.md "Temporary workarounds").
 if (document.querySelector('script[data-nf-variant]')) document.documentElement.classList.add('has-host-badge');
 
 createRoot(document.getElementById('root')!).render(

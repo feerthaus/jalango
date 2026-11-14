@@ -134,7 +134,7 @@ export function MapPage() {
       </div>
 
       {/* Bottom area (above nav on mobile) */}
-      <div className="absolute inset-x-0 bottom-[calc(4rem+env(safe-area-inset-bottom))] z-10 space-y-3 p-3 md:bottom-0 md:p-4">
+      <div className="absolute inset-x-0 bottom-[calc(4rem+var(--bottom-clear))] z-10 space-y-3 p-3 md:bottom-0 md:p-4">
         {!planning && (
           <div className="flex items-end justify-between gap-3">
             <SpeedIndicator />

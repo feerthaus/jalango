@@ -6,7 +6,7 @@ import type { ReactNode } from 'react';
  */
 export function PagePanel({ title, subtitle, action, children }: { title: string; subtitle?: ReactNode; action?: ReactNode; children: ReactNode }) {
   return (
-    <section className="pointer-events-auto absolute inset-x-0 top-0 bottom-[calc(4rem+env(safe-area-inset-bottom))] flex animate-slide-up flex-col bg-ink-50 md:inset-y-0 md:bottom-0 md:left-0 md:w-[420px] md:border-r md:border-ink-200 md:shadow-float dark:bg-ink-950 md:dark:border-ink-800">
+    <section className="pointer-events-auto absolute inset-x-0 top-0 bottom-[calc(4rem+var(--bottom-clear))] flex animate-slide-up flex-col bg-ink-50 md:inset-y-0 md:bottom-0 md:left-0 md:w-[420px] md:border-r md:border-ink-200 md:shadow-float dark:bg-ink-950 md:dark:border-ink-800">
       <header className="safe-top flex items-end justify-between gap-3 px-5 pb-3 pt-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">{title}</h1>

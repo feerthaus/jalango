@@ -181,7 +181,7 @@ function SewaMap({ items, toggles, viewSwitch }: { items: PublicListing[]; toggl
         );
       })}
       {selected && (
-        <div className="pointer-events-auto absolute inset-x-4 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-10 mx-auto max-w-md">
+        <div className="pointer-events-auto absolute inset-x-4 bottom-[calc(4.5rem+var(--bottom-clear))] z-10 mx-auto max-w-md">
           <ListingCard l={selected} />
         </div>
       )}

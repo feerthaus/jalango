@@ -71,6 +71,12 @@ CI (`.github/workflows/ci.yml`) runs `npm ci`, typecheck, test and build on ever
 - No individual-level data is ever sold or shared.
 - Any change to what is collected or shown updates `PrivacyPage.tsx` (BM and EN) and `LEGAL.lastUpdated`.
 
+## Temporary workarounds
+
+Remove these when their condition is met. Each is marked `TEMPORARY` in the code.
+
+- **Netlify badge spacing.** On the Netlify Free plan, Netlify injects a fixed "Powered by Netlify" badge (`#nl-badge-frame`) at the bottom right, over the bottom tab bar. `web/src/main.tsx` adds `has-host-badge` to `<html>` when Netlify's badge script is on the page, and `web/src/index.css` then sets `--host-badge-h`, which feeds `--bottom-clear` (tab bar, bottom sheets, page panels) and the driving controls. Do not hide the badge with CSS or JS: it is part of Netlify's Free plan. **Remove after the owner upgrades to a paid Netlify plan (Personal or Pro) and the badge is off:** delete the `has-host-badge` line in `main.tsx`, the `:root.has-host-badge` rule and `--host-badge-h` in `index.css`, and `+var(--host-badge-h)` in `NavigationHud.tsx` and `MapPage.tsx`. Keep `--bottom-clear`, which then equals `env(safe-area-inset-bottom)`.
+
 ## Secrets
 
 - Never commit `.env` files or keys. The Supabase service-role key and Mapbox secret token live only in Netlify / server environment variables.

@@ -49,9 +49,17 @@
 @layer base {
   :root {
     --host-badge-h: 0px;
+    /* Space to keep clear at the bottom of the screen: the phone's home-indicator
+       area, or the host badge when there is one, whichever is taller. */
+    --bottom-clear: max(env(safe-area-inset-bottom), var(--host-badge-h));
   }
+  /* TEMPORARY (Netlify Free plan): Netlify injects a "Powered by Netlify" badge
+     fixed at the bottom right, over our bottom tab bar. main.tsx adds this class
+     only when Netlify's badge script is on the page, so this switches itself off
+     once the badge is gone. Remove it (and the class in main.tsx) after the
+     upgrade to a paid Netlify plan; see AGENTS.md "Temporary workarounds". */
   :root.has-host-badge {
-    --host-badge-h: 3.5rem;
+    --host-badge-h: 4rem;
   }
   html, body, #root {
     height: 100%;
@@ -71,7 +79,7 @@
 }
 
 @utility safe-bottom {
-  padding-bottom: env(safe-area-inset-bottom);
+  padding-bottom: var(--bottom-clear);
 }
 
 @utility safe-top {

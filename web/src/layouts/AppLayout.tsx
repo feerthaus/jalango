@@ -10,7 +10,7 @@ import { useIsNavigating } from '@/contexts/RoutingContext';
 export function AppLayout() {
   const navigating = useIsNavigating();
   return (
-    <div className={navigating ? 'relative h-dvh w-full overflow-hidden [--map-bottom-inset:6.5rem]' : 'relative h-dvh w-full overflow-hidden [--map-bottom-inset:calc(4rem+env(safe-area-inset-bottom))] md:[--map-bottom-inset:0px]'}>
+    <div className={navigating ? 'relative h-dvh w-full overflow-hidden [--map-bottom-inset:6.5rem]' : 'relative h-dvh w-full overflow-hidden [--map-bottom-inset:calc(4rem+var(--bottom-clear))] md:[--map-bottom-inset:0px]'}>
       <div className={navigating ? 'absolute inset-0' : 'absolute inset-0 md:left-20'}>
         <MapView />
       </div>

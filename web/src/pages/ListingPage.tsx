@@ -40,7 +40,7 @@ export function ListingPage() {
   }, [id, navigating]);
 
   return (
-    <section className="pointer-events-auto absolute inset-x-0 top-0 bottom-[calc(4rem+env(safe-area-inset-bottom))] flex flex-col bg-ink-50 md:inset-y-0 md:bottom-0 md:left-0 md:w-[480px] md:border-r md:border-ink-200 md:shadow-float dark:bg-ink-950 md:dark:border-ink-800">
+    <section className="pointer-events-auto absolute inset-x-0 top-0 bottom-[calc(4rem+var(--bottom-clear))] flex flex-col bg-ink-50 md:inset-y-0 md:bottom-0 md:left-0 md:w-[480px] md:border-r md:border-ink-200 md:shadow-float dark:bg-ink-950 md:dark:border-ink-800">
       <header className="safe-top flex items-center gap-2 px-3 pb-2 pt-3">
         <button type="button" onClick={() => (window.history.length > 1 ? navigate(-1) : navigate('/sewa'))} aria-label="Kembali" className="grid size-10 place-items-center rounded-full hover:bg-ink-200 dark:hover:bg-ink-800">
           <ArrowLeft className="size-5" />
