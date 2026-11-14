@@ -2,7 +2,7 @@ import { AsyncLocalStorage } from 'node:async_hooks';
 import { HttpError } from './errors.js';
 import { supabaseAdmin } from './supabaseAdmin.js';
 
-export type UsageKind = 'directions' | 'geo';
+export type UsageKind = 'directions' | 'geo' | 'google_places';
 
 /**
  * How a request behaves when the shared usage counter can't be reached:
@@ -17,20 +17,23 @@ export type UsageCounter = (kind: UsageKind, n: number) => Promise<number>;
 
 /** Daily ceilings for paid Mapbox calls (Malaysia time). Override with env vars. */
 export function dailyLimit(kind: UsageKind): number {
-  const raw = kind === 'directions' ? process.env.DAILY_LIMIT_DIRECTIONS : process.env.DAILY_LIMIT_GEO;
+  const raw = kind === 'directions' ? process.env.DAILY_LIMIT_DIRECTIONS : kind === 'geo' ? process.env.DAILY_LIMIT_GEO : process.env.DAILY_LIMIT_GOOGLE_PLACES;
   const n = Number(raw);
-  return Number.isFinite(n) && n > 0 ? n : 3000;
+  // Google Places: 150 a day keeps a month under Google's 5,000 free Nearby/Text calls.
+  return Number.isFinite(n) && n > 0 ? n : kind === 'google_places' ? 150 : 3000;
 }
 
 /** Upstream calls one function instance may make per hour while the shared counter is down. */
 export function emergencyLimit(kind: UsageKind): number {
   const n = Number(process.env.EMERGENCY_LIMIT_PER_HOUR);
-  return Number.isFinite(n) && n > 0 ? n : kind === 'directions' ? 200 : 300;
+  return Number.isFinite(n) && n > 0 ? n : kind === 'directions' ? 200 : kind === 'google_places' ? 10 : 300;
 }
 
 const supabaseCounter: UsageCounter | null = supabaseAdmin
   ? async (kind, n) => {
-      const { data, error } = await supabaseAdmin!.rpc('bump_api_usage', { p_kind: kind, p_n: n });
+      // Mapbox kinds live in api_usage (read by admin stats); other providers in api_usage_extra.
+      const fn = kind === 'directions' || kind === 'geo' ? 'bump_api_usage' : 'bump_api_usage_extra';
+      const { data, error } = await supabaseAdmin!.rpc(fn, { p_kind: kind, p_n: n });
       if (error) throw new Error(error.message);
       if (typeof data !== 'number') throw new Error('unexpected counter response');
       return data;

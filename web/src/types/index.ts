@@ -19,7 +19,7 @@ export type PlaceKind =
   | 'other';
 
 /** Where a record came from. `demo` = bundled sample data, never live. */
-export type DataSource = 'mapbox' | 'demo' | 'community' | 'osm' | 'link';
+export type DataSource = 'mapbox' | 'demo' | 'community' | 'osm' | 'link' | 'google';
 
 export interface Place {
   id: string;
@@ -72,7 +72,7 @@ export interface SearchResponse {
   notice?: string;
 }
 
-export type ExploreCategory = 'petrol' | 'rnr' | 'ev' | 'parking' | 'hospital' | 'food';
+export type ExploreCategory = 'petrol' | 'rnr' | 'ev' | 'parking' | 'hospital' | 'food' | 'homestay' | 'car_rental';
 
 /* ─── Routing ─────────────────────────────────────────────────────── */
 

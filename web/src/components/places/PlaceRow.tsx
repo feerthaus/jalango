@@ -33,6 +33,7 @@ export function PlaceRow({ place, onSelect, active, leadingIcon, trailing, id }:
           <span className="flex items-center gap-2">
             <span className="truncate font-medium">{place.name}</span>
             {place.source === 'demo' && <DemoBadge label="Sample" className="shrink-0" />}
+            {place.source === 'google' && <span className="shrink-0 text-[10px] font-medium text-ink-400" translate="no">Google Maps</span>}
           </span>
           <span className="block truncate text-sm text-ink-500 dark:text-ink-300">{place.address || place.category || '—'}</span>
         </span>

@@ -23,7 +23,7 @@ export interface Place {
   kind: PlaceKind;
   category?: string;
   /** Where the record came from. `demo` records are sample data. */
-  source: 'mapbox' | 'demo' | 'osm' | 'link';
+  source: 'mapbox' | 'demo' | 'osm' | 'link' | 'google';
   distanceMeters?: number;
 }
 
