@@ -1,3 +1,4 @@
+import { adminChanged } from './adminCounts';
 import { supabase } from '@/lib/supabase';
 import type { AccidentOutcome, AccidentRecord, AccidentVehicle } from '@/types';
 import { toReportError, type Bounds } from './reportsService';
@@ -115,4 +116,5 @@ export async function fetchPendingPhotos(): Promise<AccidentRecord[]> {
 export async function reviewAccidentPhoto(id: string, approve: boolean): Promise<void> {
   const { error } = await client().rpc('review_accident_photo', { p_record: id, p_approve: approve });
   if (error) throw toReportError(error);
+  adminChanged();
 }

@@ -1,3 +1,4 @@
+import { adminChanged } from './adminCounts';
 import { supabase } from '@/lib/supabase';
 import { preparePhoto } from './accidentService';
 import type { OperatorKind } from './operatorService';
@@ -173,9 +174,11 @@ export async function fetchListingsForReview(): Promise<ListingForReview[]> {
 export async function reviewListing(id: string, approve: boolean, note?: string): Promise<void> {
   const { error } = await client().rpc('admin_review_listing', { p_listing: id, p_approve: approve, p_note: note ?? null });
   if (error) throw toReportError(error);
+  adminChanged();
 }
 
 export async function reviewListingPhoto(id: string, approve: boolean): Promise<void> {
   const { error } = await client().rpc('admin_review_listing_photo', { p_photo: id, p_approve: approve });
   if (error) throw toReportError(error);
+  adminChanged();
 }

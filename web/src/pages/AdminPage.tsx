@@ -1,8 +1,10 @@
-import { ArrowLeft, Ban, Check, EyeOff, Loader2, RefreshCw, RotateCcw, ShieldAlert, X } from 'lucide-react';
+import { ArrowLeft, Ban, Bell, Check, EyeOff, Loader2, RefreshCw, RotateCcw, ShieldAlert, X } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router';
 import { Wordmark } from '@/components/brand/LogoMark';
 import { PhotoReviewQueue } from '@/components/accidents/PhotoReviewQueue';
+import { CountBadge } from '@/components/admin/CountBadge';
+import { useAdminCounts } from '@/hooks/useAdminCounts';
 import { AdminTwoFactor } from '@/components/admin/AdminTwoFactor';
 import { StatsPanel } from '@/components/admin/StatsPanel';
 import { OperatorReview } from '@/components/admin/OperatorReview';
@@ -27,6 +29,8 @@ import {
 import { formatRelativeTime } from '@/utils/format';
 import type { ReportType } from '@/types';
 
+const TAB_COUNT = { operators: 'operators', listings: 'listings', flags: 'flags', photos: 'photos', feedback: 'feedback' } as const;
+
 /** Moderation queue + feedback inbox. Only usable by users in public.admins (enforced in the database). */
 export function AdminPage() {
   const { user, loading } = useAuth();
@@ -34,6 +38,7 @@ export function AdminPage() {
   const [needs2fa, setNeeds2fa] = useState(false);
   const [check, setCheck] = useState(0);
   const [tab, setTab] = useState<'stats' | 'operators' | 'listings' | 'flags' | 'photos' | 'feedback'>('stats');
+  const counts = useAdminCounts();
 
   useEffect(() => {
     if (loading) return;
@@ -52,6 +57,12 @@ export function AdminPage() {
             <ArrowLeft className="size-5" />
           </Link>
           <Wordmark className="flex-1" />
+          {counts && counts.total > 0 && (
+            <span className="relative grid size-10 place-items-center" title={`${counts.total} perkara menunggu`} aria-label={`${counts.total} perkara menunggu semakan`}>
+              <Bell className="size-5" />
+              <CountBadge n={counts.total} className="absolute -right-0.5 -top-0.5" />
+            </span>
+          )}
           <span className="rounded-full bg-red-500/10 px-2 py-1 text-xs font-semibold text-red-600">Admin</span>
         </div>
       </header>
@@ -74,8 +85,9 @@ export function AdminPage() {
           <>
             <div role="tablist" className="mb-4 grid grid-cols-3 gap-1 rounded-2xl sm:grid-cols-6 bg-ink-100 p-1 dark:bg-ink-900">
               {(['stats', 'operators', 'listings', 'flags', 'photos', 'feedback'] as const).map((t) => (
-                <button key={t} type="button" role="tab" aria-selected={tab === t} onClick={() => setTab(t)} className={cn('rounded-xl px-1 py-2 text-xs font-semibold sm:text-sm', tab === t ? 'bg-white shadow-sm dark:bg-ink-700' : 'text-ink-500')}>
+                <button key={t} type="button" role="tab" aria-selected={tab === t} onClick={() => setTab(t)} className={cn('flex items-center justify-center gap-1 rounded-xl px-1 py-2 text-xs font-semibold sm:text-sm', tab === t ? 'bg-white shadow-sm dark:bg-ink-700' : 'text-ink-500')}>
                   {t === 'stats' ? 'Statistik' : t === 'operators' ? 'Operator' : t === 'listings' ? 'Listing' : t === 'flags' ? 'Laporan' : t === 'photos' ? 'Gambar kemalangan' : 'Mesej'}
+                  {t !== 'stats' && <CountBadge n={counts?.[TAB_COUNT[t]] ?? 0} />}
                 </button>
               ))}
             </div>

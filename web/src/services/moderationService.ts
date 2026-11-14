@@ -1,3 +1,4 @@
+import { adminChanged } from './adminCounts';
 import { supabase } from '@/lib/supabase';
 import { toReportError } from './reportsService';
 
@@ -57,6 +58,7 @@ export async function fetchFlagQueue(): Promise<FlagQueueItem[]> {
 export async function moderate(type: FlagContentType, id: string, action: 'remove' | 'restore' | 'dismiss'): Promise<void> {
   const { error } = await client().rpc('admin_moderate', { p_type: type, p_id: id, p_action: action });
   if (error) throw new Error(error.message);
+  adminChanged();
 }
 
 export async function setBan(userId: string, banned: boolean): Promise<void> {
@@ -83,4 +85,5 @@ export async function fetchFeedback(): Promise<FeedbackItem[]> {
 export async function setFeedbackStatus(id: string, status: FeedbackItem['status']): Promise<void> {
   const { error } = await client().from('feedback').update({ status }).eq('id', id);
   if (error) throw new Error(error.message);
+  adminChanged();
 }
