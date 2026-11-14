@@ -2,7 +2,7 @@ import { AsyncLocalStorage } from 'node:async_hooks';
 import { HttpError } from './errors.js';
 import { supabaseAdmin } from './supabaseAdmin.js';
 
-export type UsageKind = 'directions' | 'geo' | 'google_places';
+export type UsageKind = 'directions' | 'geo' | 'google_places' | 'google_place_info';
 
 /**
  * How a request behaves when the shared usage counter can't be reached:
@@ -17,16 +17,22 @@ export type UsageCounter = (kind: UsageKind, n: number) => Promise<number>;
 
 /** Daily ceilings for paid Mapbox calls (Malaysia time). Override with env vars. */
 export function dailyLimit(kind: UsageKind): number {
-  const raw = kind === 'directions' ? process.env.DAILY_LIMIT_DIRECTIONS : kind === 'geo' ? process.env.DAILY_LIMIT_GEO : process.env.DAILY_LIMIT_GOOGLE_PLACES;
+  const raw =
+    kind === 'directions' ? process.env.DAILY_LIMIT_DIRECTIONS
+    : kind === 'geo' ? process.env.DAILY_LIMIT_GEO
+    : kind === 'google_places' ? process.env.DAILY_LIMIT_GOOGLE_PLACES
+    : process.env.DAILY_LIMIT_GOOGLE_PLACE_INFO;
   const n = Number(raw);
-  // Google Places: 150 a day keeps a month under Google's 5,000 free Nearby/Text calls.
-  return Number.isFinite(n) && n > 0 ? n : kind === 'google_places' ? 150 : 3000;
+  // Google Places: 150 a day keeps a month under Google's 5,000 free Pro calls;
+  // place info (rating, open now) is Enterprise: 30 a day stays under 1,000 a month.
+  if (Number.isFinite(n) && n > 0) return n;
+  return kind === 'google_places' ? 150 : kind === 'google_place_info' ? 30 : 3000;
 }
 
 /** Upstream calls one function instance may make per hour while the shared counter is down. */
 export function emergencyLimit(kind: UsageKind): number {
   const n = Number(process.env.EMERGENCY_LIMIT_PER_HOUR);
-  return Number.isFinite(n) && n > 0 ? n : kind === 'directions' ? 200 : kind === 'google_places' ? 10 : 300;
+  return Number.isFinite(n) && n > 0 ? n : kind === 'directions' ? 200 : kind === 'google_places' || kind === 'google_place_info' ? 10 : 300;
 }
 
 const supabaseCounter: UsageCounter | null = supabaseAdmin

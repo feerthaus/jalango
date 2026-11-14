@@ -109,6 +109,30 @@ describe('rentals with Google Places fill-in', () => {
     expect(gp.isGenericName('Kereta Sewa Kota Bharu')).toBe(false);
   });
 
+  it('place info: Enterprise fields, own cap (google_place_info), only a nearby match', async () => {
+    const kinds: string[] = [];
+    usage.setUsageCounter(async (kind) => (kinds.push(kind), 1));
+    let body: { textQuery?: string } = {};
+    let mask = '';
+    vi.stubGlobal('fetch', async (_i: string | URL, init?: RequestInit) => {
+      body = JSON.parse(String(init?.body));
+      mask = (init?.headers as Record<string, string>)['X-Goog-FieldMask'];
+      return new Response(JSON.stringify({ places: [{ id: 'p', location: { latitude: 6.1201, longitude: 102.2401 }, rating: 4.4, userRatingCount: 1234, currentOpeningHours: { openNow: true }, googleMapsUri: 'https://maps.google.com/?cid=1' }] }), { status: 200 });
+    });
+    const info = await gp.googlePlaceInfo("D'Laman Cahaya", near);
+    expect(info).toEqual({ rating: 4.4, ratings: 1234, openNow: true, googleMapsUri: 'https://maps.google.com/?cid=1' });
+    expect(body.textQuery).toBe("D'Laman Cahaya");
+    expect(mask).toContain('places.rating');
+    expect(mask).toContain('places.currentOpeningHours.openNow');
+    expect(kinds).toEqual(['google_place_info']);
+    expect(usage.dailyLimit('google_place_info')).toBe(30);
+  });
+
+  it('place info: a far-away match is ignored', async () => {
+    vi.stubGlobal('fetch', async () => new Response(JSON.stringify({ places: [{ id: 'p', location: { latitude: 6.2, longitude: 102.3 }, rating: 4.9 }] }), { status: 200 }));
+    expect(await gp.googlePlaceInfo('Restoran X', near)).toBeNull();
+  });
+
   it('mergeWithGoogle keeps different places with the same name far apart', () => {
     const a = { id: '1', name: 'Homestay Ali', address: '', coordinates: { lat: 6.1, lng: 102.2 }, kind: 'poi' as const, source: 'mapbox' as const };
     const b = { ...a, id: '2', coordinates: { lat: 6.3, lng: 102.4 }, source: 'google' as const };

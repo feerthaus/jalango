@@ -16,6 +16,10 @@ const RADIUS_KM = 25;
 
 interface GPlace {
   id?: string;
+  rating?: number;
+  userRatingCount?: number;
+  currentOpeningHours?: { openNow?: boolean };
+  googleMapsUri?: string;
   displayName?: { text?: string };
   formattedAddress?: string;
   location?: { latitude?: number; longitude?: number };
@@ -23,12 +27,12 @@ interface GPlace {
 
 export const googlePlacesEnabled = () => Boolean(config.googlePlacesKey);
 
-async function post(path: string, body: unknown): Promise<GPlace[]> {
+async function post(path: string, body: unknown, fields = FIELDS, kind: 'google_places' | 'google_place_info' = 'google_places'): Promise<GPlace[]> {
   if (!config.googlePlacesKey) return [];
-  await guardUsage('google_places'); // every paid Google call counts against its own daily ceiling
+  await guardUsage(kind); // every paid Google call counts against its own daily ceiling
   const res = await fetch(`${BASE}:${path}`, {
     method: 'POST',
-    headers: { 'content-type': 'application/json', 'X-Goog-Api-Key': config.googlePlacesKey, 'X-Goog-FieldMask': FIELDS },
+    headers: { 'content-type': 'application/json', 'X-Goog-Api-Key': config.googlePlacesKey, 'X-Goog-FieldMask': fields },
     body: JSON.stringify(body),
     signal: AbortSignal.timeout(TIMEOUT_MS),
   });
@@ -90,4 +94,43 @@ export function mergeWithGoogle(base: Place[], extra: Place[]): Place[] {
     if (!out.some((p) => norm(p.name) === norm(g.name) && closeBy(p.coordinates, g.coordinates))) out.push(g);
   }
   return out;
+}
+
+export interface PlaceInfo {
+  rating: number | null;
+  ratings: number | null;
+  openNow: boolean | null;
+  googleMapsUri: string | null;
+}
+
+/**
+ * Rating and "open now" for one place the user tapped. These are Enterprise
+ * fields (1,000 free calls a month), so they have their own small daily cap
+ * (google_place_info, default 30) and are never fetched for every pin.
+ */
+export async function googlePlaceInfo(name: string, near: Coordinates): Promise<PlaceInfo | null> {
+  if (!config.googlePlacesKey) return null;
+  const list = await post(
+    'searchText',
+    {
+      textQuery: name,
+      pageSize: 1,
+      locationBias: { circle: { center: { latitude: near.lat, longitude: near.lng }, radius: 300 } },
+      languageCode: 'ms',
+      regionCode: 'MY',
+    },
+    'places.id,places.location,places.rating,places.userRatingCount,places.currentOpeningHours.openNow,places.googleMapsUri',
+    'google_place_info',
+  );
+  const g = list[0];
+  const lat = g?.location?.latitude;
+  const lng = g?.location?.longitude;
+  // Only trust a match that is really this place (within ~400 m)
+  if (!g || typeof lat !== 'number' || typeof lng !== 'number' || Math.abs(lat - near.lat) > 0.004 || Math.abs(lng - near.lng) > 0.004) return null;
+  return {
+    rating: typeof g.rating === 'number' ? g.rating : null,
+    ratings: typeof g.userRatingCount === 'number' ? g.userRatingCount : null,
+    openNow: typeof g.currentOpeningHours?.openNow === 'boolean' ? g.currentOpeningHours.openNow : null,
+    googleMapsUri: g.googleMapsUri ?? null,
+  };
 }
