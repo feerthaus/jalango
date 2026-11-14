@@ -86,7 +86,7 @@ export async function searchNearbyCategory(category: ExploreCategory, near: Coor
 
 export { ApiError };
 
-export type AlongCategory = 'food' | 'cafe' | 'attraction' | 'rnr' | 'petrol' | 'ev';
+export type AlongCategory = 'food' | 'cafe' | 'attraction' | 'rnr' | 'petrol' | 'ev' | 'stay';
 
 /** Places of a category around sample points ahead on the route (live only — never sample data). */
 export async function searchAlongRoute(category: AlongCategory, points: Coordinates[], signal?: AbortSignal): Promise<Place[]> {
@@ -96,4 +96,28 @@ export async function searchAlongRoute(category: AlongCategory, points: Coordina
     signal,
   );
   return results;
+}
+
+export interface PlaceInfo {
+  rating: number | null;
+  ratings: number | null;
+  openNow: boolean | null;
+  googleMapsUri: string | null;
+}
+
+const infoCache = new Map<string, PlaceInfo | null>();
+
+/**
+ * Google rating and "open now" for one tapped place (server-side, daily cap).
+ * Remembered for this session only, so tapping the same pin again is free.
+ */
+export async function fetchPlaceInfo(place: Pick<Place, 'id' | 'name' | 'coordinates'>, signal?: AbortSignal): Promise<PlaceInfo | null> {
+  if (infoCache.has(place.id)) return infoCache.get(place.id) ?? null;
+  try {
+    const { info } = await apiGet<{ info: PlaceInfo | null }>('/geo/place-info', { name: place.name, lng: place.coordinates.lng, lat: place.coordinates.lat }, signal);
+    infoCache.set(place.id, info);
+    return info;
+  } catch {
+    return null; // cap reached or no Google key: just don't show it
+  }
 }

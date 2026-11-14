@@ -20,8 +20,9 @@ export const CATEGORY_MAP = {
   cafe: 'cafe',
   attraction: 'tourist_attraction',
   car_rental: 'car_rental',
+  hotel: 'hotel',
 } as const;
-export type CategoryId = keyof typeof CATEGORY_MAP | 'rnr' | 'homestay';
+export type CategoryId = keyof typeof CATEGORY_MAP | 'rnr' | 'homestay' | 'stay';
 
 interface MapboxFeature {
   id?: string;
@@ -339,6 +340,7 @@ async function forwardPoi(q: string, near: Coordinates, limit: number, withinKm?
 }
 
 export async function searchCategory(category: CategoryId, near: Coordinates, limit = 10): Promise<Place[]> {
+  if (category === 'stay') return searchStay(near, limit);
   const name = NAME_SEARCH[category];
   if (name) {
     const close = await forwardPoi(name, near, limit, 25);
@@ -359,4 +361,17 @@ export async function searchCategory(category: CategoryId, near: Coordinates, li
   const fallback = FALLBACK_QUERY[category];
   if (results.length === 0 && fallback) results = await forwardPoi(fallback, near, limit);
   return results;
+}
+
+/**
+ * "Penginapan" along a route: hotels (category) and homestays (by name, within
+ * ~8 km of the sample point, so each point stays local). Either may fail alone.
+ */
+async function searchStay(near: Coordinates, limit: number): Promise<Place[]> {
+  const settled = await Promise.allSettled([searchCategory('hotel', near, limit), forwardPoi('homestay', near, limit, 8)]);
+  const ok = settled.filter((s): s is PromiseFulfilledResult<Place[]> => s.status === 'fulfilled');
+  if (ok.length === 0) throw (settled[0] as PromiseRejectedResult).reason;
+  const seen = new Map<string, Place>();
+  for (const s of ok) for (const p of s.value) if (!seen.has(p.id)) seen.set(p.id, p);
+  return [...seen.values()];
 }

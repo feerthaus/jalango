@@ -89,7 +89,7 @@ export function AlongRouteSheet({ onClose }: { onClose: () => void }) {
           {rows.length === 0 && !error && <p className="py-4 text-sm text-ink-500">Tiada {meta.label.toLowerCase()} dijumpai berhampiran laluan di depan.</p>}
           {verified.length > 0 && (
             <>
-              <h3 className="mb-1 flex items-center gap-1 text-xs font-bold uppercase tracking-wide text-jade-600"><BadgeCheck className="size-3.5" /> Kedai disemak JalanGo</h3>
+              <h3 className="mb-1 flex items-center gap-1 text-xs font-bold uppercase tracking-wide text-jade-600"><BadgeCheck className="size-3.5" /> {category === 'stay' ? 'Homestay disemak JalanGo' : 'Kedai disemak JalanGo'}</h3>
               <ul className="mb-3 divide-y divide-ink-100 dark:divide-ink-800">
                 {verified.map((r) => (
                   <PlaceItem key={r.place.id} r={r} icon={meta.icon} color={meta.color} current={stop?.id === r.place.id} onStop={() => doStop(r)} />
@@ -118,7 +118,7 @@ export function AlongRouteSheet({ onClose }: { onClose: () => void }) {
             </>
           )}
           <p className="mt-3 text-xs text-ink-400">
-            {verified.length > 0 && 'Kedai disemak JalanGo: IC dan premis peniaga telah disemak. '}Senarai tempat daripada Mapbox. Tekan ⭐ Review untuk baca review di Google Maps. 👍 = disyorkan pengguna JalanGo.{category === 'rnr' && ' Pastikan R&R berada di arah perjalanan anda.'}
+            {verified.length > 0 && (category === 'stay' ? 'Homestay disemak JalanGo: IC dan bukti pemilikan telah disemak. ' : 'Kedai disemak JalanGo: IC dan premis peniaga telah disemak. ')}Senarai tempat daripada Mapbox. Tekan ⭐ Review untuk baca review di Google Maps. 👍 = disyorkan pengguna JalanGo.{category === 'rnr' && ' Pastikan R&R berada di arah perjalanan anda.'}
           </p>
         </>
       )}
@@ -164,8 +164,9 @@ function PlaceItem({ r, icon: Icon, color, current, onStop }: { r: AlongRow; ico
   );
 }
 
-/** "Warung · Buka sekarang · ± RM10" for a checked food business. */
-function ListingLine({ l }: { l: NonNullable<AlongRow['listing']> }) {
+/** "Warung · Buka sekarang · ± RM10" for a checked food business, "RM180/malam · 3 bilik" for a homestay. */
+export function ListingLine({ l }: { l: NonNullable<AlongRow['listing']> }) {
+  if (l.kind !== 'food') return <>{[`${rm(l.price)}/malam`, l.details.bedrooms ? `${l.details.bedrooms} bilik` : null, l.area_label].filter(Boolean).join(' · ')}</>;
   const open = isOpenNow(l.details);
   const type = FOOD_TYPES.find((x) => x.id === l.details.food_type)?.label;
   return <>{[type, open === true ? 'Buka sekarang' : open === false ? 'Tutup' : null, `± ${rm(l.price)}`].filter(Boolean).join(' · ')}</>;

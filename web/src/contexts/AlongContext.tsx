@@ -45,6 +45,8 @@ const BUCKET_M = 40_000;
 const ANNOUNCE_KEY = 'jalango:along-announce';
 /** Checked food businesses up to 3 km off the route still count as "along" it. */
 export const VERIFIED_MAX_OFFSET_M = 3000;
+/** Which marketplace listings join which along-route layer. */
+const VERIFIED_KIND: Partial<Record<AlongCategory, 'food' | 'homestay'>> = { food: 'food', stay: 'homestay' };
 const ANNOUNCE_GAP_MS = 45_000;
 
 export const listingToPlace = (l: PublicListing): Place => ({
@@ -53,7 +55,7 @@ export const listingToPlace = (l: PublicListing): Place => ({
   address: l.area_label,
   coordinates: { lat: l.latitude, lng: l.longitude },
   kind: 'poi',
-  category: 'food',
+  category: l.kind,
   source: 'link',
 });
 
@@ -149,8 +151,8 @@ export function AlongProvider({ children }: { children: ReactNode }) {
     Promise.all([
       searchAlongRoute(category, points, controller.signal),
       features.supabase && meta.community.length ? fetchCommunityPlaces(bounds, controller.signal).catch(() => []) : Promise.resolve([] as CommunityPlace[]),
-      // Food businesses checked by JalanGo, for the "Makan" layer only
-      features.supabase && category === 'food' ? fetchPublicListings('food').catch(() => [] as PublicListing[]) : Promise.resolve([] as PublicListing[]),
+      // Businesses checked by JalanGo: food for "Makan", homestays for "Penginapan"
+      features.supabase && VERIFIED_KIND[category] ? fetchPublicListings(VERIFIED_KIND[category]).catch(() => [] as PublicListing[]) : Promise.resolve([] as PublicListing[]),
     ])
       .then(([mapbox, community, listings]) => {
         const verified: AlongRow[] = rankAlong(

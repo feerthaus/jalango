@@ -134,6 +134,15 @@ describe('upstream request counting', () => {
     expect(calls).toEqual(['api.mapbox.com/search/searchbox/v1/category/car_rental', 'api.mapbox.com/search/searchbox/v1/forward']);
   });
 
+  it('stay (penginapan): hotel category + homestay name search near the point, merged', async () => {
+    const counts = countingCounter();
+    const calls = mockUpstream((u) => (u.pathname.includes('/category/hotel') ? { features: [feature('Hotel Seri Malaysia'), feature('Same Inn')] } : { features: [feature('Homestay Pak Mat'), feature('Same Inn')] }));
+    const r = await mapbox.searchCategory('stay', { lng: 102.24, lat: 6.12 });
+    expect(calls).toEqual(['api.mapbox.com/search/searchbox/v1/category/hotel', 'api.mapbox.com/search/searchbox/v1/forward']);
+    expect(r.map((p) => p.name).sort()).toEqual(['Homestay Pak Mat', 'Hotel Seri Malaysia', 'Same Inn']);
+    expect(counts.geo).toBe(2);
+  });
+
   it('boxAround is about the asked size', () => {
     const [minLng, minLat, maxLng, maxLat] = mapbox.boxAround({ lng: 101.7, lat: 3.1 }, 25).split(',').map(Number);
     expect((maxLat - minLat) * 111).toBeCloseTo(50, 0);

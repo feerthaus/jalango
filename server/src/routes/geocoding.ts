@@ -3,7 +3,7 @@ import { z } from 'zod';
 import type { Place } from '../types.js';
 import { withUsagePolicy } from '../lib/usageGuard.js';
 import { placeFromMapsLink } from '../services/mapsLink.js';
-import { googleCarRentals, googleHomestays, googlePlacesEnabled, isGenericName, mergeWithGoogle } from '../services/googlePlaces.js';
+import { googleCarRentals, googleHomestays, googlePlaceInfo, googlePlacesEnabled, isGenericName, mergeWithGoogle } from '../services/googlePlaces.js';
 import { CATEGORY_MAP, reverseGeocode, searchAlong, searchCategory, searchPlaces } from '../services/mapbox.js';
 
 const lng = z.coerce.number().min(-180).max(180);
@@ -19,7 +19,7 @@ const searchQuery = z.object({
 const reverseQuery = z.object({ lng, lat });
 
 const categoryQuery = z.object({
-  category: z.enum([...(Object.keys(CATEGORY_MAP) as (keyof typeof CATEGORY_MAP)[]), 'rnr', 'homestay']),
+  category: z.enum([...(Object.keys(CATEGORY_MAP) as (keyof typeof CATEGORY_MAP)[]), 'rnr', 'homestay', 'stay']),
   lng,
   lat,
   limit: z.coerce.number().int().min(1).max(25).optional(),
@@ -67,6 +67,14 @@ geocodingRouter.get('/along', async (req, res) => {
   const { category, points } = alongQuery.parse(req.query);
   // Nice-to-have and fans out to many calls: fail closed if usage can't be counted
   res.json({ results: await withUsagePolicy('optional', () => searchAlong(category, points)) });
+});
+
+const placeInfoQuery = z.object({ name: z.string().trim().min(2).max(100), lng, lat });
+
+/** Google rating + open now for one place the user tapped (own daily cap; null when unknown). */
+geocodingRouter.get('/place-info', async (req, res) => {
+  const { name, lng, lat } = placeInfoQuery.parse(req.query);
+  res.json({ info: await withUsagePolicy('optional', () => googlePlaceInfo(name, { lng, lat })) });
 });
 
 geocodingRouter.get('/category', async (req, res) => {

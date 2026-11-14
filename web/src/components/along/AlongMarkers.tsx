@@ -1,27 +1,21 @@
 import mapboxgl from 'mapbox-gl';
-import { ThumbsUp, X } from 'lucide-react';
-import { useEffect, useRef } from 'react';
+import { BadgeCheck, Star, ThumbsUp, X } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 import { useAlong, type AlongRow } from '@/contexts/AlongContext';
 import { useMapContext } from '@/contexts/MapContext';
 import { useRouting } from '@/contexts/RoutingContext';
 import { alongMeta } from '@/lib/alongCategories';
 import { formatDistance } from '@/utils/geo';
-import { aheadText, StopReviewButtons } from './AlongRouteSheet';
-
-function pinHtml(color: string, glyph: string, pick: boolean): string {
-  const bg = pick ? '#10b981' : color;
-  return `
-    <div style="display:grid;place-items:center;width:30px;height:30px;border-radius:9999px;background:${bg};border:2.5px solid #fff;box-shadow:0 2px 6px rgb(0 0 0 / .4)">
-      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">${glyph}</svg>
-    </div>
-    ${pick ? '<span style="position:absolute;top:-5px;right:-6px;font-size:12px">⭐</span>' : ''}`;
-}
+import { fetchPlaceInfo, type PlaceInfo } from '@/services/geocodingService';
+import { isOpenNow } from '@/utils/openingHours';
+import { labelledIds, pinHtml } from '@/utils/alongPins';
+import { aheadText, ListingLine, StopReviewButtons } from './AlongRouteSheet';
 
 /** JalanGo's own "along the route" layer: one pin per place, tap for details. */
 export function AlongMarkers() {
   const { map } = useMapContext();
   const { category, rows, select } = useAlong();
-  const markers = useRef(new Map<string, mapboxgl.Marker>());
+  const markers = useRef(new Map<string, { marker: mapboxgl.Marker; el: HTMLElement; key: string }>());
   const rowsRef = useRef<AlongRow[]>([]);
   rowsRef.current = rows ?? [];
 
@@ -30,27 +24,38 @@ export function AlongMarkers() {
     const wanted = new Set<string>();
     if (category) {
       const meta = alongMeta(category);
+      const labelled = labelledIds(rows ?? []);
       for (const r of rows ?? []) {
         if (r.ahead < -300) continue;
         wanted.add(r.place.id);
-        if (markers.current.has(r.place.id)) continue;
+        const open = r.listing?.kind === 'food' ? isOpenNow(r.listing.details) : null;
+        const label = labelled.has(r.place.id) ? { name: r.place.name, open } : null;
+        const key = label ? `L${open}` : '-';
+        const existing = markers.current.get(r.place.id);
+        if (existing) {
+          if (existing.key !== key) {
+            existing.el.innerHTML = pinHtml(meta.color, meta.glyph, r.listing ? 'verified' : r.pick ? 'pick' : null, label);
+            existing.key = key;
+          }
+          continue;
+        }
         const el = document.createElement('button');
         el.type = 'button';
         el.style.position = 'relative';
         el.setAttribute('aria-label', `${meta.label}: ${r.place.name}`);
-        el.innerHTML = pinHtml(meta.color, meta.glyph, Boolean(r.pick));
+        el.innerHTML = pinHtml(meta.color, meta.glyph, r.listing ? 'verified' : r.pick ? 'pick' : null, label);
         const id = r.place.id;
         el.addEventListener('click', (e) => {
           e.stopPropagation();
           const row = rowsRef.current.find((x) => x.place.id === id);
           if (row) select(row);
         });
-        markers.current.set(id, new mapboxgl.Marker({ element: el, anchor: 'center' }).setLngLat([r.place.coordinates.lng, r.place.coordinates.lat]).addTo(map));
+        markers.current.set(id, { marker: new mapboxgl.Marker({ element: el, anchor: 'center' }).setLngLat([r.place.coordinates.lng, r.place.coordinates.lat]).addTo(map), el, key });
       }
     }
     markers.current.forEach((m, id) => {
       if (wanted.has(id)) return;
-      m.remove();
+      m.marker.remove();
       markers.current.delete(id);
     });
   }, [map, category, rows, select]);
@@ -58,7 +63,7 @@ export function AlongMarkers() {
   useEffect(() => {
     const all = markers.current;
     return () => {
-      all.forEach((m) => m.remove());
+      all.forEach((m) => m.marker.remove());
       all.clear();
     };
   }, []);
@@ -70,6 +75,17 @@ export function AlongMarkers() {
 export function AlongPlaceCard() {
   const { selected, select, category } = useAlong();
   const { addStop, stop } = useRouting();
+  const [info, setInfo] = useState<PlaceInfo | null | 'loading'>(null);
+  const sel = selected?.place;
+  const verified = Boolean(selected?.listing);
+  useEffect(() => {
+    setInfo(null);
+    if (!sel || verified || sel.source === 'demo') return;
+    const controller = new AbortController();
+    setInfo('loading');
+    fetchPlaceInfo(sel, controller.signal).then((i) => !controller.signal.aborted && setInfo(i));
+    return () => controller.abort();
+  }, [sel, verified]);
   if (!selected || !category) return null;
   const meta = alongMeta(category);
   const r = selected;
@@ -86,6 +102,7 @@ export function AlongPlaceCard() {
           ) : (
             r.place.address && <p className="truncate text-sm text-ink-500 dark:text-ink-300">{r.place.address}</p>
           )}
+          <PlaceFacts r={r} info={info} />
           <p className="mt-1 flex flex-wrap items-center gap-x-2 text-xs text-ink-500">
             <strong className="text-ink-800 dark:text-ink-100">{aheadText(r)}</strong>
             <span>{r.offset < 200 ? 'tepi jalan' : `${formatDistance(r.offset)} dari laluan`}</span>
@@ -102,6 +119,34 @@ export function AlongPlaceCard() {
         </button>
       </div>
     </article>
+  );
+}
+
+/** ⭐ rating · Buka/Tutup: from the shop's own hours (checked by JalanGo) or Google. */
+function PlaceFacts({ r, info }: { r: AlongRow; info: PlaceInfo | null | 'loading' }) {
+  if (r.listing) {
+    return (
+      <>
+        <p className="mt-0.5 flex items-center gap-1 text-xs font-semibold text-jade-700 dark:text-jade-300">
+          <BadgeCheck className="size-3.5 shrink-0" /> Disemak JalanGo
+        </p>
+        <p className="truncate text-xs text-ink-500"><ListingLine l={r.listing} /></p>
+      </>
+    );
+  }
+  if (info === 'loading') return <p className="mt-0.5 h-4 w-28 animate-pulse rounded bg-ink-200 dark:bg-ink-700" aria-label="Memuatkan rating" />;
+  if (!info || (info.rating === null && info.openNow === null)) return null;
+  return (
+    <p className="mt-0.5 flex flex-wrap items-center gap-x-1.5 text-xs">
+      {info.rating !== null && (
+        <span className="flex items-center gap-0.5 font-semibold">
+          <Star className="size-3.5 text-amber-500" fill="currentColor" /> {info.rating.toFixed(1)}
+          {info.ratings ? <span className="font-normal text-ink-500">({info.ratings >= 1000 ? `${(info.ratings / 1000).toFixed(1)}k` : info.ratings})</span> : null}
+        </span>
+      )}
+      {info.openNow !== null && <span className={info.openNow ? 'font-semibold text-jade-600' : 'font-semibold text-red-600'}>{info.openNow ? 'Buka sekarang' : 'Tutup sekarang'}</span>}
+      <span className="text-[10px] text-ink-400" translate="no">Google</span>
+    </p>
   );
 }
 

@@ -250,7 +250,9 @@ Pelan penuh ada dalam `docs/MARKETPLACE.md`. Fasa 0 hanya pendaftaran dan penges
 ## Lain-lain
 
 - **Harga minyak mingguan:** dari data.gov.my.
-- **Tempat makan dan menarik sepanjang laluan.**
+- **Tempat makan dan menarik sepanjang laluan.** Tab: Makan, Kafe, **Penginapan** (hotel dari kategori Mapbox + homestay ikut nama dalam ~8 km setiap titik; homestay disemak JalanGo di atas), Menarik, R&R, Minyak, EV.
+  - **Nama pada pin:** 10 tempat terdekat di depan, serta kedai/homestay disemak JalanGo (tanda ✓) dan cadangan komuniti (⭐), supaya peta tidak sesak semasa memandu. Kedai makan disemak JalanGo tunjuk **Buka/Tutup** terus pada label.
+  - **Tekan pin:** kad tunjuk **⭐ rating (bilangan ulasan)** dan **Buka/Tutup sekarang** dari Google (`/api/geo/place-info`). Hanya bila ditekan, diingat untuk sesi itu, dan dihadkan **30 sehari** (`DAILY_LIMIT_GOOGLE_PLACE_INFO`, medan Enterprise Google: 1,000 percuma sebulan). Jika had dicapai atau tiada padanan, kad tidak tunjuk rating (butang Review Google kekal).
 - **Sejarah perjalanan:** dengan rating perjalanan.
 - **Data trafik tanpa nama:** dengan persetujuan pengguna.
 - **PWA:** boleh dipasang di skrin utama. Mod gelap/cerah. UI dalam BM/EN.
