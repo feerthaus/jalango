@@ -9,6 +9,8 @@ export const config = {
   port: Number(process.env.PORT ?? 8787),
   corsOrigins: list(process.env.CORS_ORIGINS, ['http://localhost:5173']),
   mapboxToken: process.env.MAPBOX_ACCESS_TOKEN?.trim() || null,
+  /** Google Places API (New), server only. Optional: fills in nearby homestays and car rentals. */
+  googlePlacesKey: process.env.GOOGLE_PLACES_API_KEY?.trim() || null,
   supabaseUrl: process.env.SUPABASE_URL?.trim() || null,
   supabaseServiceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY?.trim() || null,
 } as const;
@@ -16,4 +18,5 @@ export const config = {
 export const integrations = {
   mapbox: Boolean(config.mapboxToken),
   supabase: Boolean(config.supabaseUrl && config.supabaseServiceRoleKey),
+  googlePlaces: Boolean(config.googlePlacesKey),
 };

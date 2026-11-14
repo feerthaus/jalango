@@ -64,6 +64,7 @@ const ms: LegalSection[] = [
         <Ul>
           <li><strong>Supabase</strong>: pangkalan data dan log masuk (akaun, kandungan komuniti, sejarah perjalanan).</li>
           <li><strong>Mapbox</strong>: peta, carian tempat dan laluan. Menerima pertanyaan carian dan koordinat yang diperlukan.</li>
+          <li><strong>Google (Places API)</strong>: melengkapkan senarai homestay dan kereta sewa berhampiran apabila Mapbox kurang hasil. Menerima koordinat anggaran kawasan carian sahaja, melalui pelayan JalanGo (bukan terus dari telefon anda).</li>
           <li><strong>Netlify</strong>: pengehosan aplikasi dan pelayan API.</li>
           <li><strong>Sentry</strong>: laporan ralat (crash) aplikasi — jenis ralat, peranti/pelayar dan halaman, tanpa nama, email, alamat IP atau koordinat lokasi.</li>
           <li><strong>Google / Facebook</strong>: hanya jika anda memilih log masuk dengan mereka.</li>
@@ -188,6 +189,7 @@ const en: LegalSection[] = [
         <Ul>
           <li><strong>Supabase</strong> — database and sign-in (accounts, community content, trip history).</li>
           <li><strong>Mapbox</strong> — maps, place search and routing; receives search queries and the coordinates needed.</li>
+          <li><strong>Google (Places API)</strong> — fills in nearby homestays and car rentals when Mapbox finds few; receives only the approximate search coordinates, via the JalanGo server (not directly from your phone).</li>
           <li><strong>Netlify</strong> — hosting of the app and API server.</li>
           <li><strong>Sentry</strong> — app crash reports: the error, device/browser and page, without your name, email, IP address or location coordinates.</li>
           <li><strong>Google / Facebook</strong> — only if you choose to sign in with them.</li>
