@@ -5,6 +5,7 @@ import { features } from '@/lib/config';
 import { fetchCommunityPlaces } from '@/services/communityPlacesService';
 import { searchAlongRoute, type AlongCategory } from '@/services/geocodingService';
 import type { CommunityPlace, Place } from '@/types';
+import { fetchPublicListings, type PublicListing } from '@/services/marketService';
 import { aheadPhrase, rankAlong, samplePointsAhead } from '@/utils/alongRoute';
 import { buildRouteIndex } from '@/utils/routeProgress';
 import { spokenDistance } from '@/utils/voiceInstructions';
@@ -18,6 +19,8 @@ export interface AlongRow {
   offset: number;
   side: 'left' | 'right' | null;
   pick?: CommunityPlace;
+  /** a food business checked by JalanGo (marketplace listing) */
+  listing?: PublicListing;
 }
 
 interface AlongValue {
@@ -40,7 +43,19 @@ const AlongContext = createContext<AlongValue | null>(null);
  */
 const BUCKET_M = 40_000;
 const ANNOUNCE_KEY = 'jalango:along-announce';
+/** Checked food businesses up to 3 km off the route still count as "along" it. */
+export const VERIFIED_MAX_OFFSET_M = 3000;
 const ANNOUNCE_GAP_MS = 45_000;
+
+export const listingToPlace = (l: PublicListing): Place => ({
+  id: `listing:${l.id}`,
+  name: l.title,
+  address: l.area_label,
+  coordinates: { lat: l.latitude, lng: l.longitude },
+  kind: 'poi',
+  category: 'food',
+  source: 'link',
+});
 
 const communityToPlace = (c: CommunityPlace): Place => ({
   id: `community:${c.id}`,
@@ -134,8 +149,17 @@ export function AlongProvider({ children }: { children: ReactNode }) {
     Promise.all([
       searchAlongRoute(category, points, controller.signal),
       features.supabase && meta.community.length ? fetchCommunityPlaces(bounds, controller.signal).catch(() => []) : Promise.resolve([] as CommunityPlace[]),
+      // Food businesses checked by JalanGo, for the "Makan" layer only
+      features.supabase && category === 'food' ? fetchPublicListings('food').catch(() => [] as PublicListing[]) : Promise.resolve([] as PublicListing[]),
     ])
-      .then(([mapbox, community]) => {
+      .then(([mapbox, community, listings]) => {
+        const verified: AlongRow[] = rankAlong(
+          listings.filter((l) => l.latitude >= bounds.minLat && l.latitude <= bounds.maxLat && l.longitude >= bounds.minLng && l.longitude <= bounds.maxLng),
+          (l) => ({ lat: l.latitude, lng: l.longitude }),
+          index,
+          base,
+          VERIFIED_MAX_OFFSET_M,
+        ).map((r) => ({ place: listingToPlace(r.item), ahead: r.ahead, offset: r.offset, side: r.side, listing: r.item }));
         const picks: AlongRow[] = rankAlong(
           community.filter((c) => meta.community.includes(c.category)),
           (c) => ({ lat: c.latitude, lng: c.longitude }),
@@ -146,7 +170,7 @@ export function AlongProvider({ children }: { children: ReactNode }) {
         const others: AlongRow[] = rankAlong(mapbox, (p) => p.coordinates, index, base, meta.maxOffsetM)
           .filter((r) => !picks.some((p) => Math.abs(p.ahead - r.ahead) < 150 && Math.abs(p.offset - r.offset) < 150))
           .map((r) => ({ place: r.item, ahead: r.ahead, offset: r.offset, side: r.side }));
-        const rows = [...picks, ...others].sort((a, b) => a.ahead - b.ahead);
+        const rows = [...verified, ...picks, ...others].sort((a, b) => a.ahead - b.ahead);
         cache.current.set(key, rows);
         setBaseRows({ base, rows });
       })

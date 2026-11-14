@@ -1,4 +1,4 @@
-import { ArrowLeft, Bath, BedDouble, Car, ChevronLeft, ChevronRight, Clock, Fuel, Home, Info, MapPin, Navigation, Phone, Share2, Users } from 'lucide-react';
+import { ArrowLeft, Bath, Utensils, BedDouble, Car, ChevronLeft, ChevronRight, Clock, Fuel, Home, Info, MapPin, Navigation, Phone, Share2, Users } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import { AvailabilityCalendar } from '@/components/business/AvailabilityCalendar';
@@ -8,8 +8,9 @@ import { Spinner } from '@/components/ui/Spinner';
 import { useLocation } from '@/contexts/LocationContext';
 import { useIsNavigating } from '@/contexts/RoutingContext';
 import { useShowOnMap } from '@/hooks/useShowOnMap';
-import { AMENITIES, rm } from '@/lib/listingLabels';
-import { enquiryText, estimateTotal, msisdn, overlapsBlocked, whatsappUrl } from '@/lib/rentalContact';
+import { AMENITIES, DAYS_MS, FOOD_SERVICES, FOOD_TYPES, HALAL_LABEL, rm } from '@/lib/listingLabels';
+import { enquiryText, estimateTotal, foodEnquiryText, msisdn, overlapsBlocked, whatsappUrl } from '@/lib/rentalContact';
+import { formatTime, isOpenNow } from '@/utils/openingHours';
 import { fetchPublicListing, logListingEvent, type PublicListing } from '@/services/marketService';
 
 const FUEL: Record<string, string> = { petrol: 'Petrol', diesel: 'Diesel', hybrid: 'Hibrid', ev: 'Elektrik' };
@@ -58,7 +59,7 @@ export function ListingPage() {
         ) : l === null ? (
           <EmptyState icon={Home} title="Sewaan tidak dijumpai">Mungkin sudah tamat atau dijeda oleh pemilik. <Link to="/sewa" className="font-semibold text-jade-600 underline">Lihat sewaan lain</Link></EmptyState>
         ) : (
-          <Detail l={l} />
+          l.kind === 'food' ? <FoodDetail l={l} /> : <Detail l={l} />
         )}
       </div>
     </section>
@@ -106,6 +107,7 @@ function Photos({ urls, car }: { urls: string[]; car: boolean }) {
 
 function Detail({ l }: { l: PublicListing }) {
   const car = l.kind === 'car_rental';
+  const kind: 'homestay' | 'car_rental' = car ? 'car_rental' : 'homestay';
   const d = l.details;
   const { fix } = useLocation();
   const showOnMap = useShowOnMap();
@@ -120,11 +122,11 @@ function Detail({ l }: { l: PublicListing }) {
       setTo(null);
     } else setTo(day);
   };
-  const clash = from && to ? overlapsBlocked(from, to, blocked, l.kind) : false;
-  const est = from && to && !clash ? estimateTotal(from, to, l.price, l.weekend_price, l.kind) : null;
+  const clash = from && to ? overlapsBlocked(from, to, blocked, kind) : false;
+  const est = from && to && !clash ? estimateTotal(from, to, l.price, l.weekend_price, kind) : null;
   const pageUrl = `${window.location.origin}/sewa/${l.id}`;
   const pickup = car && sendLoc && fix ? fix.coordinates : null;
-  const wa = whatsappUrl(l.operator.phone, enquiryText({ kind: l.kind, title: l.title, url: pageUrl, from, to, pickup }));
+  const wa = whatsappUrl(l.operator.phone, enquiryText({ kind, title: l.title, url: pageUrl, from, to, pickup }));
 
   const facts: { icon: typeof Car; text: string }[] = car
     ? [
@@ -232,6 +234,91 @@ function Detail({ l }: { l: PublicListing }) {
         <p className="text-center text-[11px] text-ink-500">
           Tempahan dan bayaran terus dengan pemilik. JalanGo menyemak dokumen operator tetapi bukan pihak dalam perjanjian sewa.
         </p>
+      </div>
+    </>
+  );
+}
+
+/** Restaurant / warung / stall: open now, hours, services, halal, menu, WhatsApp. */
+function FoodDetail({ l }: { l: PublicListing }) {
+  const d = l.details;
+  const showOnMap = useShowOnMap();
+  const open = isOpenNow(d);
+  const closed = (d.closed_days ?? []).map((i) => DAYS_MS[i]);
+  // "Halal JAKIM" only when an admin checked the certificate; other claims never use the word halal
+  const halal = d.halal === 'jakim' ? (l.operator.halal_verified ? HALAL_LABEL.jakim : null) : d.halal ? HALAL_LABEL[d.halal] : null;
+  const services = FOOD_SERVICES.filter((x) => d.services?.includes(x.id)).map((x) => x.label);
+  const wa = whatsappUrl(l.operator.phone, foodEnquiryText(l.title, `${window.location.origin}/sewa/${l.id}`));
+
+  return (
+    <>
+      <Photos urls={l.photoUrls} car={false} />
+      <div className="space-y-4 p-4">
+        <div>
+          <h1 className="text-xl font-black leading-tight">{l.title}</h1>
+          <p className="mt-1 flex items-center gap-1 text-sm text-ink-500"><MapPin className="size-4" /> {l.area_label}</p>
+          <div className="mt-2 flex flex-wrap items-center gap-1.5 text-sm">
+            {open !== null && (
+              <span className={open ? 'rounded-full bg-jade-500/15 px-2.5 py-0.5 font-bold text-jade-700 dark:text-jade-300' : 'rounded-full bg-red-500/10 px-2.5 py-0.5 font-bold text-red-700 dark:text-red-300'}>
+                {open ? 'Buka sekarang' : 'Tutup sekarang'}
+              </span>
+            )}
+            {halal && <span className="rounded-full bg-ink-200/70 px-2.5 py-0.5 font-semibold dark:bg-ink-800">{halal}</span>}
+            <span className="font-semibold">± {rm(l.price)} seorang</span>
+          </div>
+        </div>
+
+        <ul className="grid grid-cols-2 gap-2 text-sm">
+          {d.food_type && <li className="flex items-center gap-2 rounded-xl bg-white p-2.5 ring-1 ring-ink-200 dark:bg-ink-900 dark:ring-ink-800"><Utensils className="size-4 shrink-0 text-jade-600" /> {FOOD_TYPES.find((x) => x.id === d.food_type)?.label}</li>}
+          {d.opens && d.closes && <li className="flex items-center gap-2 rounded-xl bg-white p-2.5 ring-1 ring-ink-200 dark:bg-ink-900 dark:ring-ink-800"><Clock className="size-4 shrink-0 text-jade-600" /> {d.opens === d.closes ? 'Buka 24 jam' : `${formatTime(d.opens)} – ${formatTime(d.closes)}`}</li>}
+          {closed.length > 0 && <li className="col-span-2 rounded-xl bg-white p-2.5 ring-1 ring-ink-200 dark:bg-ink-900 dark:ring-ink-800">Cuti: {closed.join(', ')}</li>}
+        </ul>
+        {services.length > 0 && (
+          <div className="flex flex-wrap gap-1.5">{services.map((x) => <span key={x} className="rounded-full bg-ink-200/70 px-2.5 py-1 text-xs font-semibold dark:bg-ink-800">{x}</span>)}</div>
+        )}
+        {l.description && <p className="whitespace-pre-line text-[15px] leading-relaxed">{l.description}</p>}
+
+        {(d.menu ?? []).length > 0 && (
+          <div className="rounded-2xl bg-white p-4 ring-1 ring-ink-200 dark:bg-ink-900 dark:ring-ink-800">
+            <p className="mb-2 font-bold">Menu</p>
+            <ul className="divide-y divide-ink-100 dark:divide-ink-800">
+              {(d.menu ?? []).map((m, i) => (
+                <li key={i} className="flex justify-between gap-3 py-1.5 text-sm">
+                  <span>{m.name}</span>
+                  {m.price != null && <span className="shrink-0 font-semibold tabular-nums">{rm(m.price)}</span>}
+                </li>
+              ))}
+            </ul>
+            <p className="mt-2 text-[11px] text-ink-500">Harga oleh peniaga dan mungkin berubah.</p>
+          </div>
+        )}
+
+        <div className="rounded-2xl bg-white p-4 ring-1 ring-ink-200 dark:bg-ink-900 dark:ring-ink-800">
+          <p className="font-bold">{l.operator.business_name}</p>
+          <p className="text-sm text-ink-500">{l.operator.town}, {l.operator.state}</p>
+          <div className="mt-2"><TrustBadges operator={l.operator} /></div>
+        </div>
+
+        <div className="grid grid-cols-[1fr_auto_auto] gap-2">
+          <a href={wa} target="_blank" rel="noopener noreferrer" onClick={() => logListingEvent(l.id, 'whatsapp')} className="flex items-center justify-center gap-2 rounded-xl bg-[#25D366] py-3.5 font-bold text-ink-950">
+            <WhatsAppIcon /> WhatsApp
+          </a>
+          <a href={`tel:+${msisdn(l.operator.phone)}`} onClick={() => logListingEvent(l.id, 'call')} aria-label="Telefon" className="grid w-14 place-items-center rounded-xl bg-white ring-1 ring-ink-200 dark:bg-ink-900 dark:ring-ink-800">
+            <Phone className="size-5" />
+          </a>
+          <button
+            type="button"
+            aria-label="Tunjuk arah"
+            onClick={() => {
+              logListingEvent(l.id, 'directions');
+              showOnMap({ id: `listing:${l.id}`, name: l.title, address: l.area_label, coordinates: { lat: l.latitude, lng: l.longitude }, kind: 'poi', source: 'link' }, { remember: false });
+            }}
+            className="grid w-14 place-items-center rounded-xl bg-white ring-1 ring-ink-200 dark:bg-ink-900 dark:ring-ink-800"
+          >
+            <Navigation className="size-5" />
+          </button>
+        </div>
+        <p className="text-center text-[11px] text-ink-500">Tempahan dan bayaran terus dengan peniaga. JalanGo menyemak IC dan premis peniaga.</p>
       </div>
     </>
   );

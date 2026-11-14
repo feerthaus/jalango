@@ -1,4 +1,4 @@
-import { Car, CheckCircle2, FileText, Home, Loader2, Trash2, Upload } from 'lucide-react';
+import { Car, CheckCircle2, FileText, Home, Loader2, Trash2, Upload, Utensils } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { AuthForm } from '@/components/auth/AuthForm';
 import { Button } from '@/components/ui/Button';
@@ -12,6 +12,7 @@ import {
   deleteOperatorDoc,
   docUrls,
   fetchMyOperator,
+  optionalDocs,
   requiredDocs,
   saveOperator,
   uploadOperatorDoc,
@@ -46,7 +47,7 @@ export function BusinessPage() {
   useEffect(load, [load]);
 
   return (
-    <PagePanel title="Bisnes saya" subtitle="Senaraikan homestay atau kereta sewa anda di JalanGo">
+    <PagePanel title="Bisnes saya" subtitle="Senaraikan homestay, kereta sewa atau kedai makan anda di JalanGo">
       {loading || (user && !loaded) ? (
         <Loader2 className="mx-auto mt-6 size-6 animate-spin text-ink-400" />
       ) : !user ? (
@@ -161,15 +162,15 @@ function DetailsForm({ userId, operator, onSaved }: { userId: string; operator: 
     <form onSubmit={submit} className="space-y-3 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-ink-200 dark:bg-ink-900 dark:ring-ink-800">
       <p className="font-bold">{operator ? 'Maklumat bisnes' : '1. Maklumat bisnes'}</p>
       <fieldset disabled={locked || busy} className="space-y-3">
-        <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label="Jenis bisnes">
-          {(['homestay', 'car_rental'] as OperatorKind[]).map((k) => (
+        <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label="Jenis bisnes">
+          {(['homestay', 'car_rental', 'food'] as OperatorKind[]).map((k) => (
             <button key={k} type="button" role="radio" aria-checked={f.kind === k} onClick={() => set('kind', k)} disabled={Boolean(operator)} className={cn('flex flex-col items-center gap-1 rounded-xl p-3 text-sm font-semibold ring-2 disabled:cursor-not-allowed', f.kind === k ? 'bg-jade-500/10 ring-jade-500' : 'ring-ink-200 dark:ring-ink-700', operator && f.kind !== k && 'opacity-40')}>
-              {k === 'homestay' ? <Home className="size-6" /> : <Car className="size-6" />}
-              {k === 'homestay' ? 'Homestay' : 'Kereta sewa'}
+              {k === 'homestay' ? <Home className="size-6" /> : k === 'car_rental' ? <Car className="size-6" /> : <Utensils className="size-6" />}
+              {k === 'homestay' ? 'Homestay' : k === 'car_rental' ? 'Kereta sewa' : 'Kedai makan'}
             </button>
           ))}
         </div>
-        <label className="block text-sm font-semibold">Nama bisnes<input className={input} value={f.business_name} maxLength={80} required onChange={(e) => set('business_name', e.target.value)} placeholder={car ? 'cth. Kereta Sewa Maju Sdn Bhd' : 'cth. Homestay Pak Mat Pantai Cahaya Bulan'} /></label>
+        <label className="block text-sm font-semibold">Nama bisnes<input className={input} value={f.business_name} maxLength={80} required onChange={(e) => set('business_name', e.target.value)} placeholder={car ? 'cth. Kereta Sewa Maju Sdn Bhd' : f.kind === 'food' ? 'cth. Warung Mak Teh Nasi Kerabu' : 'cth. Homestay Pak Mat Pantai Cahaya Bulan'} /></label>
         <div className="grid grid-cols-2 gap-2">
           <label className="block text-sm font-semibold">Negeri
             <select className={input} value={f.state} required onChange={(e) => set('state', e.target.value)}>
@@ -220,7 +221,8 @@ function Documents({ userId, operator, docs, onChange }: { userId: string; opera
   const [busy, setBusy] = useState<DocKind | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [urls, setUrls] = useState<Record<string, string>>({});
-  const kinds = useMemo<DocKind[]>(() => [...requiredDocs(operator), 'other'], [operator]);
+  const kinds = useMemo<DocKind[]>(() => [...requiredDocs(operator), ...optionalDocs(operator), 'other'], [operator]);
+  const requiredSet = useMemo(() => new Set(requiredDocs(operator)), [operator]);
   const locked = operator.status === 'suspended';
 
   const pathsKey = docs.map((d) => d.path).join('|');
@@ -257,7 +259,7 @@ function Documents({ userId, operator, docs, onChange }: { userId: string; opera
       <ul className="space-y-2">
         {kinds.map((k) => {
           const mine = docs.filter((d) => d.kind === k);
-          const required = k !== 'other';
+          const required = requiredSet.has(k);
           return (
             <li key={k} className="rounded-xl bg-ink-100 p-3 dark:bg-ink-800">
               <div className="flex items-start gap-2">

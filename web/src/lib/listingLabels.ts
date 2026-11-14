@@ -44,3 +44,26 @@ export const FUELS = [
 ] as const;
 
 export const rm = (n: number | null | undefined) => (n === null || n === undefined ? '' : `RM${Number(n).toLocaleString('ms-MY', { maximumFractionDigits: 2 })}`);
+
+export const FOOD_TYPES: { id: import('@/services/listingService').FoodType; label: string }[] = [
+  { id: 'restoran', label: 'Restoran' },
+  { id: 'warung', label: 'Warung' },
+  { id: 'gerai', label: 'Gerai' },
+  { id: 'kafe', label: 'Kafe' },
+  { id: 'food_truck', label: 'Food truck' },
+];
+
+export const FOOD_SERVICES: { id: 'dine_in' | 'takeaway' | 'delivery'; label: string }[] = [
+  { id: 'dine_in', label: 'Makan di kedai' },
+  { id: 'takeaway', label: 'Tapau' },
+  { id: 'delivery', label: 'Hantar (delivery)' },
+];
+
+/** What a food business may say about halal. Never the word "halal" without a checked JAKIM certificate. */
+export const HALAL_LABEL: Record<import('@/services/listingService').HalalClaim, string> = {
+  jakim: 'Halal JAKIM',
+  muslim_owner: 'Pemilik Muslim',
+  no_pork: 'Tiada daging babi',
+};
+
+export const DAYS_MS = ['Ahad', 'Isnin', 'Selasa', 'Rabu', 'Khamis', 'Jumaat', 'Sabtu'];

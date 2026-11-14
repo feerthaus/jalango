@@ -3,7 +3,7 @@ import { rm } from '@/lib/listingLabels';
 import { supabase } from '@/lib/supabase';
 import { fetchPublicListings, type PublicListing } from '@/services/marketService';
 import { haversineMeters } from '@/utils/geo';
-import { AlertTriangle, BatteryCharging, Car, ChevronRight, Home, KeyRound, Coffee, Fuel, Hospital, MapPinned, ParkingSquare, RefreshCw, type LucideIcon } from 'lucide-react';
+import { AlertTriangle, BatteryCharging, Car, ChevronRight, Home, KeyRound, Utensils, Coffee, Fuel, Hospital, MapPinned, ParkingSquare, RefreshCw, type LucideIcon } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { PlaceRow } from '@/components/places/PlaceRow';
 import { Button } from '@/components/ui/Button';
@@ -30,6 +30,7 @@ const CATEGORIES: { id: ExploreCategory; label: [ms: string, en: string]; icon: 
   { id: 'rnr', label: ['R&R', 'R&R'], icon: Coffee },
   { id: 'homestay', label: ['Homestay', 'Homestay'], icon: Home },
   { id: 'car_rental', label: ['Kereta sewa', 'Car rental'], icon: Car },
+  { id: 'food', label: ['Makan', 'Food'], icon: Utensils },
   { id: 'ev', label: ['Cas EV', 'EV charging'], icon: BatteryCharging },
   { id: 'parking', label: ['Parkir', 'Parking'], icon: ParkingSquare },
   { id: 'hospital', label: ['Hospital', 'Hospital'], icon: Hospital },
@@ -73,8 +74,8 @@ export function ExplorePage() {
       <Link to="/sewa" className="mb-3 flex items-center gap-3 rounded-2xl bg-gradient-to-r from-jade-500 to-jade-600 p-4 text-white shadow-sm">
         <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-white/20"><KeyRound className="size-6" /></span>
         <span className="min-w-0 flex-1">
-          <span className="block font-bold">{t('Sewa kereta & homestay', 'Car rental & homestay')}</span>
-          <span className="block text-xs text-white/85">{t('Operator yang disemak JalanGo, terus WhatsApp pemilik', 'Operators checked by JalanGo, WhatsApp the owner')}</span>
+          <span className="block font-bold">{t('Sewa kereta, homestay & makan', 'Car rental, homestay & food')}</span>
+          <span className="block text-xs text-white/85">{t('Peniaga yang disemak JalanGo, terus WhatsApp pemilik', 'Businesses checked by JalanGo, WhatsApp the owner')}</span>
         </span>
         <ChevronRight className="size-5" />
       </Link>
@@ -100,7 +101,7 @@ export function ExplorePage() {
 
       {category === 'petrol' && <FuelPriceCard className="mt-2" />}
 
-      {(category === 'homestay' || category === 'car_rental') && origin && <VerifiedRentals kind={category} near={origin.coords} />}
+      {(category === 'homestay' || category === 'car_rental' || category === 'food') && origin && <VerifiedRentals kind={category} near={origin.coords} />}
 
       <div className="mt-2 rounded-2xl bg-white p-2 shadow-sm ring-1 ring-ink-200 dark:bg-ink-900 dark:ring-ink-800">
         <NearbyResults
@@ -143,7 +144,7 @@ export function ExplorePage() {
 const RENTAL_RADIUS_M = 80_000;
 
 /** JalanGo's own checked listings of this kind near the user, shown above the map results. */
-function VerifiedRentals({ kind, near }: { kind: 'homestay' | 'car_rental'; near: Coordinates }) {
+function VerifiedRentals({ kind, near }: { kind: 'homestay' | 'car_rental' | 'food'; near: Coordinates }) {
   const [t] = useT();
   const [items, setItems] = useState<{ l: PublicListing; d: number }[] | null>(null);
   const key = `${near.lat.toFixed(2)},${near.lng.toFixed(2)}`;
@@ -177,11 +178,11 @@ function VerifiedRentals({ kind, near }: { kind: 'homestay' | 'car_rental'; near
           <li key={l.id}>
             <Link to={`/sewa/${l.id}`} className="flex items-center gap-3 rounded-xl p-2 hover:bg-ink-100 dark:hover:bg-ink-800">
               <span className="grid size-12 shrink-0 place-items-center overflow-hidden rounded-xl bg-ink-100 text-ink-400 dark:bg-ink-800">
-                {l.photoUrls[0] ? <img src={l.photoUrls[0]} alt="" className="size-full object-cover" /> : kind === 'car_rental' ? <Car className="size-5" /> : <Home className="size-5" />}
+                {l.photoUrls[0] ? <img src={l.photoUrls[0]} alt="" className="size-full object-cover" /> : kind === 'car_rental' ? <Car className="size-5" /> : kind === 'food' ? <Utensils className="size-5" /> : <Home className="size-5" />}
               </span>
               <span className="min-w-0 flex-1">
                 <span className="block truncate font-semibold">{l.title}</span>
-                <span className="block truncate text-xs text-ink-500">{rm(l.price)}/{kind === 'car_rental' ? t('hari', 'day') : t('malam', 'night')} · {l.area_label}</span>
+                <span className="block truncate text-xs text-ink-500">{kind === 'food' ? `± ${rm(l.price)} ${t('seorang', 'per person')}` : `${rm(l.price)}/${kind === 'car_rental' ? t('hari', 'day') : t('malam', 'night')}`} · {l.area_label}</span>
               </span>
               <span className="shrink-0 text-xs text-ink-500">{formatDistance(d)}</span>
             </Link>
@@ -251,7 +252,7 @@ function NearbyResults(props: {
     <>
       <p className="px-2 pb-1 pt-1 text-xs text-ink-400">
         {t(`Berhampiran ${originLabel ?? 'anda'}`, `Near ${originLabel ?? 'you'}`)}
-        {(category === 'homestay' || category === 'car_rental') && t(' · dari peta, belum disemak JalanGo', ' · from map data, not checked by JalanGo')}
+        {(category === 'homestay' || category === 'car_rental' || category === 'food') && t(' · dari peta, belum disemak JalanGo', ' · from map data, not checked by JalanGo')}
       </p>
       <ul role="listbox" aria-label="Nearby places">
         {state.results.map((p) => (

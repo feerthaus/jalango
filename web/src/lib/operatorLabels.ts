@@ -1,6 +1,6 @@
 import type { DocKind, OperatorKind, OperatorStatus } from '@/services/operatorService';
 
-export const KIND_LABEL: Record<OperatorKind, string> = { homestay: 'Homestay / rumah sewa', car_rental: 'Kereta sewa' };
+export const KIND_LABEL: Record<OperatorKind, string> = { homestay: 'Homestay / rumah sewa', car_rental: 'Kereta sewa', food: 'Restoran / warung / gerai' };
 
 export const DOC_LABEL: Record<DocKind, string> = {
   ic: 'Kad pengenalan (IC) pemilik',
@@ -9,6 +9,10 @@ export const DOC_LABEL: Record<DocKind, string> = {
   apad_licence: 'Lesen APAD kereta sewa pandu sendiri',
   insurance: 'Sijil insurans (meliputi kegunaan sewa)',
   other: 'Dokumen lain',
+  premises: 'Gambar premis (kedai, warung atau gerai, nampak papan tanda jika ada)',
+  pbt_licence: 'Lesen perniagaan PBT / majlis (jika ada)',
+  food_handler: 'Sijil latihan pengendali makanan (jika ada)',
+  halal_jakim: 'Sijil Halal JAKIM / JAIN (jika ada, untuk lencana Halal JAKIM)',
 };
 
 export const STATUS_LABEL: Record<OperatorStatus, { text: string; tone: string }> = {

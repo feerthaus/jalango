@@ -11,7 +11,9 @@ export function TrustBadges({ operator, listingInsured, compact = false }: { ope
           { ok: operator.apad_licensed, label: 'Lesen APAD' },
           { ok: operator.insured || Boolean(listingInsured), label: 'Insurans' },
         ]
-      : [{ ok: true, label: 'IC & pemilikan disemak' }];
+      : operator.kind === 'food'
+        ? [{ ok: true, label: 'IC & premis disemak' }, ...(operator.halal_verified ? [{ ok: true, label: 'Halal JAKIM' }] : [])]
+        : [{ ok: true, label: 'IC & pemilikan disemak' }];
   return (
     <ul className={cn('flex flex-wrap gap-1', compact ? 'text-[10px]' : 'text-xs')} aria-label="Semakan JalanGo">
       {items.map((b) => (

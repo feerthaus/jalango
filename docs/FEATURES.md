@@ -35,6 +35,19 @@ Kemas kini fail ini dalam PR yang sama setiap kali fungsi baru ditambah atau diu
 
 ---
 
+## Marketplace: kedai makan (restoran, warung, gerai)
+
+- **Daftar:** Bisnes saya → **Kedai makan**. Dokumen wajib: **IC** dan **gambar premis**. Pilihan: SSM, lesen PBT, sijil pengendali makanan, **sijil Halal JAKIM/JAIN**.
+- **Listing kedai:** jenis (restoran, warung, gerai, kafe, food truck), waktu buka & tutup (boleh lepas tengah malam, cth. gerai malam 6 ptg–2 pg), hari cuti, servis (makan di kedai, tapau, hantar), status halal, menu ringkas (hingga 25 hidangan dengan harga), anggaran harga seorang, lokasi tepat dan hingga 12 gambar. Tiada kalendar kekosongan.
+- **Halal:** "Halal JAKIM" hanya boleh dipilih dan dipaparkan selepas admin menyemak sijil (Admin → Operator → **Sahkan Halal JAKIM**; boleh ditarik balik). Tanpa sijil: "Pemilik Muslim" atau "Tiada daging babi" sahaja.
+- **Untuk pengguna:**
+  - **Teroka → Makan:** kedai disemak JalanGo dalam 80 km dahulu, kemudian kedai dari data peta (belum disemak).
+  - **Halaman kedai (`/sewa/:id`):** "Buka sekarang / Tutup sekarang" (waktu Malaysia), waktu buka, hari cuti, servis, lencana halal, menu & harga, butang WhatsApp ("Nak tanya / tempah"), telefon dan arah.
+  - **Ada laluan, sebelum mula:** panel laluan menunjukkan **"n kedai makan disemak JalanGo sepanjang laluan"** (dalam 3 km dari laluan). Tekan untuk senarai.
+  - **Sepanjang laluan (Makan):** bahagian **"Kedai disemak JalanGo"** di atas, dengan jenis, buka/tutup dan harga, butang Singgah.
+  - **Semasa memandu:** kedai hanya muncul jika pengguna sendiri membuka senarai "Sepanjang laluan". Tiada popup.
+- Halaman `/sewa` kini **"Sewa & Makan"** dengan tapisan **Makan**.
+
 ## Marketplace Fasa 1b: Sewa (untuk pengguna)
 
 - **Pintu masuk:** kad **"Sewa kereta & homestay"** di atas halaman Teroka, atau terus ke `/sewa`.

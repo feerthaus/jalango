@@ -16,6 +16,8 @@ export interface PublicOperator {
   ssm_verified: boolean;
   apad_licensed: boolean;
   insured: boolean;
+  /** food: JAKIM halal certificate checked by an admin */
+  halal_verified?: boolean;
   approved_at: string | null;
 }
 
@@ -39,7 +41,7 @@ const num = (v: unknown) => (v === null || v === undefined ? null : Number(v));
 async function attach(rows: Listing[]): Promise<PublicListing[]> {
   if (rows.length === 0) return [];
   const ids = [...new Set(rows.map((l) => l.operator_id))];
-  const { data: ops, error } = await client().rpc('listing_operators', { p_ids: ids });
+  const { data: ops, error } = await client().rpc('listing_operators_v2', { p_ids: ids });
   if (error) throw toReportError(error);
   const byId = new Map(((ops ?? []) as PublicOperator[]).map((o) => [o.id, o]));
   const sorted = rows.map((l) => ({ ...l, photos: (l.photos ?? []).slice().sort((a, b) => a.position - b.position || a.created_at.localeCompare(b.created_at)) }));
