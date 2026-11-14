@@ -163,7 +163,7 @@ Pelan penuh ada dalam `docs/MARKETPLACE.md`. Fasa 0 hanya pendaftaran dan penges
 **Notifikasi admin:**
 - Setiap tab Admin menunjukkan **nombor merah** untuk perkara yang menunggu: operator baru, listing (baru, berubah atau gambar baru), laporan pengguna, gambar kemalangan dan mesej baru.
 - **Loceng** di atas halaman Admin menunjukkan jumlah.
-- Di luar halaman Admin: nombor merah pada tab **Profil** di bawah, dan kad merah **"n perkara menunggu semakan"** di atas Profil yang terus membuka Admin.
+- Di luar halaman Admin: nombor merah pada tab **Profil** di bawah, dan **kad Admin** di Profil (di atas "Kongsi JalanGo"): aktif hari ini (+baru), aktif 7 hari (berapa dipasang), jumlah akaun, dan butang setiap barisan semakan (Operator, Listing, Laporan, Gambar, Mesej) dengan nombornya. Tekan butang untuk terus ke tab itu (`/admin?tab=...`). Tanpa sesi 2FA, kad hanya meminta pengesahan 2FA.
 - Jika JalanGo dipasang di skrin utama, nombor juga muncul pada **ikon app** (Android Chrome, iPhone iOS 16.4+), jika telefon menyokong.
 - Dikemas kini setiap minit, bila app dibuka semula dan selepas setiap tindakan admin. Hanya untuk admin dengan sesi 2FA (`admin_counts()`); pengguna lain tidak nampak apa-apa.
 

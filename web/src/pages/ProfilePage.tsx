@@ -1,4 +1,4 @@
-import { Bell, ChevronRight } from 'lucide-react';
+import { AdminCard } from '@/components/admin/AdminCard';
 import { CountBadge } from '@/components/admin/CountBadge';
 import { useAdminCounts } from '@/hooks/useAdminCounts';
 import { CheckCircle2, CircleDashed, Laptop, LogOut, Moon, RefreshCw, Sun, Trash2, UserRound, XCircle } from 'lucide-react';
@@ -59,8 +59,8 @@ export function ProfilePage() {
 
   return (
     <PagePanel title={t('Profil', 'Profile')}>
-      <AdminAlert />
       <AccountCard favourites={favourites.length} recents={recents.length} />
+      <AdminCard />
 
       <ShareAppCard />
       <BusinessCard />
@@ -339,31 +339,6 @@ function FeedbackCard() {
       </button>
       {open && <FeedbackSheet onClose={() => setOpen(false)} />}
     </>
-  );
-}
-
-/** Admins only: what is waiting for review, one tap to the admin page. */
-function AdminAlert() {
-  const counts = useAdminCounts();
-  if (!counts || counts.total === 0) return null;
-  const parts = [
-    [counts.operators, 'operator baru'],
-    [counts.listings, 'listing'],
-    [counts.flags, 'laporan pengguna'],
-    [counts.photos, 'gambar kemalangan'],
-    [counts.feedback, 'mesej'],
-  ].filter(([n]) => Number(n) > 0).map(([n, label]) => `${n} ${label}`);
-  return (
-    <Link to="/admin" className="mb-3 flex items-center gap-3 rounded-2xl bg-red-600 p-4 text-white shadow-sm">
-      <span className="relative grid size-10 shrink-0 place-items-center rounded-xl bg-white/15">
-        <Bell className="size-5" />
-      </span>
-      <span className="min-w-0 flex-1">
-        <span className="block font-bold">{counts.total} perkara menunggu semakan</span>
-        <span className="block truncate text-xs text-white/85">{parts.join(' · ')}</span>
-      </span>
-      <ChevronRight className="size-5 shrink-0" />
-    </Link>
   );
 }
 

@@ -93,6 +93,22 @@ describe('rentals with Google Places fill-in', () => {
     expect(r).toHaveLength(1); // Mapbox result still shown
   });
 
+  it('Mapbox entries named only "homestay" do not count: Google still fills in, nearest first', async () => {
+    vi.stubGlobal('fetch', async (input: string | URL, init?: RequestInit) => {
+      const url = new URL(String(input));
+      if (url.hostname === 'places.googleapis.com') {
+        expect(JSON.parse(String(init?.body)).rankPreference).toBe('DISTANCE');
+        return new Response(JSON.stringify({ places: [gPlace('h', 'Homestay Mak Long', 102.25, 6.13)] }), { status: 200 });
+      }
+      const features = Array.from({ length: 5 }, (_, i) => mbFeature(i % 2 ? 'Homestay' : 'homestay', 102.24 + i * 0.01, 6.12));
+      return new Response(JSON.stringify({ features }), { status: 200 });
+    });
+    const r = await route.searchRentals('homestay', near);
+    expect(r.at(-1)).toMatchObject({ name: 'Homestay Mak Long', source: 'google' });
+    expect(gp.isGenericName('Kereta Sewa')).toBe(true);
+    expect(gp.isGenericName('Kereta Sewa Kota Bharu')).toBe(false);
+  });
+
   it('mergeWithGoogle keeps different places with the same name far apart', () => {
     const a = { id: '1', name: 'Homestay Ali', address: '', coordinates: { lat: 6.1, lng: 102.2 }, kind: 'poi' as const, source: 'mapbox' as const };
     const b = { ...a, id: '2', coordinates: { lat: 6.3, lng: 102.4 }, source: 'google' as const };

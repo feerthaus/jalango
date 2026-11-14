@@ -1,6 +1,6 @@
 import { ArrowLeft, Ban, Bell, Check, EyeOff, Loader2, RefreshCw, RotateCcw, ShieldAlert, X } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
-import { Link } from 'react-router';
+import { Link, useSearchParams } from 'react-router';
 import { Wordmark } from '@/components/brand/LogoMark';
 import { PhotoReviewQueue } from '@/components/accidents/PhotoReviewQueue';
 import { CountBadge } from '@/components/admin/CountBadge';
@@ -29,6 +29,9 @@ import {
 import { formatRelativeTime } from '@/utils/format';
 import type { ReportType } from '@/types';
 
+const ADMIN_TABS = ['stats', 'operators', 'listings', 'flags', 'photos', 'feedback'] as const;
+type AdminTab = (typeof ADMIN_TABS)[number];
+
 const TAB_COUNT = { operators: 'operators', listings: 'listings', flags: 'flags', photos: 'photos', feedback: 'feedback' } as const;
 
 /** Moderation queue + feedback inbox. Only usable by users in public.admins (enforced in the database). */
@@ -37,7 +40,8 @@ export function AdminPage() {
   const [allowed, setAllowed] = useState<boolean | null>(null);
   const [needs2fa, setNeeds2fa] = useState(false);
   const [check, setCheck] = useState(0);
-  const [tab, setTab] = useState<'stats' | 'operators' | 'listings' | 'flags' | 'photos' | 'feedback'>('stats');
+  const [params] = useSearchParams();
+  const [tab, setTab] = useState<AdminTab>(() => (ADMIN_TABS as readonly string[]).includes(params.get('tab') ?? '') ? (params.get('tab') as AdminTab) : 'stats');
   const counts = useAdminCounts();
 
   useEffect(() => {
@@ -84,7 +88,7 @@ export function AdminPage() {
         ) : (
           <>
             <div role="tablist" className="mb-4 grid grid-cols-3 gap-1 rounded-2xl sm:grid-cols-6 bg-ink-100 p-1 dark:bg-ink-900">
-              {(['stats', 'operators', 'listings', 'flags', 'photos', 'feedback'] as const).map((t) => (
+              {ADMIN_TABS.map((t) => (
                 <button key={t} type="button" role="tab" aria-selected={tab === t} onClick={() => setTab(t)} className={cn('flex items-center justify-center gap-1 rounded-xl px-1 py-2 text-xs font-semibold sm:text-sm', tab === t ? 'bg-white shadow-sm dark:bg-ink-700' : 'text-ink-500')}>
                   {t === 'stats' ? 'Statistik' : t === 'operators' ? 'Operator' : t === 'listings' ? 'Listing' : t === 'flags' ? 'Laporan' : t === 'photos' ? 'Gambar kemalangan' : 'Mesej'}
                   {t !== 'stats' && <CountBadge n={counts?.[TAB_COUNT[t]] ?? 0} />}
