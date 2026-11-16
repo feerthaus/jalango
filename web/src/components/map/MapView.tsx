@@ -9,6 +9,7 @@ import { DEFAULT_CENTER, DEFAULT_ZOOM, env, features } from '@/lib/config';
 import { styleFor } from '@/lib/mapStyles';
 import { useIsNavigating, useRouting } from '@/contexts/RoutingContext';
 import { DestinationMarker } from './DestinationMarker';
+import { Map3D } from './Map3D';
 import { NavigationCamera } from './NavigationCamera';
 import { RouteLayer } from './RouteLayer';
 import { ReportMarkers } from '@/components/reports/ReportMarkers';
@@ -90,7 +91,9 @@ export function MapView() {
   useEffect(() => {
     if (!map || appliedTheme.current === theme) return;
     appliedTheme.current = theme;
-    map.setStyle(styleFor(theme, features.mapboxTiles));
+    // No diff: a diffed style swap skips 'style.load', which our own layers (route,
+    // shortcuts, 3D buildings) listen to in order to add themselves back.
+    map.setStyle(styleFor(theme, features.mapboxTiles), { diff: false } as Parameters<mapboxgl.Map['setStyle']>[1]);
   }, [map, theme]);
 
   // Stop following when the user drags or rotates the map themselves
@@ -145,6 +148,7 @@ export function MapView() {
       {map && <ReportMarkers />}
       {map && <AccidentMarkers />}
       {map && <NavigationCamera />}
+      {map && <Map3D />}
 
       {initError && (
         <div className="absolute inset-0 grid place-items-center bg-ink-100 p-6 text-center dark:bg-ink-900">

@@ -4,10 +4,12 @@ import { IconButton } from '@/components/ui/IconButton';
 import { useLocation } from '@/contexts/LocationContext';
 import { useMapContext } from '@/contexts/MapContext';
 import { useTheme } from '@/contexts/ThemeContext';
+import { PITCH_3D } from '@/lib/map3d';
+import { MapModeToggle } from './MapModeToggle';
 
 /** Right-hand stack: theme, compass, zoom. Locate button lives separately (bottom). */
 export function MapControls() {
-  const { map } = useMapContext();
+  const { map, mapMode } = useMapContext();
   const { theme, toggle } = useTheme();
   const [bearing, setBearing] = useState(0);
   const [pitch, setPitch] = useState(0);
@@ -27,15 +29,18 @@ export function MapControls() {
     };
   }, [map]);
 
-  const rotated = Math.abs(bearing) > 0.5 || pitch > 0.5;
+  // In 3D the tilt is expected; the compass shows when rotated (or tilted away from the 3D angle)
+  const rotated = Math.abs(bearing) > 0.5 || (mapMode === '3d' ? Math.abs(pitch - PITCH_3D) > 0.5 : pitch > 0.5);
 
   return (
     <div className="flex flex-col gap-2">
-      <IconButton label={theme === 'dark' ? 'Switch to light map' : 'Switch to dark map'} onClick={toggle}>
+      <MapModeToggle />
+      {/* On short phones the bottom button stack reaches this high; theme stays available in Profil */}
+      <IconButton label={theme === 'dark' ? 'Switch to light map' : 'Switch to dark map'} onClick={toggle} className="[@media(max-height:620px)]:hidden">
         {theme === 'dark' ? <Sun className="size-5" /> : <Moon className="size-5" />}
       </IconButton>
       {rotated && (
-        <IconButton label="Reset map to north" onClick={() => map?.easeTo({ bearing: 0, pitch: 0 })}>
+        <IconButton label="Reset map to north" onClick={() => map?.easeTo({ bearing: 0, pitch: mapMode === '3d' ? PITCH_3D : 0 })}>
           <Navigation2 className="size-5 text-red-500" style={{ transform: `rotate(${-bearing}deg)` }} fill="currentColor" />
         </IconButton>
       )}
