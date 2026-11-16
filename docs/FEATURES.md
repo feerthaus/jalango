@@ -252,6 +252,12 @@ Pelan penuh ada dalam `docs/MARKETPLACE.md`. Fasa 0 hanya pendaftaran dan penges
 - **Butang Kongsi:** WhatsApp, Facebook, Instagram, Telegram, X, Threads, SMS, Email, Salin, dan menu kongsi telefon (`web/src/components/share/ShareSheet.tsx`).
 - **Kongsi JalanGo:** kad di bahagian atas Profil.
 - **Kongsi lokasi live:** dengan mod Driver (kenderaan, plat, WhatsApp, hentian seterusnya).
+- **Amaran "Dah sampai" untuk yang menunggu (halaman `/live/...`):** butang **"Beritahu saya bila sampai"**. Tekan sekali (pelayar perlukan satu tekanan untuk benarkan bunyi): bunyi dibuka dan skrin dikekalkan hidup (Wake Lock).
+  - **Sampai** bila kereta ≤ 150 m dari sasaran, atau bila perkongsian "sehingga sampai" tamat dengan kedudukan terakhir ≤ 300 m (navigasi pemandu tamat di destinasi).
+  - **Sasaran:** destinasi pemandu (lalai), atau **"Beritahu bila dekat dengan saya"**: lokasi orang yang menunggu, hanya dalam telefonnya (tidak dihantar).
+  - **Bila sampai:** bip berulang (3 nada) setiap 2.5 s hingga 30 s + getar (Android; iPhone tak sokong getar web) + banner hijau "… dah sampai!" + tajuk tab "🟢 … dah sampai!". Butang **Hentikan bunyi**; banner yang ditutup tidak muncul lagi.
+  - Tanpa menekan butang: banner tetap muncul, tanpa bunyi. Pautan yang sudah tamat sebelum dibuka tidak dikira "sampai".
+  - Had: tiada bunyi bila telefon dikunci atau halaman ditutup (notifikasi push = Fasa 2, KIV).
 - **Kongsi lokasi ini:** pin sekali, bukan live.
 - **Pautan tempat JalanGo:** "Kongsi tempat ini" dan "Kongsi lokasi ini" menghantar pautan JalanGo (`/?tempat=lat,lng&n=nama&a=alamat`), bukan Google Maps. Penerima buka JalanGo dengan tempat itu terpilih di peta, terus boleh tekan Arah. Setiap pautan yang dikongsi membawa orang baru ke JalanGo.
 - **Konvoi:** kereta dan motosikal.

@@ -1,7 +1,10 @@
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
-import { Clock, Flag, ListOrdered, Loader2, MapPinOff, MessageCircle, Navigation, Phone, Radio } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { Bell, BellOff, CheckCircle2, Clock, Flag, ListOrdered, Loader2, LocateFixed, MapPinOff, MessageCircle, Navigation, Phone, Radio, VolumeX, X } from 'lucide-react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { arm, disarm, ring, stopRinging } from '@/lib/arrivalAlarm';
+import { hasArrived } from '@/utils/arrival';
+import type { Coordinates } from '@/types';
 import { Link, useParams } from 'react-router';
 import { LogoMark } from '@/components/brand/LogoMark';
 import { CAR_SVG } from '@/components/map/UserLocationMarker';
@@ -29,6 +32,7 @@ export function LiveViewPage() {
   const [error, setError] = useState<string | null>(null);
   const [follow, setFollow] = useState(true);
   const [, tick] = useState(0);
+  const alert = useArrivalAlert(share);
 
   // Poll the share
   useEffect(() => {
@@ -111,6 +115,7 @@ export function LiveViewPage() {
 
   return (
     <div className="relative h-dvh w-full overflow-hidden bg-ink-100 dark:bg-ink-950">
+      {alert.arrived && share && <ArrivedBanner name={share.display_name} where={alert.targetLabel} ringing={alert.ringing} onStop={alert.stopSound} onClose={alert.dismiss} />}
       {/* mapbox-gl.css sets .mapboxgl-map { position: relative }, so size the map from a wrapper */}
       <div className="absolute inset-0">
         <div ref={containerRef} className="h-full w-full" />
@@ -155,6 +160,7 @@ export function LiveViewPage() {
                   </span>
                 </p>
               )}
+              <ArrivalAlertControls share={share} alert={alert} />
               {share.next_stop_name && (
                 <p className="mt-2 flex items-center gap-2 rounded-xl bg-violet-500/10 px-3 py-2 text-sm">
                   <ListOrdered className="size-4 shrink-0 text-violet-600" />
@@ -221,6 +227,183 @@ function DriverCard({ share }: { share: PublicLiveShare }) {
           </a>
         </div>
       )}
+    </div>
+  );
+}
+
+interface ArrivalAlert {
+  armed: boolean;
+  arrived: boolean;
+  ringing: boolean;
+  /** "lokasi anda" or the destination name */
+  targetLabel: string;
+  useMine: boolean;
+  mineError: string | null;
+  noTarget: boolean;
+  noWakeLock: boolean;
+  start: () => Promise<void>;
+  stop: () => void;
+  setUseMine: (on: boolean) => void;
+  stopSound: () => void;
+  dismiss: () => void;
+}
+
+/**
+ * "Beritahu saya bila sampai": watches the polled share and rings once when the
+ * driver reaches the target (the driver's destination, or the waiter's own spot
+ * when they choose it; that position never leaves this phone).
+ */
+function useArrivalAlert(share: PublicLiveShare | null | undefined): ArrivalAlert {
+  const [armed, setArmed] = useState(false);
+  const [arrived, setArrived] = useState(false);
+  // Closing the banner hides it; arrival stays recorded so the next poll doesn't ring again
+  const [hidden, setHidden] = useState(false);
+  const [ringing, setRinging] = useState(false);
+  const [noWakeLock, setNoWakeLock] = useState(false);
+  const [useMine, setUseMineState] = useState(false);
+  const [mine, setMine] = useState<Coordinates | null>(null);
+  const [mineError, setMineError] = useState<string | null>(null);
+  const prevStatus = useRef<PublicLiveShare['status'] | null>(null);
+  const baseTitle = useRef(document.title);
+
+  const dest = share && share.dest_latitude !== null && share.dest_longitude !== null ? { lat: share.dest_latitude, lng: share.dest_longitude } : null;
+  const target = useMine ? mine : dest;
+
+  // The waiter's own position, only while they asked for it
+  useEffect(() => {
+    if (!useMine || !navigator.geolocation) return;
+    setMineError(null);
+    const id = navigator.geolocation.watchPosition(
+      (p) => setMine({ lat: p.coords.latitude, lng: p.coords.longitude }),
+      () => setMineError('Lokasi anda tidak dapat dibaca. Benarkan lokasi untuk pelayar ini.'),
+      { enableHighAccuracy: true, maximumAge: 15_000, timeout: 20_000 },
+    );
+    return () => navigator.geolocation.clearWatch(id);
+  }, [useMine]);
+
+  // Check on every poll
+  useEffect(() => {
+    if (!share) return;
+    const was = prevStatus.current;
+    prevStatus.current = share.status;
+    if (arrived) return;
+    const position = share.latitude !== null && share.longitude !== null ? { lat: share.latitude, lng: share.longitude } : null;
+    if (!hasArrived({ status: share.status, position, target, previousStatus: was })) return;
+    setArrived(true);
+    document.title = `🟢 ${share.display_name} dah sampai!`;
+    if (armed) {
+      ring();
+      setRinging(true);
+      window.setTimeout(() => setRinging(false), 30_000);
+    }
+  }, [share, target, armed, arrived]);
+
+  // Leaving the page: stop everything, give the title back
+  useEffect(() => {
+    const title = baseTitle.current;
+    return () => {
+      disarm();
+      document.title = title;
+    };
+  }, []);
+
+  const start = useCallback(async () => {
+    const r = await arm();
+    setNoWakeLock(!r.wakeLock);
+    setArmed(true);
+  }, []);
+  const stop = useCallback(() => {
+    disarm();
+    setArmed(false);
+    setRinging(false);
+  }, []);
+  const stopSound = useCallback(() => {
+    stopRinging();
+    setRinging(false);
+  }, []);
+  const dismiss = useCallback(() => {
+    stopRinging();
+    setRinging(false);
+    setHidden(true);
+    disarm();
+    setArmed(false);
+    document.title = baseTitle.current;
+  }, []);
+  const setUseMine = useCallback((on: boolean) => {
+    setUseMineState(on);
+    if (!on) setMine(null);
+  }, []);
+
+  return {
+    armed,
+    arrived: arrived && !hidden,
+    ringing,
+    targetLabel: useMine ? 'lokasi anda' : share?.destination_name ?? 'destinasi',
+    useMine,
+    mineError,
+    noTarget: !useMine && !dest,
+    noWakeLock,
+    start,
+    stop,
+    setUseMine,
+    stopSound,
+    dismiss,
+  };
+}
+
+/** The "Beritahu saya bila sampai" button and, once on, what it is measuring to. */
+function ArrivalAlertControls({ share, alert }: { share: PublicLiveShare; alert: ArrivalAlert }) {
+  if (!alert.armed) {
+    return (
+      <div className="mt-3">
+        <button type="button" onClick={() => void alert.start()} className="flex w-full items-center justify-center gap-2 rounded-xl bg-jade-500 py-3 text-sm font-bold text-ink-950">
+          <Bell className="size-4" /> Beritahu saya bila sampai
+        </button>
+        <p className="mt-1 text-center text-[11px] text-ink-500">Bunyi bip bila {share.display_name} sampai. Biarkan halaman ini terbuka.</p>
+      </div>
+    );
+  }
+  return (
+    <div className="mt-3 rounded-xl bg-jade-500/10 p-3 text-sm">
+      <div className="flex items-center gap-2">
+        <Bell className="size-4 shrink-0 animate-pulse text-jade-600" />
+        <p className="min-w-0 flex-1 font-semibold">
+          Amaran aktif · <span className="font-normal">bila sampai di {alert.targetLabel}</span>
+        </p>
+        <button type="button" onClick={alert.stop} className="flex shrink-0 items-center gap-1 text-xs font-semibold text-ink-500" aria-label="Matikan amaran">
+          <BellOff className="size-3.5" /> Matikan
+        </button>
+      </div>
+      {alert.noTarget && <p className="mt-1 text-xs text-amber-700 dark:text-amber-300">{share.display_name} tiada destinasi. Tekan &ldquo;Beritahu bila dekat dengan saya&rdquo;.</p>}
+      <button type="button" onClick={() => alert.setUseMine(!alert.useMine)} className="mt-2 flex items-center gap-1.5 text-xs font-semibold text-jade-700 dark:text-jade-300">
+        <LocateFixed className="size-3.5" /> {alert.useMine ? 'Guna destinasi pemandu' : 'Beritahu bila dekat dengan saya'}
+      </button>
+      {alert.useMine && <p className="mt-0.5 text-[11px] text-ink-500">Lokasi anda hanya digunakan dalam telefon ini untuk kira jarak, tidak dihantar ke mana-mana.</p>}
+      {alert.mineError && <p className="mt-1 text-xs text-red-600">{alert.mineError}</p>}
+      <p className="mt-1 text-[11px] text-ink-500">{alert.noWakeLock ? 'Biarkan skrin terbuka: bunyi tidak keluar bila telefon dikunci.' : 'Skrin dikekalkan hidup. Bunyi tidak keluar jika telefon dikunci atau halaman ditutup.'}</p>
+    </div>
+  );
+}
+
+function ArrivedBanner({ name, where, ringing, onStop, onClose }: { name: string; where: string; ringing: boolean; onStop: () => void; onClose: () => void }) {
+  return (
+    <div role="alert" className="safe-top absolute inset-x-0 top-0 z-20 p-3">
+      <div className="mx-auto flex max-w-md animate-slide-up items-center gap-3 rounded-3xl bg-jade-500 p-4 text-ink-950 shadow-float">
+        <CheckCircle2 className="size-9 shrink-0" />
+        <div className="min-w-0 flex-1">
+          <p className="text-lg font-black leading-tight">{name} dah sampai!</p>
+          <p className="truncate text-sm">di {where}</p>
+        </div>
+        {ringing ? (
+          <button type="button" onClick={onStop} className="flex shrink-0 items-center gap-1 rounded-xl bg-ink-950 px-3 py-2 text-sm font-bold text-white">
+            <VolumeX className="size-4" /> Hentikan bunyi
+          </button>
+        ) : (
+          <button type="button" onClick={onClose} aria-label="Tutup" className="grid size-9 shrink-0 place-items-center rounded-full bg-ink-950/15">
+            <X className="size-5" />
+          </button>
+        )}
+      </div>
     </div>
   );
 }
