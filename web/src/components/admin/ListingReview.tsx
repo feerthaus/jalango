@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { cn } from '@/lib/cn';
-import { AMENITIES, DAYS_MS, FOOD_SERVICES, FOOD_TYPES, FUELS, HALAL_LABEL, HOMESTAY_TYPES, LISTING_STATUS, PHOTO_STATUS, rm } from '@/lib/listingLabels';
+import { AMENITIES, DAYS, FOOD_SERVICES, FOOD_TYPES, FUELS, HALAL_LABEL, HOMESTAY_TYPES, LISTING_STATUS, PHOTO_STATUS, rm } from '@/lib/listingLabels';
 import { fetchListingsForReview, listingPhotoUrls, reviewListing, reviewListingPhoto, type ListingForReview, type ListingPhoto } from '@/services/listingService';
 
 /** Admin: review new / changed listings and every new photo before anyone sees them. */
@@ -72,15 +72,15 @@ function Card({ l, urls, onDone }: { l: ListingForReview; urls: Record<string, s
 
   const facts = food
     ? [
-        FOOD_TYPES.find((x) => x.id === d.food_type)?.label,
+        FOOD_TYPES.find((x) => x.id === d.food_type)?.label.ms,
         d.opens && d.closes ? `${d.opens}–${d.closes}` : 'waktu buka tiada',
-        (d.closed_days ?? []).length ? `cuti ${(d.closed_days ?? []).map((i) => DAYS_MS[i]).join(', ')}` : null,
-        FOOD_SERVICES.filter((x) => d.services?.includes(x.id)).map((x) => x.label).join(', ') || null,
-        d.halal ? `dakwaan: ${HALAL_LABEL[d.halal]}` : null,
+        (d.closed_days ?? []).length ? `cuti ${(d.closed_days ?? []).map((i) => DAYS[i].ms).join(', ')}` : null,
+        FOOD_SERVICES.filter((x) => d.services?.includes(x.id)).map((x) => x.label.ms).join(', ') || null,
+        d.halal ? `dakwaan: ${HALAL_LABEL[d.halal].ms}` : null,
       ]
     : car
-    ? [d.brand && d.model ? `${d.brand} ${d.model}` : null, d.year, d.transmission === 'manual' ? 'Manual' : 'Auto', d.seats ? `${d.seats} tempat duduk` : null, FUELS.find((x) => x.id === d.fuel)?.label, l.service_radius_km ? `servis ${l.service_radius_km} km` : null, l.insurance_expires_on ? `insurans tamat ${l.insurance_expires_on}` : 'tiada maklumat insurans']
-    : [HOMESTAY_TYPES.find((x) => x.id === d.type)?.label, d.bedrooms !== undefined ? `${d.bedrooms} bilik` : null, d.max_guests ? `${d.max_guests} tetamu` : null, (d.amenities ?? []).map((a) => AMENITIES.find((x) => x.id === a)?.label).filter(Boolean).join(', ') || null];
+    ? [d.brand && d.model ? `${d.brand} ${d.model}` : null, d.year, d.transmission === 'manual' ? 'Manual' : 'Auto', d.seats ? `${d.seats} tempat duduk` : null, FUELS.find((x) => x.id === d.fuel)?.label.ms, l.service_radius_km ? `servis ${l.service_radius_km} km` : null, l.insurance_expires_on ? `insurans tamat ${l.insurance_expires_on}` : 'tiada maklumat insurans']
+    : [HOMESTAY_TYPES.find((x) => x.id === d.type)?.label.ms, d.bedrooms !== undefined ? `${d.bedrooms} bilik` : null, d.max_guests ? `${d.max_guests} tetamu` : null, (d.amenities ?? []).map((a) => AMENITIES.find((x) => x.id === a)?.label.ms).filter(Boolean).join(', ') || null];
 
   return (
     <li className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-ink-200 dark:bg-ink-900 dark:ring-ink-800">
@@ -89,7 +89,7 @@ function Card({ l, urls, onDone }: { l: ListingForReview; urls: Record<string, s
           <p className="font-bold">{l.title}</p>
           <p className="text-xs text-ink-500">{l.operator?.business_name} · {car ? 'Kereta sewa' : food ? 'Kedai makan' : 'Homestay'}</p>
         </div>
-        <span className={cn('shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold', s.tone)}>{s.text}</span>
+        <span className={cn('shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold', s.tone)}>{s.text.ms}</span>
       </div>
       <p className="mt-2 text-sm">
         {food ? <>± <strong>{rm(l.price)}</strong> seorang</> : <><strong>{rm(l.price)}</strong>/{car ? 'hari' : 'malam'}</>}
@@ -111,7 +111,7 @@ function Card({ l, urls, onDone }: { l: ListingForReview; urls: Record<string, s
           <li key={p.id} className="overflow-hidden rounded-xl ring-1 ring-ink-200 dark:ring-ink-700">
             <div className="relative aspect-square bg-ink-100 dark:bg-ink-800">
               {urls[p.path] && <a href={urls[p.path]} target="_blank" rel="noreferrer"><img src={urls[p.path]} alt="" className="size-full object-cover" /></a>}
-              <span className={cn('absolute left-1 top-1 rounded px-1 text-[10px] font-bold', PHOTO_STATUS[p.status].tone)}>{PHOTO_STATUS[p.status].text}</span>
+              <span className={cn('absolute left-1 top-1 rounded px-1 text-[10px] font-bold', PHOTO_STATUS[p.status].tone)}>{PHOTO_STATUS[p.status].text.ms}</span>
             </div>
             {p.status === 'pending' && (
               <div className="grid grid-cols-2">

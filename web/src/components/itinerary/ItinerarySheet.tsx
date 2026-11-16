@@ -3,18 +3,20 @@ import { Button } from '@/components/ui/Button';
 import { Sheet } from '@/components/ui/Sheet';
 import { useItinerary } from '@/contexts/ItineraryContext';
 import { cn } from '@/lib/cn';
+import { useT } from '@/lib/i18n';
 
 /** The day's stops: reorder, remove, and drive them one by one. */
 export function ItinerarySheet({ onClose }: { onClose: () => void }) {
+  const [t] = useT();
   const { stops, nextIndex, activeIndex, remove, move, clear, goNext, skip } = useItinerary();
   const left = stops.filter((s) => !s.done).length;
   return (
-    <Sheet title="Itinerari" onClose={onClose}>
+    <Sheet title={t('Itinerari', 'Itinerary')} onClose={onClose}>
       {stops.length === 0 ? (
         <div className="space-y-2 text-sm text-ink-600 dark:text-ink-300">
-          <p>Senarai hentian untuk hari ini, contohnya lawatan pelancong, hantar barang, atau singgah rumah saudara masa balik kampung.</p>
+          <p>{t('Senarai hentian untuk hari ini, contohnya lawatan pelancong, hantar barang, atau singgah rumah saudara masa balik kampung.', 'A list of stops for today, e.g. a tour, deliveries, or visiting relatives on the way home for the holidays.')}</p>
           <p>
-            Cari tempat (atau tekan lama di peta), kemudian tekan <strong>“+ Itinerari”</strong> pada kad tempat itu.
+            {t('Cari tempat (atau tekan lama di peta), kemudian tekan', 'Search for a place (or long-press the map), then tap')} <strong>{t('“+ Itinerari”', '“+ Itinerary”')}</strong> {t('pada kad tempat itu.', 'on that place’s card.')}
           </p>
         </div>
       ) : (
@@ -33,28 +35,28 @@ export function ItinerarySheet({ onClose }: { onClose: () => void }) {
                 <div className="min-w-0 flex-1">
                   <p className={cn('truncate text-sm font-semibold', s.done && 'line-through')}>{s.place.name}</p>
                   {s.place.address && <p className="truncate text-xs text-ink-500">{s.place.address}</p>}
-                  {i === activeIndex && <p className="text-xs font-semibold text-violet-600">Sedang menuju</p>}
+                  {i === activeIndex && <p className="text-xs font-semibold text-violet-600">{t('Sedang menuju', 'Heading to')}</p>}
                 </div>
                 <div className="flex shrink-0 items-center">
-                  <IconBtn label={`Naik: ${s.place.name}`} onClick={() => move(i, -1)} disabled={i === 0}>
+                  <IconBtn label={t(`Naik: ${s.place.name}`, `Move up: ${s.place.name}`)} onClick={() => move(i, -1)} disabled={i === 0}>
                     <ArrowUp className="size-4" />
                   </IconBtn>
-                  <IconBtn label={`Turun: ${s.place.name}`} onClick={() => move(i, 1)} disabled={i === stops.length - 1}>
+                  <IconBtn label={t(`Turun: ${s.place.name}`, `Move down: ${s.place.name}`)} onClick={() => move(i, 1)} disabled={i === stops.length - 1}>
                     <ArrowDown className="size-4" />
                   </IconBtn>
                   {!s.done && i !== activeIndex && (
-                    <IconBtn label={`Langkau: ${s.place.name}`} onClick={() => skip(i)}>
+                    <IconBtn label={t(`Langkau: ${s.place.name}`, `Skip: ${s.place.name}`)} onClick={() => skip(i)}>
                       <SkipForward className="size-4" />
                     </IconBtn>
                   )}
-                  <IconBtn label={`Buang: ${s.place.name}`} onClick={() => remove(i)}>
+                  <IconBtn label={t(`Buang: ${s.place.name}`, `Remove: ${s.place.name}`)} onClick={() => remove(i)}>
                     <Trash2 className="size-4" />
                   </IconBtn>
                 </div>
               </li>
             ))}
           </ol>
-          <p className="mt-2 text-xs text-ink-500">{left === 0 ? 'Semua hentian selesai 🎉' : `${left} hentian lagi.`}</p>
+          <p className="mt-2 text-xs text-ink-500">{left === 0 ? t('Semua hentian selesai 🎉', 'All stops done 🎉') : t(`${left} hentian lagi.`, `${left} stops left.`)}</p>
           <div className="mt-3 grid grid-cols-[1fr_auto] gap-2">
             <Button
               className="py-3"
@@ -65,10 +67,10 @@ export function ItinerarySheet({ onClose }: { onClose: () => void }) {
               }}
             >
               <Navigation className="size-4" fill="currentColor" />
-              {nextIndex === -1 ? 'Selesai' : `Pergi: ${stops[nextIndex].place.name.slice(0, 22)}`}
+              {nextIndex === -1 ? t('Selesai', 'Done') : t(`Pergi: ${stops[nextIndex].place.name.slice(0, 22)}`, `Go: ${stops[nextIndex].place.name.slice(0, 22)}`)}
             </Button>
             <Button variant="ghost" onClick={clear}>
-              Kosongkan
+              {t('Kosongkan', 'Clear')}
             </Button>
           </div>
         </>

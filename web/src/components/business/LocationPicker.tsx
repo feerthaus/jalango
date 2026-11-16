@@ -8,6 +8,7 @@ import { DEFAULT_CENTER, env, features } from '@/lib/config';
 import { styleFor } from '@/lib/mapStyles';
 import { reverseGeocode, searchPlaces } from '@/services/geocodingService';
 import type { Coordinates, Place } from '@/types';
+import { useT } from '@/lib/i18n';
 
 if (env.mapboxToken) mapboxgl.accessToken = env.mapboxToken;
 
@@ -16,6 +17,7 @@ if (env.mapboxToken) mapboxgl.accessToken = env.mapboxToken;
  * link), or drag the pin. Reports the point and a short area name.
  */
 export function LocationPicker({ value, onChange }: { value: Coordinates | null; onChange: (c: Coordinates, areaHint?: string) => void }) {
+  const [t] = useT();
   const box = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const marker = useRef<mapboxgl.Marker | null>(null);
@@ -103,11 +105,11 @@ export function LocationPicker({ value, onChange }: { value: Coordinates | null;
           }}
           className="flex shrink-0 items-center gap-1.5 rounded-xl bg-jade-500 px-3 py-2 text-sm font-semibold text-white"
         >
-          {waitingGps ? <Loader2 className="size-4 animate-spin" /> : <Crosshair className="size-4" />} Lokasi saya
+          {waitingGps ? <Loader2 className="size-4 animate-spin" /> : <Crosshair className="size-4" />} {t('Lokasi saya', 'My location')}
         </button>
         <form onSubmit={search} className="flex min-w-0 flex-1 items-center gap-1 rounded-xl bg-ink-100 px-2 dark:bg-ink-800">
-          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Cari alamat / tampal link Google Maps" aria-label="Cari lokasi" className="min-w-0 flex-1 bg-transparent py-2 text-base outline-none" />
-          <button type="submit" aria-label="Cari" className="grid size-8 place-items-center">
+          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t('Cari alamat / tampal link Google Maps', 'Search an address / paste a Google Maps link')} aria-label={t('Cari lokasi', 'Search location')} className="min-w-0 flex-1 bg-transparent py-2 text-base outline-none" />
+          <button type="submit" aria-label={t('Cari', 'Search')} className="grid size-8 place-items-center">
             {busy ? <Loader2 className="size-4 animate-spin" /> : <Search className="size-4" />}
           </button>
         </form>
@@ -131,8 +133,8 @@ export function LocationPicker({ value, onChange }: { value: Coordinates | null;
           ))}
         </ul>
       )}
-      <div ref={box} className="h-56 w-full overflow-hidden rounded-xl bg-ink-100 dark:bg-ink-800" aria-label="Peta lokasi: seret pin atau tekan peta" />
-      <p className="text-xs text-ink-500">{value ? `📍 ${value.lat.toFixed(5)}, ${value.lng.toFixed(5)} · seret pin untuk betulkan` : 'Tekan "Lokasi saya" di premis, cari alamat, atau tekan peta.'}</p>
+      <div ref={box} className="h-56 w-full overflow-hidden rounded-xl bg-ink-100 dark:bg-ink-800" aria-label={t('Peta lokasi: seret pin atau tekan peta', 'Location map: drag the pin or tap the map')} />
+      <p className="text-xs text-ink-500">{value ? t(`📍 ${value.lat.toFixed(5)}, ${value.lng.toFixed(5)} · seret pin untuk betulkan`, `📍 ${value.lat.toFixed(5)}, ${value.lng.toFixed(5)} · drag the pin to adjust`) : t('Tekan "Lokasi saya" di premis, cari alamat, atau tekan peta.', 'Tap "My location" at the premises, search an address, or tap the map.')}</p>
     </div>
   );
 }

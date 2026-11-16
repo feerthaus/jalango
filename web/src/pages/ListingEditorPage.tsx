@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { PagePanel } from '@/components/ui/PagePanel';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/cn';
-import { AMENITIES, DAYS_MS, FOOD_SERVICES, FOOD_TYPES, FUELS, HOMESTAY_TYPES, LISTING_STATUS, PHOTO_STATUS } from '@/lib/listingLabels';
+import { AMENITIES, DAYS, FOOD_SERVICES, FOOD_TYPES, FUELS, HOMESTAY_TYPES, LISTING_STATUS, PHOTO_STATUS } from '@/lib/listingLabels';
 import {
   deleteListing,
   deleteListingPhoto,
@@ -31,6 +31,7 @@ import {
 } from '@/services/listingService';
 import { fetchMyOperator, type Operator } from '@/services/operatorService';
 import type { Coordinates } from '@/types';
+import { useT } from '@/lib/i18n';
 
 const input = 'mt-1 w-full rounded-xl bg-ink-100 px-3 py-2.5 text-base font-normal outline-none ring-jade-500 focus:ring-2 dark:bg-ink-800';
 const label = 'block text-sm font-semibold';
@@ -38,6 +39,7 @@ type Form = Omit<ListingInput, 'latitude' | 'longitude' | 'price'> & { price: st
 
 /** Create / edit one listing: a rental car or a homestay unit. */
 export function ListingEditorPage() {
+  const [t] = useT();
   const { id = 'new' } = useParams();
   const { user, loading } = useAuth();
   const navigate = useNavigate();
@@ -63,7 +65,7 @@ export function ListingEditorPage() {
 
   const back = (
     <Link to="/business" className="mb-2 inline-flex items-center gap-1 text-sm font-semibold text-jade-700 dark:text-jade-400">
-      <ArrowLeft className="size-4" /> Bisnes saya
+      <ArrowLeft className="size-4" /> {t('Bisnes saya', 'My business')}
     </Link>
   );
   if (loading || (user && !loaded)) return <PagePanel title="Listing"><Loader2 className="mx-auto mt-6 size-6 animate-spin text-ink-400" /></PagePanel>;
@@ -71,13 +73,13 @@ export function ListingEditorPage() {
     return (
       <PagePanel title="Listing">
         {back}
-        <p className="text-sm text-ink-500">Listing hanya boleh dibuat selepas bisnes anda diluluskan.</p>
+        <p className="text-sm text-ink-500">{t('Listing hanya boleh dibuat selepas bisnes anda diluluskan.', 'Listings can only be created after your business is approved.')}</p>
       </PagePanel>
     );
   if (id !== 'new' && !listing) return <PagePanel title="Listing">{back}<p className="text-sm text-ink-500">{error ?? 'Listing tidak dijumpai.'}</p></PagePanel>;
 
   return (
-    <PagePanel title={listing ? listing.title : operator.kind === 'car_rental' ? 'Tambah kereta' : operator.kind === 'food' ? 'Tambah kedai makan' : 'Tambah unit homestay'}>
+    <PagePanel title={listing ? listing.title : operator.kind === 'car_rental' ? t('Tambah kereta', 'Add car') : operator.kind === 'food' ? t('Tambah kedai makan', 'Add food business') : t('Tambah unit homestay', 'Add homestay unit')}>
       {back}
       <Editor key={listing?.id ?? 'new'} userId={user.id} operator={operator} listing={listing} onSaved={(l) => { setListing(l); if (id === 'new') navigate(`/business/listings/${l.id}`, { replace: true }); }} onDeleted={() => navigate('/business')} />
     </PagePanel>
@@ -85,6 +87,7 @@ export function ListingEditorPage() {
 }
 
 function Editor({ userId, operator, listing, onSaved, onDeleted }: { userId: string; operator: Operator; listing: Listing | null; onSaved: (l: Listing) => void; onDeleted: () => void }) {
+  const [t] = useT();
   const car = operator.kind === 'car_rental';
   const food = operator.kind === 'food';
   const [f, setF] = useState<Form>(() => ({
@@ -119,11 +122,11 @@ function Editor({ userId, operator, listing, onSaved, onDeleted }: { userId: str
 
   const save = async (status: 'draft' | 'pending' | 'live' | 'paused') => {
     setError(null);
-    if (f.title.trim().length < 3) return setError('Tajuk sekurang-kurangnya 3 aksara.');
+    if (f.title.trim().length < 3) return setError(t('Tajuk sekurang-kurangnya 3 aksara.', 'The title needs at least 3 characters.'));
     const price = Number(f.price);
-    if (!(price >= 1)) return setError(car ? 'Masukkan harga sehari.' : food ? 'Masukkan anggaran harga makan seorang.' : 'Masukkan harga semalam.');
-    if (food && (d.menu ?? []).some((m) => !m.name.trim())) return setError('Isi nama setiap hidangan dalam menu, atau buang baris kosong.');
-    if (!f.at) return setError('Tetapkan lokasi di peta.');
+    if (!(price >= 1)) return setError(car ? t('Masukkan harga sehari.', 'Enter the price per day.') : food ? t('Masukkan anggaran harga makan seorang.', 'Enter the approximate price per person.') : t('Masukkan harga semalam.', 'Enter the price per night.'));
+    if (food && (d.menu ?? []).some((m) => !m.name.trim())) return setError(t('Isi nama setiap hidangan dalam menu, atau buang baris kosong.', 'Fill in a name for every dish in the menu, or remove empty rows.'));
+    if (!f.at) return setError(t('Tetapkan lokasi di peta.', 'Set the location on the map.'));
     setBusy(status);
     try {
       const body: ListingInput = {
@@ -153,116 +156,116 @@ function Editor({ userId, operator, listing, onSaved, onDeleted }: { userId: str
     <div className="space-y-3">
       {listing && s && (
         <div className="rounded-2xl bg-white p-3 shadow-sm ring-1 ring-ink-200 dark:bg-ink-900 dark:ring-ink-800">
-          <span className={cn('rounded-full px-2 py-0.5 text-xs font-semibold', s.tone)}>{s.text}</span>
-          {listing.status === 'pending' && <p className="mt-1 text-xs text-ink-500">Admin JalanGo akan menyemak maklumat dan gambar sebelum disiarkan.</p>}
-          {listing.status === 'rejected' && listing.review_note && <p className="mt-1 text-sm"><strong>Nota admin:</strong> {listing.review_note}</p>}
+          <span className={cn('rounded-full px-2 py-0.5 text-xs font-semibold', s.tone)}>{t(s.text)}</span>
+          {listing.status === 'pending' && <p className="mt-1 text-xs text-ink-500">{t('Admin JalanGo akan menyemak maklumat dan gambar sebelum disiarkan.', 'JalanGo admins will check the details and photos before publishing.')}</p>}
+          {listing.status === 'rejected' && listing.review_note && <p className="mt-1 text-sm"><strong>{t('Nota admin:', 'Admin note:')}</strong> {listing.review_note}</p>}
         </div>
       )}
 
       <section className="space-y-3 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-ink-200 dark:bg-ink-900 dark:ring-ink-800">
-        <p className="font-bold">Maklumat</p>
-        <label className={label}>Tajuk<input className={input} value={f.title} maxLength={80} onChange={(e) => set('title', e.target.value)} placeholder={car ? 'cth. Perodua Myvi 1.5 AV 2022' : food ? 'cth. Warung Mak Teh Nasi Kerabu' : 'cth. Homestay Kayu 3 Bilik dekat Pantai'} /></label>
+        <p className="font-bold">{t('Maklumat', 'Details')}</p>
+        <label className={label}>{t('Tajuk', 'Title')}<input className={input} value={f.title} maxLength={80} onChange={(e) => set('title', e.target.value)} placeholder={car ? t('cth. Perodua Myvi 1.5 AV 2022', 'e.g. Perodua Myvi 1.5 AV 2022') : food ? t('cth. Warung Mak Teh Nasi Kerabu', 'e.g. Warung Mak Teh Nasi Kerabu') : t('cth. Homestay Kayu 3 Bilik dekat Pantai', 'e.g. 3-Bedroom Wooden Homestay near the Beach')} /></label>
         {car ? (
           <>
             <div className="grid grid-cols-2 gap-2">
-              <label className={label}>Jenama<input className={input} value={d.brand ?? ''} maxLength={30} onChange={(e) => setD({ brand: e.target.value })} placeholder="Perodua" /></label>
+              <label className={label}>{t('Jenama', 'Brand')}<input className={input} value={d.brand ?? ''} maxLength={30} onChange={(e) => setD({ brand: e.target.value })} placeholder="Perodua" /></label>
               <label className={label}>Model<input className={input} value={d.model ?? ''} maxLength={40} onChange={(e) => setD({ model: e.target.value })} placeholder="Myvi" /></label>
-              <label className={label}>Tahun<input className={input} type="number" inputMode="numeric" min={1990} max={2030} value={d.year ?? ''} onChange={(e) => setD({ year: e.target.value ? Number(e.target.value) : undefined })} /></label>
-              <label className={label}>Tempat duduk<input className={input} type="number" inputMode="numeric" min={2} max={15} value={d.seats ?? ''} onChange={(e) => setD({ seats: e.target.value ? Number(e.target.value) : undefined })} /></label>
-              <label className={label}>Transmisi
+              <label className={label}>{t('Tahun', 'Year')}<input className={input} type="number" inputMode="numeric" min={1990} max={2030} value={d.year ?? ''} onChange={(e) => setD({ year: e.target.value ? Number(e.target.value) : undefined })} /></label>
+              <label className={label}>{t('Tempat duduk', 'Seats')}<input className={input} type="number" inputMode="numeric" min={2} max={15} value={d.seats ?? ''} onChange={(e) => setD({ seats: e.target.value ? Number(e.target.value) : undefined })} /></label>
+              <label className={label}>{t('Transmisi', 'Transmission')}
                 <select className={input} value={d.transmission ?? 'auto'} onChange={(e) => setD({ transmission: e.target.value as 'auto' | 'manual' })}>
                   <option value="auto">Auto</option>
                   <option value="manual">Manual</option>
                 </select>
               </label>
-              <label className={label}>Bahan api
+              <label className={label}>{t('Bahan api', 'Fuel')}
                 <select className={input} value={d.fuel ?? 'petrol'} onChange={(e) => setD({ fuel: e.target.value as CarDetails['fuel'] })}>
-                  {FUELS.map((x) => <option key={x.id} value={x.id}>{x.label}</option>)}
+                  {FUELS.map((x) => <option key={x.id} value={x.id}>{t(x.label)}</option>)}
                 </select>
               </label>
             </div>
-            <label className={label}>Insurans kereta ini tamat (jika ada)<input className={input} type="date" value={f.insurance_expires_on ?? ''} onChange={(e) => set('insurance_expires_on', e.target.value || null)} /></label>
+            <label className={label}>{t('Insurans kereta ini tamat (jika ada)', 'This car\'s insurance expiry (if any)')}<input className={input} type="date" value={f.insurance_expires_on ?? ''} onChange={(e) => set('insurance_expires_on', e.target.value || null)} /></label>
           </>
         ) : food ? (
           <FoodFields d={d} setD={setD} halalVerified={Boolean(operator.halal_verified_at)} />
         ) : (
           <>
             <div className="grid grid-cols-2 gap-2">
-              <label className={label}>Jenis
+              <label className={label}>{t('Jenis', 'Type')}
                 <select className={input} value={d.type ?? 'house'} onChange={(e) => setD({ type: e.target.value as HomestayDetails['type'] })}>
-                  {HOMESTAY_TYPES.map((x) => <option key={x.id} value={x.id}>{x.label}</option>)}
+                  {HOMESTAY_TYPES.map((x) => <option key={x.id} value={x.id}>{t(x.label)}</option>)}
                 </select>
               </label>
-              <label className={label}>Tetamu maksimum<input className={input} type="number" inputMode="numeric" min={1} max={50} value={d.max_guests ?? ''} onChange={(e) => setD({ max_guests: e.target.value ? Number(e.target.value) : undefined })} /></label>
-              <label className={label}>Bilik tidur<input className={input} type="number" inputMode="numeric" min={0} max={20} value={d.bedrooms ?? ''} onChange={(e) => setD({ bedrooms: e.target.value ? Number(e.target.value) : undefined })} /></label>
-              <label className={label}>Bilik air<input className={input} type="number" inputMode="numeric" min={0} max={20} value={d.bathrooms ?? ''} onChange={(e) => setD({ bathrooms: e.target.value ? Number(e.target.value) : undefined })} /></label>
-              <label className={label}>Daftar masuk<input className={input} type="time" value={d.check_in ?? '14:00'} onChange={(e) => setD({ check_in: e.target.value })} /></label>
-              <label className={label}>Daftar keluar<input className={input} type="time" value={d.check_out ?? '12:00'} onChange={(e) => setD({ check_out: e.target.value })} /></label>
+              <label className={label}>{t('Tetamu maksimum', 'Max guests')}<input className={input} type="number" inputMode="numeric" min={1} max={50} value={d.max_guests ?? ''} onChange={(e) => setD({ max_guests: e.target.value ? Number(e.target.value) : undefined })} /></label>
+              <label className={label}>{t('Bilik tidur', 'Bedrooms')}<input className={input} type="number" inputMode="numeric" min={0} max={20} value={d.bedrooms ?? ''} onChange={(e) => setD({ bedrooms: e.target.value ? Number(e.target.value) : undefined })} /></label>
+              <label className={label}>{t('Bilik air', 'Bathrooms')}<input className={input} type="number" inputMode="numeric" min={0} max={20} value={d.bathrooms ?? ''} onChange={(e) => setD({ bathrooms: e.target.value ? Number(e.target.value) : undefined })} /></label>
+              <label className={label}>{t('Daftar masuk', 'Check-in')}<input className={input} type="time" value={d.check_in ?? '14:00'} onChange={(e) => setD({ check_in: e.target.value })} /></label>
+              <label className={label}>{t('Daftar keluar', 'Check-out')}<input className={input} type="time" value={d.check_out ?? '12:00'} onChange={(e) => setD({ check_out: e.target.value })} /></label>
             </div>
             <fieldset>
-              <legend className={label}>Kemudahan</legend>
+              <legend className={label}>{t('Kemudahan', 'Amenities')}</legend>
               <div className="mt-1 flex flex-wrap gap-1.5">
                 {AMENITIES.map((a) => {
                   const on = (d.amenities ?? []).includes(a.id);
                   return (
                     <button key={a.id} type="button" aria-pressed={on} onClick={() => setD({ amenities: on ? (d.amenities ?? []).filter((x) => x !== a.id) : [...(d.amenities ?? []), a.id] })} className={cn('rounded-full px-3 py-1.5 text-xs font-semibold', on ? 'bg-jade-500 text-white' : 'bg-ink-100 dark:bg-ink-800')}>
-                      {a.label}
+                      {t(a.label)}
                     </button>
                   );
                 })}
               </div>
             </fieldset>
-            <label className={label}>Peraturan rumah (pilihan)<textarea className={cn(input, 'resize-none')} rows={2} maxLength={300} value={d.rules ?? ''} onChange={(e) => setD({ rules: e.target.value })} placeholder="cth. Tiada merokok, tiada haiwan peliharaan" /></label>
+            <label className={label}>{t('Peraturan rumah (pilihan)', 'House rules (optional)')}<textarea className={cn(input, 'resize-none')} rows={2} maxLength={300} value={d.rules ?? ''} onChange={(e) => setD({ rules: e.target.value })} placeholder={t('cth. Tiada merokok, tiada haiwan peliharaan', 'e.g. No smoking, no pets')} /></label>
           </>
         )}
         {food ? (
-          <label className={label}>Anggaran harga makan seorang (RM)<span className="block text-xs font-normal text-ink-500">Dipaparkan sebagai "± RM… seorang".</span><input className={input} type="number" inputMode="decimal" min={1} value={f.price} onChange={(e) => set('price', e.target.value)} placeholder="cth. 10" /></label>
+          <label className={label}>{t('Anggaran harga makan seorang (RM)', 'Approximate price per person (RM)')}<span className="block text-xs font-normal text-ink-500">{t('Dipaparkan sebagai "± RM… seorang".', 'Shown as "± RM… per person".')}</span><input className={input} type="number" inputMode="decimal" min={1} value={f.price} onChange={(e) => set('price', e.target.value)} placeholder={t('cth. 10', 'e.g. 10')} /></label>
         ) : (
           <div className="grid grid-cols-3 gap-2">
-            <label className={label}>{car ? 'Harga/hari (RM)' : 'Harga/malam (RM)'}<input className={input} type="number" inputMode="decimal" min={1} value={f.price} onChange={(e) => set('price', e.target.value)} /></label>
-            <label className={label}>Hujung minggu<input className={input} type="number" inputMode="decimal" min={1} value={f.weekend} onChange={(e) => set('weekend', e.target.value)} placeholder="sama" /></label>
+            <label className={label}>{car ? t('Harga/hari (RM)', 'Price/day (RM)') : t('Harga/malam (RM)', 'Price/night (RM)')}<input className={input} type="number" inputMode="decimal" min={1} value={f.price} onChange={(e) => set('price', e.target.value)} /></label>
+            <label className={label}>{t('Hujung minggu', 'Weekend')}<input className={input} type="number" inputMode="decimal" min={1} value={f.weekend} onChange={(e) => set('weekend', e.target.value)} placeholder={t('sama', 'same')} /></label>
             <label className={label}>Deposit<input className={input} type="number" inputMode="decimal" min={0} value={f.depositText} onChange={(e) => set('depositText', e.target.value)} /></label>
           </div>
         )}
-        <label className={label}>Penerangan (pilihan)<textarea className={cn(input, 'resize-none')} rows={3} maxLength={1000} value={f.description ?? ''} onChange={(e) => set('description', e.target.value)} /></label>
+        <label className={label}>{t('Penerangan (pilihan)', 'Description (optional)')}<textarea className={cn(input, 'resize-none')} rows={3} maxLength={1000} value={f.description ?? ''} onChange={(e) => set('description', e.target.value)} /></label>
       </section>
 
       <section className="space-y-2 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-ink-200 dark:bg-ink-900 dark:ring-ink-800">
-        <p className="font-bold">{car ? 'Lokasi pangkalan kereta' : food ? 'Lokasi kedai / gerai' : 'Lokasi homestay'}</p>
-        <p className="text-xs text-ink-500">{car ? 'Penyewa akan menghantar lokasi ambil/hantar mereka kepada anda melalui WhatsApp. Lokasi ini untuk carian "berdekatan".' : food ? 'Letak pin tepat di kedai atau gerai. Pemandu akan nampak kedai anda bila laluan mereka melaluinya.' : 'Lokasi tepat homestay, dipaparkan kepada pengguna dengan butang Navigasi.'}</p>
+        <p className="font-bold">{car ? t('Lokasi pangkalan kereta', 'Car base location') : food ? t('Lokasi kedai / gerai', 'Shop / stall location') : t('Lokasi homestay', 'Homestay location')}</p>
+        <p className="text-xs text-ink-500">{car ? t('Penyewa akan menghantar lokasi ambil/hantar mereka kepada anda melalui WhatsApp. Lokasi ini untuk carian "berdekatan".', 'Renters send you their pickup/drop-off location on WhatsApp. This location is used for "nearby" searches.') : food ? t('Letak pin tepat di kedai atau gerai. Pemandu akan nampak kedai anda bila laluan mereka melaluinya.', 'Put the pin exactly on the shop or stall. Drivers will see your shop when their route passes it.') : t('Lokasi tepat homestay, dipaparkan kepada pengguna dengan butang Navigasi.', 'Exact homestay location, shown to users with a Navigate button.')}</p>
         <LocationPicker value={f.at} onChange={(c, area) => { set('at', c); if (area) setF((x) => ({ ...x, at: c, area_label: area })); }} />
-        <label className={label}>Nama kawasan<input className={input} value={f.area_label} maxLength={80} onChange={(e) => set('area_label', e.target.value)} placeholder="cth. Kota Bharu, Kelantan" /></label>
+        <label className={label}>{t('Nama kawasan', 'Area name')}<input className={input} value={f.area_label} maxLength={80} onChange={(e) => set('area_label', e.target.value)} placeholder={t('cth. Kota Bharu, Kelantan', 'e.g. Kota Bharu, Kelantan')} /></label>
         {car && (
-          <label className={label}>Kawasan servis (km dari pangkalan)<input className={input} type="number" inputMode="numeric" min={1} max={300} value={f.service_radius_km ?? 30} onChange={(e) => set('service_radius_km', Number(e.target.value))} /></label>
+          <label className={label}>{t('Kawasan servis (km dari pangkalan)', 'Service area (km from base)')}<input className={input} type="number" inputMode="numeric" min={1} max={300} value={f.service_radius_km ?? 30} onChange={(e) => set('service_radius_km', Number(e.target.value))} /></label>
         )}
       </section>
 
       {error && <p role="alert" className="text-sm text-red-600">{error}</p>}
       <div className="grid grid-cols-2 gap-2">
         <Button variant="secondary" disabled={Boolean(busy)} onClick={() => void save('draft')}>
-          {busy === 'draft' && <Loader2 className="size-4 animate-spin" />} Simpan draf
+          {busy === 'draft' && <Loader2 className="size-4 animate-spin" />} {t('Simpan draf', 'Save draft')}
         </Button>
         <Button disabled={Boolean(busy)} onClick={() => void save(listing?.status === 'live' || listing?.status === 'paused' ? (listing.status as 'live' | 'paused') : 'pending')}>
-          {busy && busy !== 'draft' ? <Loader2 className="size-4 animate-spin" /> : saved ? <CheckCircle2 className="size-4" /> : <Send className="size-4" />} {listing && (listing.status === 'live' || listing.status === 'paused') ? 'Simpan perubahan' : 'Hantar untuk semakan'}
+          {busy && busy !== 'draft' ? <Loader2 className="size-4 animate-spin" /> : saved ? <CheckCircle2 className="size-4" /> : <Send className="size-4" />} {listing && (listing.status === 'live' || listing.status === 'paused') ? t('Simpan perubahan', 'Save changes') : t('Hantar untuk semakan', 'Send for review')}
         </Button>
       </div>
-      {listing && (listing.status === 'live' || listing.status === 'paused') && <p className="text-xs text-ink-500">Perubahan maklumat akan dihantar untuk semakan semula sebelum dipaparkan.</p>}
+      {listing && (listing.status === 'live' || listing.status === 'paused') && <p className="text-xs text-ink-500">{t('Perubahan maklumat akan dihantar untuk semakan semula sebelum dipaparkan.', 'Changes to the details will be reviewed again before they are shown.')}</p>}
 
       {listing ? (
         <>
           <Photos userId={userId} listing={listing} onChange={(photos) => onSaved({ ...listing, photos })} />
           {!food && (
             <section className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-ink-200 dark:bg-ink-900 dark:ring-ink-800">
-              <p className="mb-2 font-bold">Kalendar kekosongan</p>
+              <p className="mb-2 font-bold">{t('Kalendar kekosongan', 'Availability calendar')}</p>
               <Calendar listing={listing} onChange={(blocks) => onSaved({ ...listing, blocks })} />
             </section>
           )}
           <div className="grid grid-cols-2 gap-2">
             {listing.status === 'live' && (
-              <Button variant="secondary" onClick={() => void save('paused')}><Pause className="size-4" /> Jeda listing</Button>
+              <Button variant="secondary" onClick={() => void save('paused')}><Pause className="size-4" /> {t('Jeda listing', 'Pause listing')}</Button>
             )}
             {listing.status === 'paused' && (
-              <Button variant="secondary" onClick={() => void save('live')}><Play className="size-4" /> Siar semula</Button>
+              <Button variant="secondary" onClick={() => void save('live')}><Play className="size-4" /> {t('Siar semula', 'Publish again')}</Button>
             )}
             <Button
               variant="danger"
@@ -277,18 +280,19 @@ function Editor({ userId, operator, listing, onSaved, onDeleted }: { userId: str
                 }
               }}
             >
-              <Trash2 className="size-4" /> Padam
+              <Trash2 className="size-4" /> {t('Padam', 'Delete')}
             </Button>
           </div>
         </>
       ) : (
-        <p className="text-center text-xs text-ink-500">Simpan dahulu, kemudian tambah gambar dan kalendar.</p>
+        <p className="text-center text-xs text-ink-500">{t('Simpan dahulu, kemudian tambah gambar dan kalendar.', 'Save first, then add photos and the calendar.')}</p>
       )}
     </div>
   );
 }
 
 function Photos({ userId, listing, onChange }: { userId: string; listing: Listing; onChange: (p: ListingPhoto[]) => void }) {
+  const [t] = useT();
   const photos = useMemo(() => listing.photos ?? [], [listing.photos]);
   const [urls, setUrls] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
@@ -320,26 +324,26 @@ function Photos({ userId, listing, onChange }: { userId: string; listing: Listin
   return (
     <section className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-ink-200 dark:bg-ink-900 dark:ring-ink-800">
       <div className="mb-2 flex items-center justify-between">
-        <p className="font-bold">Gambar ({photos.length}/{limit})</p>
+        <p className="font-bold">{t('Gambar (', 'Photos (')}{photos.length}/{limit})</p>
         {photos.length < limit && (
           <label className={cn('flex cursor-pointer items-center gap-1 rounded-lg bg-jade-500 px-3 py-1.5 text-xs font-semibold text-white', busy && 'pointer-events-none opacity-60')}>
-            {busy ? <Loader2 className="size-3.5 animate-spin" /> : <Camera className="size-3.5" />} Tambah gambar
-            <input type="file" accept="image/*" multiple className="sr-only" aria-label="Tambah gambar" onChange={(e) => void add(e.target.files)} />
+            {busy ? <Loader2 className="size-3.5 animate-spin" /> : <Camera className="size-3.5" />} {t('Tambah gambar', 'Add photos')}
+            <input type="file" accept="image/*" multiple className="sr-only" aria-label={t('Tambah gambar', 'Add photos')} onChange={(e) => void add(e.target.files)} />
           </label>
         )}
       </div>
-      <p className="mb-2 text-xs text-ink-500">Setiap gambar disemak admin sebelum dipaparkan. Gambar pertama ialah gambar utama.</p>
+      <p className="mb-2 text-xs text-ink-500">{t('Setiap gambar disemak admin sebelum dipaparkan. Gambar pertama ialah gambar utama.', 'Every photo is checked by an admin before it is shown. The first photo is the cover.')}</p>
       {error && <p role="alert" className="mb-2 text-sm text-red-600">{error}</p>}
       <ul className="grid grid-cols-3 gap-2">
         {photos.map((p, i) => (
           <li key={p.id} className="relative aspect-square overflow-hidden rounded-xl bg-ink-100 dark:bg-ink-800">
             {urls[p.path] && <img src={urls[p.path]} alt="" className="size-full object-cover" />}
-            <span className={cn('absolute left-1 top-1 rounded px-1 text-[10px] font-bold', PHOTO_STATUS[p.status].tone)}>{i === 0 ? '★ ' : ''}{PHOTO_STATUS[p.status].text}</span>
+            <span className={cn('absolute left-1 top-1 rounded px-1 text-[10px] font-bold', PHOTO_STATUS[p.status].tone)}>{i === 0 ? '★ ' : ''}{t(PHOTO_STATUS[p.status].text)}</span>
             <div className="absolute inset-x-1 bottom-1 flex justify-between">
               {i > 0 ? (
-                <button type="button" aria-label="Jadikan gambar utama" onClick={async () => onChange(await makeCover(photos, p.id))} className="grid size-7 place-items-center rounded-full bg-ink-950/70 text-white"><Star className="size-3.5" /></button>
+                <button type="button" aria-label={t('Jadikan gambar utama', 'Make cover photo')} onClick={async () => onChange(await makeCover(photos, p.id))} className="grid size-7 place-items-center rounded-full bg-ink-950/70 text-white"><Star className="size-3.5" /></button>
               ) : <span />}
-              <button type="button" aria-label="Padam gambar" onClick={async () => { try { await deleteListingPhoto(p); onChange(photos.filter((x) => x.id !== p.id)); } catch (e) { setError(e instanceof Error ? e.message : 'Gagal.'); } }} className="grid size-7 place-items-center rounded-full bg-ink-950/70 text-white"><Trash2 className="size-3.5" /></button>
+              <button type="button" aria-label={t('Padam gambar', 'Delete photo')} onClick={async () => { try { await deleteListingPhoto(p); onChange(photos.filter((x) => x.id !== p.id)); } catch (e) { setError(e instanceof Error ? e.message : 'Gagal.'); } }} className="grid size-7 place-items-center rounded-full bg-ink-950/70 text-white"><Trash2 className="size-3.5" /></button>
             </div>
           </li>
         ))}
@@ -377,68 +381,69 @@ function Calendar({ listing, onChange }: { listing: Listing; onChange: (b: { day
 
 /** Food business: type, opening hours, services, halal claim and a short menu. */
 function FoodFields({ d, setD, halalVerified }: { d: FoodDetails; setD: (p: Partial<FoodDetails>) => void; halalVerified: boolean }) {
+  const [t] = useT();
   const menu = d.menu ?? [];
   const closed = new Set(d.closed_days ?? []);
   const setMenu = (next: MenuItem[]) => setD({ menu: next });
   return (
     <>
       <div className="grid grid-cols-2 gap-2">
-        <label className={label}>Jenis
+        <label className={label}>{t('Jenis', 'Type')}
           <select className={input} value={d.food_type ?? 'warung'} onChange={(e) => setD({ food_type: e.target.value as FoodType })}>
-            {FOOD_TYPES.map((x) => <option key={x.id} value={x.id}>{x.label}</option>)}
+            {FOOD_TYPES.map((x) => <option key={x.id} value={x.id}>{t(x.label)}</option>)}
           </select>
         </label>
         <span />
-        <label className={label}>Buka<input className={input} type="time" value={d.opens ?? ''} onChange={(e) => setD({ opens: e.target.value })} /></label>
-        <label className={label}>Tutup<input className={input} type="time" value={d.closes ?? ''} onChange={(e) => setD({ closes: e.target.value })} /></label>
+        <label className={label}>{t('Buka', 'Opens')}<input className={input} type="time" value={d.opens ?? ''} onChange={(e) => setD({ opens: e.target.value })} /></label>
+        <label className={label}>{t('Tutup', 'Closes')}<input className={input} type="time" value={d.closes ?? ''} onChange={(e) => setD({ closes: e.target.value })} /></label>
       </div>
       <fieldset>
-        <legend className={label}>Hari cuti (tutup)</legend>
+        <legend className={label}>{t('Hari cuti (tutup)', 'Days off (closed)')}</legend>
         <div className="mt-1 flex flex-wrap gap-1.5">
-          {DAYS_MS.map((name, i) => {
+          {DAYS.map((day, i) => {
             const on = closed.has(i);
             return (
-              <button key={name} type="button" aria-pressed={on} onClick={() => setD({ closed_days: on ? [...closed].filter((x) => x !== i) : [...closed, i].sort() })} className={cn('rounded-full px-3 py-1.5 text-xs font-semibold', on ? 'bg-red-600 text-white' : 'bg-ink-100 dark:bg-ink-800')}>
-                {name}
+              <button key={day.en} type="button" aria-pressed={on} onClick={() => setD({ closed_days: on ? [...closed].filter((x) => x !== i) : [...closed, i].sort() })} className={cn('rounded-full px-3 py-1.5 text-xs font-semibold', on ? 'bg-red-600 text-white' : 'bg-ink-100 dark:bg-ink-800')}>
+                {t(day)}
               </button>
             );
           })}
         </div>
       </fieldset>
       <fieldset>
-        <legend className={label}>Servis</legend>
+        <legend className={label}>{t('Servis', 'Services')}</legend>
         <div className="mt-1 flex flex-wrap gap-1.5">
           {FOOD_SERVICES.map((x) => {
             const on = (d.services ?? []).includes(x.id);
             return (
               <button key={x.id} type="button" aria-pressed={on} onClick={() => setD({ services: on ? (d.services ?? []).filter((y) => y !== x.id) : [...(d.services ?? []), x.id] })} className={cn('rounded-full px-3 py-1.5 text-xs font-semibold', on ? 'bg-jade-500 text-white' : 'bg-ink-100 dark:bg-ink-800')}>
-                {x.label}
+                {t(x.label)}
               </button>
             );
           })}
         </div>
       </fieldset>
-      <label className={label}>Status halal
+      <label className={label}>{t('Status halal', 'Halal status')}
         <select className={input} value={d.halal ?? ''} onChange={(e) => setD({ halal: (e.target.value || null) as HalalClaim | null })}>
-          <option value="">Tidak dinyatakan</option>
-          <option value="muslim_owner">Pemilik Muslim</option>
-          <option value="no_pork">Tiada daging babi</option>
-          <option value="jakim" disabled={!halalVerified}>Halal JAKIM{halalVerified ? '' : ' (sijil belum disemak)'}</option>
+          <option value="">{t('Tidak dinyatakan', 'Not stated')}</option>
+          <option value="muslim_owner">{t('Pemilik Muslim', 'Muslim owner')}</option>
+          <option value="no_pork">{t('Tiada daging babi', 'No pork')}</option>
+          <option value="jakim" disabled={!halalVerified}>Halal JAKIM{halalVerified ? '' : t(' (sijil belum disemak)', ' (certificate not checked yet)')}</option>
         </select>
         <span className="mt-1 block text-xs font-normal text-ink-500">
           {halalVerified
-            ? 'Sijil Halal JAKIM anda sudah disemak.'
-            : 'Lencana "Halal JAKIM" hanya selepas anda muat naik sijil di Bisnes saya dan admin menyemaknya. Menggunakan perkataan halal tanpa sijil adalah kesalahan di Malaysia.'}
+            ? t('Sijil Halal JAKIM anda sudah disemak.', 'Your JAKIM halal certificate has been checked.')
+            : t('Lencana "Halal JAKIM" hanya selepas anda muat naik sijil di Bisnes saya dan admin menyemaknya. Menggunakan perkataan halal tanpa sijil adalah kesalahan di Malaysia.', 'The "Halal JAKIM" badge only appears after you upload the certificate in My business and an admin checks it. Using the word halal without a certificate is an offence in Malaysia.')}
         </span>
       </label>
       <fieldset>
-        <legend className={label}>Menu ringkas ({menu.length}/{MENU_LIMIT})</legend>
+        <legend className={label}>{t('Menu ringkas (', 'Short menu (')}{menu.length}/{MENU_LIMIT})</legend>
         <ul className="mt-1 space-y-1.5">
           {menu.map((m, i) => (
             <li key={i} className="flex gap-1.5">
-              <input className={cn(input, 'mt-0 flex-1')} value={m.name} maxLength={50} placeholder="cth. Nasi kerabu ayam" aria-label={`Hidangan ${i + 1}`} onChange={(e) => setMenu(menu.map((x, j) => (j === i ? { ...x, name: e.target.value } : x)))} />
-              <input className={cn(input, 'mt-0 w-24')} type="number" inputMode="decimal" min={0} value={m.price ?? ''} placeholder="RM" aria-label={`Harga hidangan ${i + 1}`} onChange={(e) => setMenu(menu.map((x, j) => (j === i ? { ...x, price: e.target.value ? Number(e.target.value) : undefined } : x)))} />
-              <button type="button" aria-label={`Buang hidangan ${i + 1}`} onClick={() => setMenu(menu.filter((_, j) => j !== i))} className="grid w-10 shrink-0 place-items-center rounded-xl text-ink-500 hover:bg-ink-100 dark:hover:bg-ink-800">
+              <input className={cn(input, 'mt-0 flex-1')} value={m.name} maxLength={50} placeholder={t('cth. Nasi kerabu ayam', 'e.g. Nasi kerabu ayam')} aria-label={t(`Hidangan ${i + 1}`, `Dish ${i + 1}`)} onChange={(e) => setMenu(menu.map((x, j) => (j === i ? { ...x, name: e.target.value } : x)))} />
+              <input className={cn(input, 'mt-0 w-24')} type="number" inputMode="decimal" min={0} value={m.price ?? ''} placeholder="RM" aria-label={t(`Harga hidangan ${i + 1}`, `Price of dish ${i + 1}`)} onChange={(e) => setMenu(menu.map((x, j) => (j === i ? { ...x, price: e.target.value ? Number(e.target.value) : undefined } : x)))} />
+              <button type="button" aria-label={t(`Buang hidangan ${i + 1}`, `Remove dish ${i + 1}`)} onClick={() => setMenu(menu.filter((_, j) => j !== i))} className="grid w-10 shrink-0 place-items-center rounded-xl text-ink-500 hover:bg-ink-100 dark:hover:bg-ink-800">
                 <Trash2 className="size-4" />
               </button>
             </li>
@@ -446,10 +451,10 @@ function FoodFields({ d, setD, halalVerified }: { d: FoodDetails; setD: (p: Part
         </ul>
         {menu.length < MENU_LIMIT && (
           <button type="button" onClick={() => setMenu([...menu, { name: '' }])} className="mt-1.5 rounded-lg bg-ink-100 px-3 py-1.5 text-xs font-semibold dark:bg-ink-800">
-            + Tambah hidangan
+            {t('+ Tambah hidangan', '+ Add dish')}
           </button>
         )}
-        <span className="mt-1 block text-xs font-normal text-ink-500">Gambar menu penuh boleh dimuat naik di bahagian Gambar.</span>
+        <span className="mt-1 block text-xs font-normal text-ink-500">{t('Gambar menu penuh boleh dimuat naik di bahagian Gambar.', 'Full menu photos can be uploaded in the Photos section.')}</span>
       </fieldset>
     </>
   );

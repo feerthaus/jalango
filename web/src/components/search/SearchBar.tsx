@@ -31,7 +31,7 @@ export const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(function S
       )}
     >
       {open ? (
-        <button type="button" onClick={onClose} aria-label="Close search" className="grid size-10 place-items-center rounded-xl text-ink-600 hover:bg-ink-100 dark:text-ink-200 dark:hover:bg-ink-700">
+        <button type="button" onClick={onClose} aria-label={t('Tutup carian', 'Close search')} className="grid size-10 place-items-center rounded-xl text-ink-600 hover:bg-ink-100 dark:text-ink-200 dark:hover:bg-ink-700">
           <ArrowLeft className="size-5" />
         </button>
       ) : (
@@ -51,7 +51,7 @@ export const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(function S
         onFocus={onOpen}
         onKeyDown={onKeyDown}
         placeholder={t('Ke mana? Tempat, jalan, poskod…', 'Where to? Place, address, postcode…')}
-        aria-label="Search destination"
+        aria-label={t('Cari destinasi', 'Search destination')}
         role="combobox"
         aria-expanded={open}
         aria-controls="search-results"
@@ -59,12 +59,12 @@ export const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(function S
         aria-activedescendant={activeDescendant}
         className="h-full min-w-0 flex-1 bg-transparent text-base font-medium outline-none placeholder:font-normal placeholder:text-ink-400 [&::-webkit-search-cancel-button]:hidden"
       />
-      {loading && <Spinner className="mx-2 size-4 text-jade-500" label="Searching" />}
+      {loading && <Spinner className="mx-2 size-4 text-jade-500" label={t('Mencari', 'Searching')} />}
       {value && (
         <button
           type="button"
           onClick={() => onChange('')}
-          aria-label="Clear search"
+          aria-label={t('Kosongkan carian', 'Clear search')}
           className="grid size-10 place-items-center rounded-xl text-ink-500 hover:bg-ink-100 dark:hover:bg-ink-700"
         >
           <X className="size-5" />

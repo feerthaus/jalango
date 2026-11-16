@@ -54,7 +54,7 @@ export function PlaceCard({ place, onClose }: { place: Place; onClose: () => voi
 
   return (
     <article
-      aria-label={`Selected place: ${place.name}`}
+      aria-label={t(`Tempat dipilih: ${place.name}`, `Selected place: ${place.name}`)}
       className="glass pointer-events-auto animate-slide-up rounded-3xl p-4 shadow-float ring-1 ring-ink-900/5 dark:ring-white/10"
     >
       <div className="flex items-start gap-3">
@@ -64,10 +64,10 @@ export function PlaceCard({ place, onClose }: { place: Place; onClose: () => voi
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <h2 className="truncate text-lg font-bold leading-tight">{place.name}</h2>
-            {place.source === 'demo' && <DemoBadge label="Sample place" />}
+            {place.source === 'demo' && <DemoBadge label={t('Tempat contoh', 'Sample place')} />}
             {pick && (
               <span className="rounded-full bg-jade-500/15 px-2 py-0.5 text-[11px] font-semibold text-jade-700 dark:text-jade-300">
-                Community pick · {categoryMeta(pick.category).label}
+                {t('Pilihan komuniti ·', 'Community pick ·')} {t(categoryMeta(pick.category).labelMs, categoryMeta(pick.category).label)}
               </span>
             )}
           </div>
@@ -80,7 +80,7 @@ export function PlaceCard({ place, onClose }: { place: Place; onClose: () => voi
           )}
           <p className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-ink-500 dark:text-ink-400">
             {distance !== null && (
-              <span title="Straight-line distance from your location. Road distance comes with route calculation.">
+              <span title={t('Jarak garis lurus dari lokasi anda. Jarak jalan dikira bersama laluan.', 'Straight-line distance from your location. Road distance comes with route calculation.')}>
                 <strong className="font-semibold text-ink-800 dark:text-ink-100">{formatDistance(distance)}</strong> {t('dari sini (garis lurus)', 'away (straight line)')}
               </span>
             )}
@@ -90,7 +90,7 @@ export function PlaceCard({ place, onClose }: { place: Place; onClose: () => voi
         <button
           type="button"
           onClick={onClose}
-          aria-label="Close"
+          aria-label={t('Tutup', 'Close')}
           className="-mr-1 -mt-1 grid size-9 place-items-center rounded-full text-ink-500 hover:bg-ink-100 dark:hover:bg-ink-800"
         >
           <X className="size-5" />
@@ -115,7 +115,7 @@ export function PlaceCard({ place, onClose }: { place: Place; onClose: () => voi
             aria-pressed={picked}
             disabled={!user || pick.user_id === user.id}
             onClick={() => void community.toggleRecommend(pick.id).catch(() => {})}
-            title={!user ? 'Sign in to recommend' : undefined}
+            title={!user ? t('Log masuk untuk syorkan', 'Sign in to recommend') : undefined}
           >
             <ThumbsUp className="size-4" /> {pick.recommend_count}
           </Button>
@@ -145,10 +145,10 @@ export function PlaceCard({ place, onClose }: { place: Place; onClose: () => voi
       {convoy.isLeader && (
         <div className="mt-2 grid grid-cols-2 gap-2">
           <Button variant="secondary" className="text-xs text-violet-700 dark:text-violet-300" onClick={() => setForConvoy('meet')}>
-            <Users className="size-4" /> Titik berkumpul
+            <Users className="size-4" /> {t('Titik berkumpul', 'Meeting point')}
           </Button>
           <Button variant="secondary" className="text-xs text-violet-700 dark:text-violet-300" onClick={() => setForConvoy('destination')}>
-            <Users className="size-4" /> Destinasi konvoi
+            <Users className="size-4" /> {t('Destinasi konvoi', 'Convoy destination')}
           </Button>
           {convoyMsg && <p role="status" className="col-span-2 text-xs text-ink-500">{convoyMsg}</p>}
         </div>

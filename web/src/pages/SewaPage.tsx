@@ -16,16 +16,18 @@ import { supabase } from '@/lib/supabase';
 import { fetchPublicListings, type PublicListing } from '@/services/marketService';
 import type { OperatorKind } from '@/services/operatorService';
 import { haversineMeters } from '@/utils/geo';
+import { useT, type Msg } from '@/lib/i18n';
 
-const KINDS: { id: OperatorKind | 'all'; label: string; icon?: typeof Car }[] = [
-  { id: 'all', label: 'Semua' },
-  { id: 'car_rental', label: 'Kereta sewa', icon: Car },
-  { id: 'homestay', label: 'Homestay', icon: Home },
-  { id: 'food', label: 'Makan', icon: Utensils },
+const KINDS: { id: OperatorKind | 'all'; label: Msg; icon?: typeof Car }[] = [
+  { id: 'all', label: { ms: 'Semua', en: 'All' } },
+  { id: 'car_rental', label: { ms: 'Kereta sewa', en: 'Car rental' }, icon: Car },
+  { id: 'homestay', label: { ms: 'Homestay', en: 'Homestay' }, icon: Home },
+  { id: 'food', label: { ms: 'Makan', en: 'Food' }, icon: Utensils },
 ];
 
 /** "Sewa & Makan": verified car rentals, homestays and food businesses, nearest first. Never shown while driving. */
 export function SewaPage() {
+  const [t] = useT();
   const navigating = useIsNavigating();
   const [params, setParams] = useSearchParams();
   const kind = (params.get('jenis') as OperatorKind | null) ?? 'all';
@@ -64,8 +66,8 @@ export function SewaPage() {
 
   if (navigating) {
     return (
-      <PagePanel title="Sewa">
-        <EmptyState icon={Car} title="Tidak dipaparkan semasa memandu">Fokus pada jalan. Buka semula selepas anda berhenti.</EmptyState>
+      <PagePanel title={t('Sewa', 'Rent')}>
+        <EmptyState icon={Car} title={t('Tidak dipaparkan semasa memandu', 'Not shown while driving')}>{t('Fokus pada jalan. Buka semula selepas anda berhenti.', 'Focus on the road. Open it again once you’ve stopped.')}</EmptyState>
       </PagePanel>
     );
   }
@@ -83,7 +85,7 @@ export function SewaPage() {
             kind === id ? 'bg-jade-500 text-ink-950' : 'bg-white shadow-sm ring-1 ring-ink-200 dark:bg-ink-900 dark:ring-ink-800',
           )}
         >
-          {Icon && <Icon className="size-4" />} {label}
+          {Icon && <Icon className="size-4" />} {t(label)}
         </button>
       ))}
     </div>
@@ -94,7 +96,7 @@ export function SewaPage() {
       onClick={() => set('papar', view === 'peta' ? null : 'peta')}
       className="pointer-events-auto flex items-center gap-1.5 rounded-full bg-white px-3 py-2 text-sm font-semibold shadow-sm ring-1 ring-ink-200 dark:bg-ink-900 dark:ring-ink-800"
     >
-      {view === 'peta' ? <List className="size-4" /> : <MapIcon className="size-4" />} {view === 'peta' ? 'Senarai' : 'Peta'}
+      {view === 'peta' ? <List className="size-4" /> : <MapIcon className="size-4" />} {view === 'peta' ? t('Senarai', 'List') : t('Peta', 'Map')}
     </button>
   );
 
@@ -103,13 +105,13 @@ export function SewaPage() {
   }
 
   return (
-    <PagePanel title="Sewa & Makan" subtitle="Kereta sewa, homestay & kedai makan yang disemak JalanGo" action={viewSwitch}>
+    <PagePanel title={t('Sewa & Makan', 'Rent & Food')} subtitle={t('Kereta sewa, homestay & kedai makan yang disemak JalanGo', 'Rental cars, homestays & food businesses checked by JalanGo')} action={viewSwitch}>
       {toggles}
-      {!supabase && <EmptyState icon={Store} title="Belum bersambung">Senarai sewaan perlukan sambungan ke pelayan.</EmptyState>}
+      {!supabase && <EmptyState icon={Store} title={t('Belum bersambung', 'Not connected yet')}>{t('Senarai sewaan perlukan sambungan ke pelayan.', 'The rentals list needs a connection to the server.')}</EmptyState>}
       {error && <p role="alert" className="py-4 text-sm text-red-600">{error}</p>}
-      {supabase && !sorted && !error && <div className="grid place-items-center py-10"><Spinner label="Memuatkan" /></div>}
+      {supabase && !sorted && !error && <div className="grid place-items-center py-10"><Spinner label={t('Memuatkan', 'Loading')} /></div>}
       {sorted && sorted.length === 0 && (
-        <EmptyState icon={Store} title="Belum ada sewaan di sini">Operator baru sedang disemak. Cuba lagi nanti.</EmptyState>
+        <EmptyState icon={Store} title={t('Belum ada sewaan di sini', 'No rentals here yet')}>{t('Operator baru sedang disemak. Cuba lagi nanti.', 'New operators are being reviewed. Try again later.')}</EmptyState>
       )}
       <ul className="grid gap-3 sm:grid-cols-1">
         {sorted?.map(({ l, d }) => (
@@ -119,7 +121,7 @@ export function SewaPage() {
         ))}
       </ul>
       <p className="mt-6 text-center text-xs text-ink-500">
-        Ada kereta sewa, homestay atau kedai makan? <Link to="/business" className="font-semibold text-jade-600 underline">Daftar perniagaan</Link>
+        {t('Ada kereta sewa, homestay atau kedai makan?', 'Own a rental car, homestay or food business?')} <Link to="/business" className="font-semibold text-jade-600 underline">{t('Daftar perniagaan', 'Register your business')}</Link>
       </p>
     </PagePanel>
   );

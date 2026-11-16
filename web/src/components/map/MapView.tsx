@@ -21,6 +21,7 @@ import { StopMarker } from '@/components/along/StopMarker';
 import { AlongMarkers } from '@/components/along/AlongMarkers';
 import { CameraMarkers } from './CameraMarkers';
 import { useDropPin } from '@/hooks/useDropPin';
+import { useT } from '@/lib/i18n';
 
 if (env.mapboxToken) mapboxgl.accessToken = env.mapboxToken;
 
@@ -29,6 +30,7 @@ if (env.mapboxToken) mapboxgl.accessToken = env.mapboxToken;
  * re-creates the map (keeps it fast and avoids extra map loads).
  */
 export function MapView() {
+  const [t] = useT();
   const containerRef = useRef<HTMLDivElement>(null);
   const { map, setMap, following, setFollowing, selectedPlace, tileError, setTileError } = useMapContext();
   const { theme } = useTheme();
@@ -136,7 +138,7 @@ export function MapView() {
 
   return (
     <div className="absolute inset-0">
-      <div ref={containerRef} className="h-full w-full" role="region" aria-label="Map" />
+      <div ref={containerRef} className="h-full w-full" role="region" aria-label={t('Peta', 'Map')} />
       {map && <ConvoyMarkers />}
       {map && <CameraMarkers />}
       {map && <AlongMarkers />}
@@ -154,15 +156,15 @@ export function MapView() {
         <div className="absolute inset-0 grid place-items-center bg-ink-100 p-6 text-center dark:bg-ink-900">
           <div className="max-w-xs">
             <MapPinOff className="mx-auto mb-3 size-10 text-ink-400" />
-            <p className="font-semibold">Map unavailable</p>
+            <p className="font-semibold">{t('Peta tidak tersedia', 'Map unavailable')}</p>
             <p className="mt-1 text-sm text-ink-500 dark:text-ink-300">{initError}</p>
-            <p className="mt-3 text-xs text-ink-400">Search, saved places and other tabs still work.</p>
+            <p className="mt-3 text-xs text-ink-400">{t('Carian, tempat disimpan dan tab lain masih berfungsi.', 'Search, saved places and other tabs still work.')}</p>
           </div>
         </div>
       )}
       {!initError && !map && (
         <div className="pointer-events-none absolute inset-0 grid place-items-center">
-          <div className="size-8 animate-spin rounded-full border-4 border-jade-500/30 border-t-jade-500" aria-label="Loading map" />
+          <div className="size-8 animate-spin rounded-full border-4 border-jade-500/30 border-t-jade-500" aria-label={t('Memuatkan peta', 'Loading map')} />
         </div>
       )}
     </div>

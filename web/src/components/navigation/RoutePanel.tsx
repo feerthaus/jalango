@@ -40,11 +40,11 @@ export function RoutePanel() {
 
   return (
     <section
-      aria-label="Route options"
+      aria-label={t('Pilihan laluan', 'Route options')}
       className="glass pointer-events-auto flex max-h-[65dvh] animate-slide-up flex-col rounded-3xl shadow-float ring-1 ring-ink-900/5 md:max-h-[calc(100dvh-2rem)] dark:ring-white/10"
     >
       <header className="flex items-center gap-2 p-3 pb-2">
-        <button type="button" onClick={clearRoute} aria-label="Close directions" className="grid size-10 place-items-center rounded-xl hover:bg-ink-100 dark:hover:bg-ink-800">
+        <button type="button" onClick={clearRoute} aria-label={t('Tutup arahan', 'Close directions')} className="grid size-10 place-items-center rounded-xl hover:bg-ink-100 dark:hover:bg-ink-800">
           <ArrowLeft className="size-5" />
         </button>
         <div className="min-w-0 flex-1">
@@ -95,7 +95,7 @@ export function RoutePanel() {
             )}
             <ShortcutSuggestions />
             <CommunityRouteSuggestions />
-            <ul role="radiogroup" aria-label="Routes" className="space-y-2 pb-2">
+            <ul role="radiogroup" aria-label={t('Laluan', 'Routes')} className="space-y-2 pb-2">
               {routes.map((r, i) => (
                 <RouteOption key={r.id} route={r} reportCount={reportCounts[i] ?? 0} selected={i === selectedIndex} fastest={routes.length > 1 && i === fastest} onSelect={() => selectRoute(i)} />
               ))}
@@ -165,7 +165,7 @@ function RouteOption({ route, reportCount, selected, fastest, onSelect }: { rout
             {formatDuration(route.durationSeconds)}
           </span>
           <span className="text-sm text-ink-500 dark:text-ink-300">
-            {formatDistance(route.distanceMeters)} · arrive {arrivalClock(route.durationSeconds)}
+            {formatDistance(route.distanceMeters)} {t('· tiba', '· arrive')} {arrivalClock(route.durationSeconds)}
           </span>
         </div>
         <p className="mt-0.5 truncate text-sm text-ink-600 dark:text-ink-300">{route.summary ? `${t('melalui', 'via')} ${route.summary}` : t('Laluan', 'Route')}</p>

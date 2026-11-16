@@ -3,9 +3,11 @@ import { useState } from 'react';
 import { useConvoy } from '@/contexts/ConvoyContext';
 import { memberStatus } from '@/utils/convoy';
 import { ConvoySheet } from './ConvoySheet';
+import { useT } from '@/lib/i18n';
 
 /** "Konvoi · 4 kereta" pill; tap to open the member panel. Also shows why we left a convoy. */
 export function ConvoyBanner() {
+  const [t] = useT();
   const { convoy, members, notice, dismissNotice } = useConvoy();
   const [open, setOpen] = useState(false);
   if (!convoy) {
@@ -14,7 +16,7 @@ export function ConvoyBanner() {
       <div role="status" className="pointer-events-auto flex items-center gap-2 rounded-full bg-ink-900/90 py-1.5 pl-3 pr-1.5 text-xs font-semibold text-white shadow-float">
         <Users className="size-4 shrink-0" />
         <span className="min-w-0 flex-1">{notice}</span>
-        <button type="button" onClick={dismissNotice} aria-label="Dismiss" className="grid size-7 place-items-center rounded-full bg-white/15">
+        <button type="button" onClick={dismissNotice} aria-label={t('Tutup', 'Dismiss')} className="grid size-7 place-items-center rounded-full bg-white/15">
           <X className="size-3.5" />
         </button>
       </div>
@@ -31,7 +33,7 @@ export function ConvoyBanner() {
           ))}
         </span>
         <span className="min-w-0 truncate">
-          Konvoi · {members.length} kereta{offline ? ` · ${offline} hilang isyarat` : ''}
+          {t('Konvoi ·', 'Convoy ·')} {members.length} {t('kereta', 'car')}{offline ? t(` · ${offline} hilang isyarat`, ` · ${offline} lost signal`) : ''}
         </span>
       </button>
       {open && <ConvoySheet onClose={() => setOpen(false)} />}

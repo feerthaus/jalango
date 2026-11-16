@@ -12,6 +12,7 @@ import { convoyUrl, type ConvoyMember } from '@/services/convoyService';
 import { formatConvoyCode, memberPosition, memberStatus, normalizeConvoyCode, type MemberStatus } from '@/utils/convoy';
 import { formatDistance, haversineMeters } from '@/utils/geo';
 import { useMyVehicle, type Vehicle } from '@/lib/vehicle';
+import { useT } from '@/lib/i18n';
 
 function defaultName(user: ReturnType<typeof useAuth>['user']): string {
   return ((user?.user_metadata?.name as string | undefined) || user?.email?.split('@')[0] || '').slice(0, 40);
@@ -19,31 +20,33 @@ function defaultName(user: ReturnType<typeof useAuth>['user']): string {
 
 /** Create / join a convoy, or manage the one you're in. */
 export function ConvoySheet({ onClose, joinCode }: { onClose: () => void; joinCode?: string | null }) {
+  const [t] = useT();
   const { user } = useAuth();
   const { available, convoy } = useConvoy();
   if (!user) {
     return (
-      <Sheet title="Konvoi" onClose={onClose}>
-        <p className="mb-3 text-sm text-ink-600 dark:text-ink-300">Log masuk supaya rakan konvoi tahu itu memang anda. / Sign in so your group knows it’s you.</p>
+      <Sheet title={t('Konvoi', 'Convoy')} onClose={onClose}>
+        <p className="mb-3 text-sm text-ink-600 dark:text-ink-300">{t('Log masuk supaya rakan konvoi tahu itu memang anda.', 'Sign in so your group knows it’s you.')}</p>
         <AuthForm compact />
       </Sheet>
     );
   }
   if (!available) {
     return (
-      <Sheet title="Konvoi" onClose={onClose}>
-        <p className="text-sm text-ink-500">Konvoi belum disambungkan. / Convoy isn’t connected yet.</p>
+      <Sheet title={t('Konvoi', 'Convoy')} onClose={onClose}>
+        <p className="text-sm text-ink-500">{t('Konvoi belum disambungkan.', 'Convoy isn’t connected yet.')}</p>
       </Sheet>
     );
   }
   return (
-    <Sheet title={convoy ? convoy.name : 'Konvoi'} onClose={onClose}>
+    <Sheet title={convoy ? convoy.name : t('Konvoi', 'Convoy')} onClose={onClose}>
       {convoy ? <ConvoyPanel onClose={onClose} /> : <StartConvoy joinCode={joinCode ?? null} />}
     </Sheet>
   );
 }
 
 function StartConvoy({ joinCode }: { joinCode: string | null }) {
+  const [t] = useT();
   const { user } = useAuth();
   const { create, join } = useConvoy();
   const { destination: routeDest, status } = useRouting();
@@ -77,42 +80,42 @@ function StartConvoy({ joinCode }: { joinCode: string | null }) {
   return (
     <div className="space-y-3">
       <p className="text-sm text-ink-600 dark:text-ink-300">
-        Jalan beramai-ramai: semua ahli nampak kereta masing-masing di peta, destinasi sama, dan amaran suara jika ada yang ketinggalan.
+        {t('Jalan beramai-ramai: semua ahli nampak kereta masing-masing di peta, destinasi sama, dan amaran suara jika ada yang ketinggalan.', 'Drive together: every member sees each other’s car on the map, the same destination, and a voice alert if someone falls behind.')}
       </p>
       <div role="tablist" className="grid grid-cols-2 gap-1 rounded-2xl bg-ink-100 p-1 dark:bg-ink-800">
-        {(['create', 'join'] as const).map((t) => (
-          <button key={t} type="button" role="tab" aria-selected={tab === t} onClick={() => setTab(t)} className={cn('rounded-xl py-2 text-sm font-semibold', tab === t ? 'bg-white shadow dark:bg-ink-900' : 'text-ink-500')}>
-            {t === 'create' ? 'Mula konvoi' : 'Sertai dengan kod'}
+        {(['create', 'join'] as const).map((m) => (
+          <button key={m} type="button" role="tab" aria-selected={tab === m} onClick={() => setTab(m)} className={cn('rounded-xl py-2 text-sm font-semibold', tab === m ? 'bg-white shadow dark:bg-ink-900' : 'text-ink-500')}>
+            {m === 'create' ? t('Mula konvoi', 'Start convoy') : t('Sertai dengan kod', 'Join with a code')}
           </button>
         ))}
       </div>
       {tab === 'join' && (
-        <Field label="Kod konvoi / Convoy code">
+        <Field label={t('Kod konvoi', 'Convoy code')}>
           <input value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} maxLength={9} placeholder="K7M4-QX2P" autoCapitalize="characters" className="input font-mono tracking-widest" />
         </Field>
       )}
       {tab === 'create' && (
-        <Field label="Nama konvoi / Convoy name">
-          <input value={name} onChange={(e) => setName(e.target.value)} maxLength={60} placeholder="cth. Balik kampung Ipoh" className="input" />
+        <Field label={t('Nama konvoi', 'Convoy name')}>
+          <input value={name} onChange={(e) => setName(e.target.value)} maxLength={60} placeholder={t('cth. Balik kampung Ipoh', 'e.g. Balik kampung Ipoh')} className="input" />
         </Field>
       )}
-      <Field label="Nama anda dalam konvoi / Your name">
-        <input value={displayName} onChange={(e) => setDisplayName(e.target.value)} maxLength={40} placeholder="cth. Firdaus" className="input" />
+      <Field label={t('Nama anda dalam konvoi', 'Your name')}>
+        <input value={displayName} onChange={(e) => setDisplayName(e.target.value)} maxLength={40} placeholder={t('cth. Firdaus', 'e.g. Firdaus')} className="input" />
       </Field>
       {tab === 'create' && hasDest && routeDest && (
         <label className="flex items-center gap-2 text-sm">
           <input type="checkbox" checked={useDest} onChange={(e) => setUseDest(e.target.checked)} className="size-4 accent-jade-500" />
-          Destinasi: <strong className="truncate">{routeDest.name}</strong>
+          {t('Destinasi:', 'Destination:')} <strong className="truncate">{routeDest.name}</strong>
         </label>
       )}
       <VehicleToggle />
       <p className="flex items-start gap-2 text-xs text-ink-500 dark:text-ink-400">
         <ShieldCheck className="mt-0.5 size-4 shrink-0 text-jade-500" />
-        Hanya ahli konvoi nampak lokasi terkini anda (bukan sejarah). Konvoi tamat sendiri selepas 12 jam, dan anda boleh keluar bila-bila masa.
+        {t('Hanya ahli konvoi nampak lokasi terkini anda (bukan sejarah). Konvoi tamat sendiri selepas 12 jam, dan anda boleh keluar bila-bila masa.', 'Only convoy members see your latest location (not your history). The convoy ends by itself after 12 hours, and you can leave any time.')}
       </p>
       {error && <p role="alert" className="text-sm text-red-600">{error}</p>}
       <Button className="w-full py-3" onClick={submit} disabled={busy || !displayName.trim() || (tab === 'join' && !code.trim())}>
-        {busy ? <Loader2 className="size-4 animate-spin" /> : <Users className="size-4" />} {tab === 'create' ? 'Mula konvoi' : 'Sertai konvoi'}
+        {busy ? <Loader2 className="size-4 animate-spin" /> : <Users className="size-4" />} {tab === 'create' ? t('Mula konvoi', 'Start convoy') : t('Sertai konvoi', 'Join convoy')}
       </Button>
     </div>
   );
@@ -136,6 +139,7 @@ const STATUS_TEXT: Record<MemberStatus, string> = {
 };
 
 function ConvoyPanel({ onClose }: { onClose: () => void }) {
+  const [t] = useT();
   const { user } = useAuth();
   const { fix } = useLocation();
   const { destination: routeDest, status } = useRouting();
@@ -170,34 +174,34 @@ function ConvoyPanel({ onClose }: { onClose: () => void }) {
       <VehicleToggle />
 
       <section className="space-y-2">
-        <PlaceRow icon={<Flag className="size-4" />} color="#0ea5e9" title="Destinasi" place={c.destination} onGo={() => go('destination')} />
-        <PlaceRow icon={<MapPin className="size-4" />} color="#a855f7" title="Titik berkumpul" place={c.meetPoint} onGo={() => go('meet')} />
+        <PlaceRow icon={<Flag className="size-4" />} color="#0ea5e9" title={t('Destinasi', 'Destination')} place={c.destination} onGo={() => go('destination')} />
+        <PlaceRow icon={<MapPin className="size-4" />} color="#a855f7" title={t('Titik berkumpul', 'Meeting point')} place={c.meetPoint} onGo={() => go('meet')} />
         {c.isLeader && (
           <div className="flex flex-wrap gap-2">
             {routeDest && status !== 'idle' && (
               <Button variant="secondary" className="text-xs" disabled={busy !== null} onClick={() => run('dest', () => c.setDestination({ name: routeDest.name, coordinates: routeDest.coordinates }))}>
-                <Flag className="size-3.5" /> Jadikan “{routeDest.name.slice(0, 18)}” destinasi
+                <Flag className="size-3.5" /> {t('Jadikan “', 'Make “')}{routeDest.name.slice(0, 18)}{t('” destinasi', '” the destination')}
               </Button>
             )}
             {fix && (
               <Button variant="secondary" className="text-xs" disabled={busy !== null} onClick={() => run('meet', () => c.setMeetPoint({ name: 'Lokasi ketua', coordinates: fix.coordinates }))}>
-                <MapPin className="size-3.5" /> Berkumpul di lokasi saya
+                <MapPin className="size-3.5" /> {t('Berkumpul di lokasi saya', 'Meet at my location')}
               </Button>
             )}
             {c.meetPoint && (
               <Button variant="ghost" className="text-xs" disabled={busy !== null} onClick={() => run('meet-clear', () => c.setMeetPoint(null))}>
-                Buang titik berkumpul
+                {t('Buang titik berkumpul', 'Remove meeting point')}
               </Button>
             )}
           </div>
         )}
-        {c.isLeader && <p className="text-xs text-ink-500">Tip: cari tempat (cth. R&amp;R), kemudian tekan “Titik berkumpul” pada kad tempat itu.</p>}
+        {c.isLeader && <p className="text-xs text-ink-500">{t('Tip: cari tempat (cth. R&R), kemudian tekan “Titik berkumpul” pada kad tempat itu.', 'Tip: search for a place (e.g. an R&R), then tap “Meeting point” on its card.')}</p>}
       </section>
 
       <section>
         <h3 className="mb-2 flex items-center justify-between text-sm font-bold">
-          <span>{c.members.length} kereta</span>
-          <span className={cn('text-xs font-medium', c.live ? 'text-jade-600' : 'text-ink-400')}>{c.live ? '● Langsung' : '○ Kemas kini berkala'}</span>
+          <span>{c.members.length} {t('kereta', 'car')}</span>
+          <span className={cn('text-xs font-medium', c.live ? 'text-jade-600' : 'text-ink-400')}>{c.live ? t('● Langsung', '● Live') : t('○ Kemas kini berkala', '○ Periodic updates')}</span>
         </h3>
         <ul className="divide-y divide-ink-100 rounded-2xl bg-ink-50 dark:divide-ink-800 dark:bg-ink-800/50">
           {c.members.map((m) => (
@@ -217,24 +221,24 @@ function ConvoyPanel({ onClose }: { onClose: () => void }) {
       </section>
 
       {error && <p role="alert" className="text-sm text-red-600">{error}</p>}
-      <p className="text-xs text-ink-500">Tamat automatik dalam {hours >= 1 ? `${Math.floor(hours)} jam` : `${Math.round(hours * 60)} minit`}. Hanya ahli nampak lokasi anda.</p>
+      <p className="text-xs text-ink-500">{t('Tamat automatik dalam', 'Ends automatically in')} {hours >= 1 ? t(`${Math.floor(hours)} jam`, `${Math.floor(hours)} h`) : t(`${Math.round(hours * 60)} minit`, `${Math.round(hours * 60)} min`)}{t('. Hanya ahli nampak lokasi anda.', '. Only members see your location.')}</p>
 
       {c.isLeader ? (
         confirmEnd ? (
           <div className="grid grid-cols-2 gap-2">
-            <Button variant="secondary" onClick={() => setConfirmEnd(false)}>Batal</Button>
+            <Button variant="secondary" onClick={() => setConfirmEnd(false)}>{t('Batal', 'Cancel')}</Button>
             <Button variant="danger" disabled={busy !== null} onClick={() => run('end', c.end)}>
-              {busy === 'end' ? <Loader2 className="size-4 animate-spin" /> : null} Ya, tamatkan
+              {busy === 'end' ? <Loader2 className="size-4 animate-spin" /> : null} {t('Ya, tamatkan', 'Yes, end it')}
             </Button>
           </div>
         ) : (
           <Button variant="danger" className="w-full" onClick={() => setConfirmEnd(true)}>
-            Tamatkan konvoi untuk semua
+            {t('Tamatkan konvoi untuk semua', 'End the convoy for everyone')}
           </Button>
         )
       ) : (
         <Button variant="secondary" className="w-full" disabled={busy !== null} onClick={() => run('leave', c.leave)}>
-          <LogOut className="size-4" /> Keluar konvoi
+          <LogOut className="size-4" /> {t('Keluar konvoi', 'Leave convoy')}
         </Button>
       )}
     </div>
@@ -242,16 +246,17 @@ function ConvoyPanel({ onClose }: { onClose: () => void }) {
 }
 
 function PlaceRow({ icon, color, title, place, onGo }: { icon: ReactNode; color: string; title: string; place: ConvoyPlace | null; onGo: () => void }) {
+  const [t] = useT();
   return (
     <div className="flex items-center gap-3 rounded-2xl bg-ink-50 p-3 dark:bg-ink-800/50">
       <span className="grid size-8 shrink-0 place-items-center rounded-full text-white" style={{ background: color }}>{icon}</span>
       <div className="min-w-0 flex-1">
         <p className="text-xs text-ink-500">{title}</p>
-        <p className="truncate text-sm font-semibold">{place ? place.name : 'Belum ditetapkan'}</p>
+        <p className="truncate text-sm font-semibold">{place ? place.name : t('Belum ditetapkan', 'Not set yet')}</p>
       </div>
       {place && (
-        <Button variant="secondary" className="h-9 px-3 text-xs" onClick={onGo} aria-label={`Navigate to ${title}`}>
-          <Navigation className="size-3.5" /> Pergi
+        <Button variant="secondary" className="h-9 px-3 text-xs" onClick={onGo} aria-label={t(`Navigasi ke ${title}`, `Navigate to ${title}`)}>
+          <Navigation className="size-3.5" /> {t('Pergi', 'Go')}
         </Button>
       )}
     </div>
@@ -261,6 +266,7 @@ function PlaceRow({ icon, color, title, place, onGo }: { icon: ReactNode; color:
 function MemberRow({ m, isMe, isLeader, from, dest, canRemove, busy, onRemove }: {
   m: ConvoyMember; isMe: boolean; isLeader: boolean; from: { lat: number; lng: number } | null; dest: ConvoyPlace | null; canRemove: boolean; busy: boolean; onRemove: () => void;
 }) {
+  const [t] = useT();
   const pos = memberPosition(m);
   const st = memberStatus(m);
   const away = !isMe && pos && from ? haversineMeters(from, pos) : null;
@@ -271,9 +277,9 @@ function MemberRow({ m, isMe, isLeader, from, dest, canRemove, busy, onRemove }:
       <span className="size-3.5 shrink-0 rounded-full ring-2 ring-white dark:ring-ink-900" style={{ background: m.color }} />
       <div className="min-w-0 flex-1">
         <p className="flex items-center gap-1 truncate text-sm font-semibold">
-          {m.vehicle === 'motorcycle' && <span aria-label="motosikal">🏍️</span>}
+          {m.vehicle === 'motorcycle' && <span aria-label={t('motosikal', 'motorcycle')}>🏍️</span>}
           {m.display_name}
-          {isMe && <span className="text-xs font-normal text-ink-400">(anda)</span>}
+          {isMe && <span className="text-xs font-normal text-ink-400">{t('(anda)', '(you)')}</span>}
           {isLeader && <Crown className="size-3.5 text-amber-500" aria-label="Leader" />}
         </p>
         <p className="truncate text-xs text-ink-500">
@@ -284,7 +290,7 @@ function MemberRow({ m, isMe, isLeader, from, dest, canRemove, busy, onRemove }:
         </p>
       </div>
       {canRemove && (
-        <button type="button" onClick={onRemove} disabled={busy} aria-label={`Remove ${m.display_name}`} className="grid size-8 place-items-center rounded-full text-ink-400 hover:bg-red-500/10 hover:text-red-600">
+        <button type="button" onClick={onRemove} disabled={busy} aria-label={t(`Buang ${m.display_name}`, `Remove ${m.display_name}`)} className="grid size-8 place-items-center rounded-full text-ink-400 hover:bg-red-500/10 hover:text-red-600">
           {busy ? <Loader2 className="size-4 animate-spin" /> : <UserMinus className="size-4" />}
         </button>
       )}
@@ -293,6 +299,7 @@ function MemberRow({ m, isMe, isLeader, from, dest, canRemove, busy, onRemove }:
 }
 
 function ConvoyCode({ code, name }: { code: string; name: string }) {
+  const [t] = useT();
   const [copied, setCopied] = useState(false);
   const url = convoyUrl(code);
   const text = `Jom sertai konvoi “${name}” di JalanGo. Kod: ${formatConvoyCode(code)}`;
@@ -307,17 +314,17 @@ function ConvoyCode({ code, name }: { code: string; name: string }) {
   };
   return (
     <div className="rounded-2xl bg-jade-500/10 p-3">
-      <p className="text-xs text-ink-500">Kod konvoi</p>
+      <p className="text-xs text-ink-500">{t('Kod konvoi', 'Convoy code')}</p>
       <p className="font-mono text-2xl font-black tracking-[0.2em] text-jade-700 dark:text-jade-300" data-testid="convoy-code">{formatConvoyCode(code)}</p>
       <div className="mt-2 grid grid-cols-3 gap-2">
         <a href={`https://wa.me/?text=${encodeURIComponent(`${text}\n${url}`)}`} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-1.5 rounded-xl bg-[#25D366] py-2 text-sm font-semibold text-white">
           <MessageCircle className="size-4" /> WhatsApp
         </a>
         <Button variant="secondary" onClick={copy}>
-          {copied ? <Check className="size-4" /> : <Copy className="size-4" />} {copied ? 'Disalin' : 'Salin'}
+          {copied ? <Check className="size-4" /> : <Copy className="size-4" />} {copied ? t('Disalin', 'Copied') : t('Salin', 'Copy')}
         </Button>
         <Button variant="secondary" onClick={() => navigator.share?.({ title: 'JalanGo Konvoi', text, url }).catch(() => {})} disabled={typeof navigator.share !== 'function'}>
-          <Share2 className="size-4" /> Lain
+          <Share2 className="size-4" /> {t('Lain', 'More')}
         </Button>
       </div>
     </div>
@@ -326,6 +333,7 @@ function ConvoyCode({ code, name }: { code: string; name: string }) {
 
 /** "Saya naik: Kereta / Motor" — changes my icon on everyone's map. */
 function VehicleToggle() {
+  const [t] = useT();
   const [vehicle, setVehicle] = useMyVehicle();
   const opts: [Vehicle, string][] = [
     ['car', '🚗 Kereta'],
@@ -333,8 +341,8 @@ function VehicleToggle() {
   ];
   return (
     <div className="flex items-center gap-2 text-sm">
-      <span className="font-medium">Saya naik:</span>
-      <div role="radiogroup" aria-label="Kenderaan" className="grid flex-1 grid-cols-2 gap-1 rounded-xl bg-ink-100 p-1 dark:bg-ink-800">
+      <span className="font-medium">{t('Saya naik:', 'I’m riding:')}</span>
+      <div role="radiogroup" aria-label={t('Kenderaan', 'Vehicle')} className="grid flex-1 grid-cols-2 gap-1 rounded-xl bg-ink-100 p-1 dark:bg-ink-800">
         {opts.map(([v, label]) => (
           <button key={v} type="button" role="radio" aria-checked={vehicle === v} onClick={() => setVehicle(v)} className={cn('rounded-lg py-1.5 text-sm font-semibold', vehicle === v ? 'bg-white shadow-sm dark:bg-ink-600' : 'text-ink-500')}>
             {label}

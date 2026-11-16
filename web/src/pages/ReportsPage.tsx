@@ -50,28 +50,28 @@ export function ReportsPage() {
       action={
         available && (
           <Button className="px-3 py-2" onClick={() => setReportOpen(true)}>
-            <Megaphone className="size-4" /> Report
+            <Megaphone className="size-4" /> {t('Lapor', 'Report')}
           </Button>
         )
       }
     >
       {!available ? (
         <div className="rounded-2xl bg-white shadow-sm ring-1 ring-ink-200 dark:bg-ink-900 dark:ring-ink-800">
-          <EmptyState icon={Megaphone} title="Community reports not connected">
-            Reports from other drivers appear here once the Supabase database is configured. JalanGo never shows invented incidents.
+          <EmptyState icon={Megaphone} title={t('Laporan komuniti belum disambungkan', 'Community reports not connected')}>
+            {t('Laporan daripada pemandu lain dipaparkan di sini selepas pangkalan data Supabase dikonfigurasi. JalanGo tidak pernah memaparkan insiden rekaan.', 'Reports from other drivers appear here once the Supabase database is configured. JalanGo never shows invented incidents.')}
           </EmptyState>
         </div>
       ) : (
         <>
-          <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-3" role="tablist" aria-label="Filter by type">
+          <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-3" role="tablist" aria-label={t('Tapis ikut jenis', 'Filter by type')}>
             <FilterChip active={filter === 'all'} onClick={() => setFilter('all')}>
-              All ({reports.length})
+              {t('Semua (', 'All (')}{reports.length})
             </FilterChip>
-            {REPORT_TYPES.map((t) => {
-              const n = reports.filter((r) => r.report_type === t.type).length;
+            {REPORT_TYPES.map((rt) => {
+              const n = reports.filter((r) => r.report_type === rt.type).length;
               return n > 0 ? (
-                <FilterChip key={t.type} active={filter === t.type} onClick={() => setFilter(t.type)}>
-                  {t.label} ({n})
+                <FilterChip key={rt.type} active={filter === rt.type} onClick={() => setFilter(rt.type)}>
+                  {t(rt.labelMs, rt.label)} ({n})
                 </FilterChip>
               ) : null;
             })}
@@ -82,7 +82,7 @@ export function ReportsPage() {
               <EmptyState icon={AlertTriangle} title={t('Tak dapat muat laporan', 'Couldn’t load reports')}>
                 <p>{error}</p>
                 <Button variant="secondary" className="mt-3" onClick={refresh}>
-                  <RefreshCw className="size-4" /> Try again
+                  <RefreshCw className="size-4" /> {t('Cuba lagi', 'Try again')}
                 </Button>
               </EmptyState>
             ) : loading && reports.length === 0 ? (
@@ -93,10 +93,10 @@ export function ReportsPage() {
               </ul>
             ) : list.length === 0 ? (
               <EmptyState icon={ShieldCheck} title={t('Tiada laporan aktif berhampiran', 'No active reports nearby')}>
-                Roads look clear from the community’s side. Seen something? Tap <strong>Report</strong>.
+                {t('Jalan nampak lancar menurut komuniti. Nampak sesuatu? Tekan', 'Roads look clear from the community’s side. Seen something? Tap')} <strong>{t('Lapor', 'Report')}</strong>.
               </EmptyState>
             ) : (
-              <ul aria-label="Nearby reports">
+              <ul aria-label={t('Laporan berhampiran', 'Nearby reports')}>
                 {list.map(({ r, d }) => {
                   const meta = reportMeta(r.report_type);
                   const Icon = meta.icon;
@@ -107,7 +107,7 @@ export function ReportsPage() {
                           <Icon className="size-5" />
                         </span>
                         <span className="min-w-0 flex-1">
-                          <span className="block font-medium">{meta.label}</span>
+                          <span className="block font-medium">{t(meta.labelMs, meta.label)}</span>
                           <span className="block truncate text-sm text-ink-500 dark:text-ink-300">{r.description || formatRelativeTime(r.created_at)}</span>
                         </span>
                         <span className="shrink-0 text-right text-xs text-ink-500 dark:text-ink-400">
@@ -131,8 +131,7 @@ export function ReportsPage() {
           </div>
           <p className="mt-3 flex items-start gap-2 px-1 text-xs text-ink-500 dark:text-ink-400">
             <ShieldCheck className="mt-0.5 size-4 shrink-0 text-jade-500" />
-            Community reports from JalanGo users, not verified by authorities. Reports expire automatically and are cleared when other
-            drivers mark them gone.
+            {t('Laporan komuniti daripada pengguna JalanGo, tidak disahkan oleh pihak berkuasa. Laporan tamat sendiri dan dipadam bila pemandu lain menandakannya sudah tiada.', 'Community reports from JalanGo users, not verified by authorities. Reports expire automatically and are cleared when other drivers mark them gone.')}
           </p>
         </>
       )}

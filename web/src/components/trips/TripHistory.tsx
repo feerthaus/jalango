@@ -13,28 +13,31 @@ import { formatDuration } from '@/utils/format';
 import { formatDistance } from '@/utils/geo';
 import { RateTrip, TRIP_TAGS } from './RateTrip';
 import { TripRouteActions } from './SavedRoutes';
+import { useT } from '@/lib/i18n';
 
 export function TripHistory() {
+  const [t] = useT();
   const { trips } = useTrips();
   if (trips.length === 0) {
     return (
       <div className="rounded-2xl bg-white p-2 shadow-sm ring-1 ring-ink-200 dark:bg-ink-900 dark:ring-ink-800">
-        <EmptyState icon={History} title="No trips yet">
-          Trips you navigate with JalanGo are saved here, so you can rate them, go again or share a shortcut.
+        <EmptyState icon={History} title={t('Belum ada perjalanan', 'No trips yet')}>
+          {t('Perjalanan yang anda navigasi dengan JalanGo disimpan di sini, supaya anda boleh menilai, pergi lagi atau kongsi jalan pintas.', 'Trips you navigate with JalanGo are saved here, so you can rate them, go again or share a shortcut.')}
         </EmptyState>
       </div>
     );
   }
   return (
-    <ul className="space-y-2" aria-label="Trip history">
-      {trips.map((t) => (
-        <TripItem key={t.id} trip={t} />
+    <ul className="space-y-2" aria-label={t('Sejarah perjalanan', 'Trip history')}>
+      {trips.map((tr) => (
+        <TripItem key={tr.id} trip={tr} />
       ))}
     </ul>
   );
 }
 
 function TripItem({ trip }: { trip: Trip }) {
+  const [t] = useT();
   const [open, setOpen] = useState(false);
   const [sharing, setSharing] = useState(false);
   const [sharingRoute, setSharingRoute] = useState(false);
@@ -68,39 +71,39 @@ function TripItem({ trip }: { trip: Trip }) {
             <Star className="size-4" fill="currentColor" /> {trip.rating}
           </span>
         ) : (
-          <span className="shrink-0 rounded-full bg-amber-400/15 px-2 py-0.5 text-[11px] font-semibold text-amber-700 dark:text-amber-300">Rate</span>
+          <span className="shrink-0 rounded-full bg-amber-400/15 px-2 py-0.5 text-[11px] font-semibold text-amber-700 dark:text-amber-300">{t('Nilai', 'Rate')}</span>
         )}
         <ChevronDown className={cn('size-4 shrink-0 text-ink-400 transition', open && 'rotate-180')} />
       </button>
 
       {open && (
         <div className="space-y-3 border-t border-ink-100 p-3 dark:border-ink-800">
-          {trip.routeSummary && <p className="text-xs text-ink-500">Route: {trip.routeSummary}</p>}
+          {trip.routeSummary && <p className="text-xs text-ink-500">{t('Laluan:', 'Route:')} {trip.routeSummary}</p>}
           {trip.rating && trip.ratingTags?.length ? (
-            <p className="text-xs text-ink-500">{trip.ratingTags.map((t) => TRIP_TAGS.find((x) => x.id === t)?.label).filter(Boolean).join(' · ')}</p>
+            <p className="text-xs text-ink-500">{trip.ratingTags.map((id) => TRIP_TAGS.find((x) => x.id === id)?.label).filter((x) => x !== undefined).map((x) => t(x)).join(' · ')}</p>
           ) : null}
           {trip.rating && !editing ? (
             <button type="button" onClick={() => setEditing(true)} className="text-xs font-semibold text-jade-600 dark:text-jade-400">
-              Edit rating
+              {t('Ubah rating', 'Edit rating')}
             </button>
           ) : (
             <RateTrip trip={trip} compact onDone={() => setEditing(false)} />
           )}
           <div className="grid grid-cols-3 gap-2">
             <Button variant="secondary" className="px-2 text-xs" onClick={goAgain}>
-              <CornerUpRight className="size-4" /> Go again
+              <CornerUpRight className="size-4" /> {t('Pergi lagi', 'Go again')}
             </Button>
             <Button variant="secondary" className="px-2 text-xs" onClick={() => setSharing(true)} disabled={!trip.trace}>
-              <Share2 className="size-4" /> Shortcut
+              <Share2 className="size-4" /> {t('Jalan pintas', 'Shortcut')}
             </Button>
             <Button variant="danger" className="px-2 text-xs" onClick={() => removeTrip(trip.id)}>
-              <Trash2 className="size-4" /> Delete
+              <Trash2 className="size-4" /> {t('Padam', 'Delete')}
             </Button>
           </div>
           <TripRouteActions trip={trip} />
           {canShareAsCommunityRoute(trip) && (
             <Button variant="secondary" className="w-full text-xs" onClick={() => setSharingRoute(true)}>
-              <Users className="size-4" /> Kongsi sebagai laluan komuniti
+              <Users className="size-4" /> {t('Kongsi sebagai laluan komuniti', 'Share as a community route')}
             </Button>
           )}
         </div>

@@ -1,6 +1,7 @@
 import { ArrowUp, ArrowUpLeft, ArrowUpRight, CornerUpLeft, CornerUpRight, Undo2, type LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/cn';
 import type { RouteStep } from '@/types';
+import { useT } from '@/lib/i18n';
 
 const ICONS: Record<string, LucideIcon> = {
   straight: ArrowUp,
@@ -24,10 +25,11 @@ export const hasLanes = (step: RouteStep) => Boolean(step.lanes && step.lanes.le
 
 /** "Use these lanes" strip under the maneuver banner. */
 export function LaneGuide({ step }: { step: RouteStep }) {
+  const [t] = useT();
   if (!hasLanes(step)) return null;
   const lanes = step.lanes!;
   return (
-    <div className="flex items-center justify-center gap-1 border-t border-white/10 px-4 py-2" aria-label={`Lanes: use ${lanes.filter((l) => l.valid).length} of ${lanes.length}`}>
+    <div className="flex items-center justify-center gap-1 border-t border-white/10 px-4 py-2" aria-label={t(`Lorong: guna ${lanes.filter((l) => l.valid).length} daripada ${lanes.length}`, `Lanes: use ${lanes.filter((l) => l.valid).length} of ${lanes.length}`)}>
       {lanes.map((lane, i) => {
         const Icon = ICONS[laneArrow(lane.indications, step.maneuver.modifier)] ?? ArrowUp;
         return (

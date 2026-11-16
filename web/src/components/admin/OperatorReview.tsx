@@ -98,9 +98,9 @@ function OperatorCard({ o, urls, onDone }: { o: OperatorWithDocs; urls: Record<s
       <div className="flex items-start gap-2">
         <div className="min-w-0 flex-1">
           <p className="font-bold">{o.business_name}</p>
-          <p className="text-xs text-ink-500">{KIND_LABEL[o.kind]}{isApadLicensed(o) && ' · ✓ Berlesen APAD'} · {o.town}, {o.state}</p>
+          <p className="text-xs text-ink-500">{KIND_LABEL[o.kind].ms}{isApadLicensed(o) && ' · ✓ Berlesen APAD'} · {o.town}, {o.state}</p>
         </div>
-        <span className={cn('shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold', s.tone)}>{s.text}</span>
+        <span className={cn('shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold', s.tone)}>{s.text.ms}</span>
       </div>
       <dl className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
         <dt className="text-ink-500">Telefon</dt>
@@ -140,12 +140,12 @@ function OperatorCard({ o, urls, onDone }: { o: OperatorWithDocs; urls: Record<s
       </dl>
       {o.description && <p className="mt-2 text-xs italic text-ink-600 dark:text-ink-300">“{o.description}”</p>}
       {expired && <p className="mt-2 text-xs font-semibold text-red-600">⚠ Insurans atau lesen APAD sudah tamat.</p>}
-      {missing.length > 0 && <p className="mt-2 text-xs font-semibold text-amber-600">Dokumen belum ada: {missing.map((k) => DOC_LABEL[k]).join('; ')}</p>}
+      {missing.length > 0 && <p className="mt-2 text-xs font-semibold text-amber-600">Dokumen belum ada: {missing.map((k) => DOC_LABEL[k].ms).join('; ')}</p>}
       <ul className="mt-2 space-y-1">
         {o.documents.map((d) => (
           <li key={d.id} className="flex items-center gap-1.5 text-xs">
             <FileText className="size-3.5 shrink-0 text-ink-400" />
-            {urls[d.path] ? <a href={urls[d.path]} target="_blank" rel="noreferrer" className="text-sky-600 underline">{DOC_LABEL[d.kind]}</a> : DOC_LABEL[d.kind]}
+            {urls[d.path] ? <a href={urls[d.path]} target="_blank" rel="noreferrer" className="text-sky-600 underline">{DOC_LABEL[d.kind].ms}</a> : DOC_LABEL[d.kind].ms}
           </li>
         ))}
       </ul>

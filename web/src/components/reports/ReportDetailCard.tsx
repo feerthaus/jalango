@@ -48,7 +48,7 @@ export function ReportDetailCard({ report, onClose }: { report: TrafficReport; o
   };
 
   return (
-    <article aria-label={`${meta.label} report`} className="glass pointer-events-auto animate-slide-up rounded-3xl p-4 shadow-float ring-1 ring-ink-900/5 dark:ring-white/10">
+    <article aria-label={t(`Laporan ${meta.label}`, `${meta.label} report`)} className="glass pointer-events-auto animate-slide-up rounded-3xl p-4 shadow-float ring-1 ring-ink-900/5 dark:ring-white/10">
       <div className="flex items-start gap-3">
         <span className={`grid size-12 shrink-0 place-items-center rounded-2xl ${meta.tone}`}>
           <Icon className="size-6" />
@@ -73,7 +73,7 @@ export function ReportDetailCard({ report, onClose }: { report: TrafficReport; o
             </span>
           </p>
         </div>
-        <button type="button" onClick={onClose} aria-label="Close" className="-mr-1 -mt-1 grid size-9 place-items-center rounded-full text-ink-500 hover:bg-ink-100 dark:hover:bg-ink-800">
+        <button type="button" onClick={onClose} aria-label={t('Tutup', 'Close')} className="-mr-1 -mt-1 grid size-9 place-items-center rounded-full text-ink-500 hover:bg-ink-100 dark:hover:bg-ink-800">
           <X className="size-5" />
         </button>
       </div>
@@ -112,7 +112,7 @@ export function ReportDetailCard({ report, onClose }: { report: TrafficReport; o
           </Button>
         </div>
       )}
-      {!user && <p className="mt-2 text-center text-xs text-ink-400">Sign in to confirm or clear reports.</p>}
+      {!user && <p className="mt-2 text-center text-xs text-ink-400">{t('Log masuk untuk sahkan atau padam laporan.', 'Sign in to confirm or clear reports.')}</p>}
     </article>
   );
 }

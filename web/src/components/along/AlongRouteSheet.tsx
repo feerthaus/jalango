@@ -10,9 +10,11 @@ import { isOpenNow } from '@/utils/openingHours';
 import { formatDistance } from '@/utils/geo';
 import { googleMapsReviewsUrl } from '@/utils/googleMapsLink';
 import { FuelPriceCard } from '@/components/fuel/FuelPriceCard';
+import { useT } from '@/lib/i18n';
 
 /** Food, cafés, attractions, R&R and fuel ahead on the current route, with "stop here". Results are also plotted on the map. */
 export function AlongRouteSheet({ onClose }: { onClose: () => void }) {
+  const [t] = useT();
   const { addStop, stop, clearStop, destination } = useRouting();
   const { category, setCategory, rows, error, live, announce, setAnnounce } = useAlong();
   useEffect(() => {
@@ -28,19 +30,19 @@ export function AlongRouteSheet({ onClose }: { onClose: () => void }) {
   };
 
   return (
-    <Sheet title="Sepanjang laluan" onClose={onClose}>
+    <Sheet title={t('Sepanjang laluan', 'Along the route')} onClose={onClose}>
       {stop && (
         <div className="mb-3 flex items-center gap-2 rounded-2xl bg-violet-500/10 p-3 text-sm">
           <MapPinPlus className="size-4 shrink-0 text-violet-600" />
           <span className="min-w-0 flex-1 truncate">
-            Singgah di <strong>{stop.name}</strong>, kemudian ke {destination?.name}
+            {t('Singgah di', 'Stop at')} <strong>{stop.name}</strong>{t(', kemudian ke', ', then on to')} {destination?.name}
           </span>
           <button type="button" onClick={clearStop} className="flex items-center gap-1 rounded-full bg-white px-2 py-1 text-xs font-semibold text-violet-700 dark:bg-ink-900">
-            <X className="size-3.5" /> Batal
+            <X className="size-3.5" /> {t('Batal', 'Cancel')}
           </button>
         </div>
       )}
-      <div role="tablist" aria-label="Kategori" className="-mx-1 mb-2 flex gap-2 overflow-x-auto px-1 pb-1">
+      <div role="tablist" aria-label={t('Kategori', 'Category')} className="-mx-1 mb-2 flex gap-2 overflow-x-auto px-1 pb-1">
         {ALONG_CATEGORIES.map((c) => (
           <button
             key={c.id}
@@ -51,12 +53,12 @@ export function AlongRouteSheet({ onClose }: { onClose: () => void }) {
             className={cn('flex shrink-0 items-center gap-1.5 rounded-full px-3 py-2 text-sm font-semibold', category === c.id ? 'text-white' : 'bg-ink-100 dark:bg-ink-800')}
             style={category === c.id ? { background: c.color } : undefined}
           >
-            <c.icon className="size-4" /> {c.label}
+            <c.icon className="size-4" /> {t(c.label)}
           </button>
         ))}
       </div>
       <div className="mb-3 flex items-center justify-between gap-2 text-xs text-ink-500">
-        <span>Ditanda di peta dengan pin {meta.label.toLowerCase()}.</span>
+        <span>{t('Ditanda di peta dengan pin', 'Marked on the map with')} {t(meta.label).toLowerCase()}.</span>
         <div className="flex gap-1.5">
           <button
             type="button"
@@ -65,11 +67,11 @@ export function AlongRouteSheet({ onClose }: { onClose: () => void }) {
             onClick={() => setAnnounce(!announce)}
             className={cn('flex items-center gap-1 rounded-full px-2.5 py-1 font-semibold', announce ? 'bg-jade-500/15 text-jade-700 dark:text-jade-300' : 'bg-ink-100 dark:bg-ink-800')}
           >
-            {announce ? <Volume2 className="size-3.5" /> : <VolumeX className="size-3.5" />} {announce ? 'Suara: on' : 'Suara: off'}
+            {announce ? <Volume2 className="size-3.5" /> : <VolumeX className="size-3.5" />} {announce ? t('Suara: on', 'Voice: on') : t('Suara: off', 'Voice: off')}
           </button>
           {category && (
             <button type="button" onClick={() => (setCategory(null), onClose())} className="rounded-full bg-ink-100 px-2.5 py-1 font-semibold dark:bg-ink-800">
-              Buang dari peta
+              {t('Buang dari peta', 'Remove from map')}
             </button>
           )}
         </div>
@@ -78,18 +80,18 @@ export function AlongRouteSheet({ onClose }: { onClose: () => void }) {
       {category === 'petrol' && <FuelPriceCard className="mb-3" />}
 
       {!live ? (
-        <p className="text-sm text-ink-500">Carian sepanjang laluan perlukan laluan sebenar dan sambungan internet.</p>
+        <p className="text-sm text-ink-500">{t('Carian sepanjang laluan perlukan laluan sebenar dan sambungan internet.', 'Searching along the route needs a real route and an internet connection.')}</p>
       ) : rows === null ? (
         <p className="flex items-center gap-2 py-6 text-sm text-ink-500">
-          <Loader2 className="size-4 animate-spin" /> Mencari {meta.label.toLowerCase()} di depan…
+          <Loader2 className="size-4 animate-spin" /> {t('Mencari', 'Looking for')} {t(meta.label).toLowerCase()} {t('di depan…', 'ahead…')}
         </p>
       ) : (
         <>
           {error && <p role="alert" className="mb-2 text-sm text-red-600">{error}</p>}
-          {rows.length === 0 && !error && <p className="py-4 text-sm text-ink-500">Tiada {meta.label.toLowerCase()} dijumpai berhampiran laluan di depan.</p>}
+          {rows.length === 0 && !error && <p className="py-4 text-sm text-ink-500">{t('Tiada', 'No')} {t(meta.label).toLowerCase()} {t('dijumpai berhampiran laluan di depan.', 'found near the route ahead.')}</p>}
           {verified.length > 0 && (
             <>
-              <h3 className="mb-1 flex items-center gap-1 text-xs font-bold uppercase tracking-wide text-jade-600"><BadgeCheck className="size-3.5" /> {category === 'stay' ? 'Homestay disemak JalanGo' : 'Kedai disemak JalanGo'}</h3>
+              <h3 className="mb-1 flex items-center gap-1 text-xs font-bold uppercase tracking-wide text-jade-600"><BadgeCheck className="size-3.5" /> {category === 'stay' ? t('Homestay disemak JalanGo', 'Homestays checked by JalanGo') : t('Kedai disemak JalanGo', 'Shops checked by JalanGo')}</h3>
               <ul className="mb-3 divide-y divide-ink-100 dark:divide-ink-800">
                 {verified.map((r) => (
                   <PlaceItem key={r.place.id} r={r} icon={meta.icon} color={meta.color} current={stop?.id === r.place.id} onStop={() => doStop(r)} />
@@ -99,7 +101,7 @@ export function AlongRouteSheet({ onClose }: { onClose: () => void }) {
           )}
           {picks.length > 0 && (
             <>
-              <h3 className="mb-1 text-xs font-bold uppercase tracking-wide text-jade-600">Disyorkan pengguna JalanGo</h3>
+              <h3 className="mb-1 text-xs font-bold uppercase tracking-wide text-jade-600">{t('Disyorkan pengguna JalanGo', 'Recommended by JalanGo users')}</h3>
               <ul className="mb-3 divide-y divide-ink-100 dark:divide-ink-800">
                 {picks.map((r) => (
                   <PlaceItem key={r.place.id} r={r} icon={meta.icon} color={meta.color} current={stop?.id === r.place.id} onStop={() => doStop(r)} />
@@ -109,7 +111,7 @@ export function AlongRouteSheet({ onClose }: { onClose: () => void }) {
           )}
           {others.length > 0 && (
             <>
-              {(picks.length > 0 || verified.length > 0) && <h3 className="mb-1 text-xs font-bold uppercase tracking-wide text-ink-500">Lain-lain di depan</h3>}
+              {(picks.length > 0 || verified.length > 0) && <h3 className="mb-1 text-xs font-bold uppercase tracking-wide text-ink-500">{t('Lain-lain di depan', 'Others ahead')}</h3>}
               <ul className="divide-y divide-ink-100 dark:divide-ink-800">
                 {others.slice(0, 30).map((r) => (
                   <PlaceItem key={r.place.id} r={r} icon={meta.icon} color={meta.color} current={stop?.id === r.place.id} onStop={() => doStop(r)} />
@@ -118,7 +120,7 @@ export function AlongRouteSheet({ onClose }: { onClose: () => void }) {
             </>
           )}
           <p className="mt-3 text-xs text-ink-400">
-            {verified.length > 0 && (category === 'stay' ? 'Homestay disemak JalanGo: IC dan bukti pemilikan telah disemak. ' : 'Kedai disemak JalanGo: IC dan premis peniaga telah disemak. ')}Senarai tempat daripada Mapbox. Tekan ⭐ Review untuk baca review di Google Maps. 👍 = disyorkan pengguna JalanGo.{category === 'rnr' && ' Pastikan R&R berada di arah perjalanan anda.'}
+            {verified.length > 0 && (category === 'stay' ? t('Homestay disemak JalanGo: IC dan bukti pemilikan telah disemak. ', 'Homestays checked by JalanGo: IC and proof of ownership were checked. ') : t('Kedai disemak JalanGo: IC dan premis peniaga telah disemak. ', 'Shops checked by JalanGo: the seller’s IC and premises were checked. '))}{t('Senarai tempat daripada Mapbox. Tekan ⭐ Review untuk baca review di Google Maps. 👍 = disyorkan pengguna JalanGo.', 'Places from Mapbox. Tap ⭐ Review to read reviews on Google Maps. 👍 = recommended by JalanGo users.')}{category === 'rnr' && ' Pastikan R&R berada di arah perjalanan anda.'}
           </p>
         </>
       )}
@@ -133,6 +135,7 @@ export function aheadText(r: AlongRow): string {
 }
 
 function PlaceItem({ r, icon: Icon, color, current, onStop }: { r: AlongRow; icon: LucideIcon; color: string; current: boolean; onStop: () => void }) {
+  const [t] = useT();
   return (
     <li className="flex items-center gap-3 py-3">
       <span className="grid size-10 shrink-0 place-items-center rounded-xl text-white" style={{ background: r.pick || r.listing ? '#10b981' : color }}>
@@ -151,7 +154,7 @@ function PlaceItem({ r, icon: Icon, color, current, onStop }: { r: AlongRow; ico
         )}
         <p className="mt-0.5 flex flex-wrap items-center gap-x-2 text-xs text-ink-500">
           <strong className="text-ink-800 dark:text-ink-100">{aheadText(r)}</strong>
-          <span>{r.offset < 200 ? 'tepi jalan' : `${formatDistance(r.offset)} dari laluan`}</span>
+          <span>{r.offset < 200 ? t('tepi jalan', 'roadside') : t(`${formatDistance(r.offset)} dari laluan`, `${formatDistance(r.offset)} off the route`)}</span>
           {r.pick && (
             <span className="flex items-center gap-0.5 text-jade-600">
               <ThumbsUp className="size-3" /> {r.pick.recommend_count}
@@ -166,13 +169,15 @@ function PlaceItem({ r, icon: Icon, color, current, onStop }: { r: AlongRow; ico
 
 /** "Warung · Buka sekarang · ± RM10" for a checked food business, "RM180/malam · 3 bilik" for a homestay. */
 export function ListingLine({ l }: { l: NonNullable<AlongRow['listing']> }) {
-  if (l.kind !== 'food') return <>{[`${rm(l.price)}/malam`, l.details.bedrooms ? `${l.details.bedrooms} bilik` : null, l.area_label].filter(Boolean).join(' · ')}</>;
+  const [t] = useT();
+  if (l.kind !== 'food') return <>{[t(`${rm(l.price)}/malam`, `${rm(l.price)}/night`), l.details.bedrooms ? t(`${l.details.bedrooms} bilik`, `${l.details.bedrooms} bedrooms`) : null, l.area_label].filter(Boolean).join(' · ')}</>;
   const open = isOpenNow(l.details);
-  const type = FOOD_TYPES.find((x) => x.id === l.details.food_type)?.label;
-  return <>{[type, open === true ? 'Buka sekarang' : open === false ? 'Tutup' : null, `± ${rm(l.price)}`].filter(Boolean).join(' · ')}</>;
+  const ft = FOOD_TYPES.find((x) => x.id === l.details.food_type);
+  return <>{[ft ? t(ft.label) : null, open === true ? t('Buka sekarang', 'Open now') : open === false ? t('Tutup', 'Closed') : null, `± ${rm(l.price)}`].filter(Boolean).join(' · ')}</>;
 }
 
 export function StopReviewButtons({ r, current, onStop }: { r: AlongRow; current: boolean; onStop: () => void }) {
+  const [t] = useT();
   return (
     <div className="flex shrink-0 flex-col items-stretch gap-1.5">
       <button
@@ -180,16 +185,16 @@ export function StopReviewButtons({ r, current, onStop }: { r: AlongRow; current
         onClick={onStop}
         disabled={current}
         className="rounded-xl bg-violet-600 px-3 py-2 text-xs font-bold text-white disabled:bg-violet-600/40"
-        aria-label={`Singgah di ${r.place.name}`}
+        aria-label={t(`Singgah di ${r.place.name}`, `Stop at ${r.place.name}`)}
       >
-        {current ? 'Dipilih' : 'Singgah'}
+        {current ? t('Dipilih', 'Chosen') : t('Singgah', 'Stop')}
       </button>
       <a
         href={googleMapsReviewsUrl(r.place)}
         target="_blank"
         rel="noreferrer"
         className="flex items-center justify-center gap-1 rounded-xl bg-ink-100 px-2 py-1.5 text-[11px] font-semibold text-ink-700 dark:bg-ink-800 dark:text-ink-200"
-        aria-label={`Review Google untuk ${r.place.name}`}
+        aria-label={t(`Review Google untuk ${r.place.name}`, `Google reviews for ${r.place.name}`)}
       >
         <Star className="size-3 text-amber-500" fill="currentColor" /> Review
       </a>

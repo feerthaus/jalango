@@ -44,9 +44,9 @@ export function ShortcutSuggestions() {
   const jammed = delay > 180 || Boolean(selectedRoute?.congestion?.some((c) => c === 'heavy' || c === 'severe'));
 
   return (
-    <section aria-label="Community shortcuts" className="mb-2 rounded-2xl bg-violet-500/10 p-3">
+    <section aria-label={t('Jalan pintas komuniti', 'Community shortcuts')} className="mb-2 rounded-2xl bg-violet-500/10 p-3">
       <p className="flex items-center gap-1.5 text-sm font-semibold text-violet-700 dark:text-violet-300">
-        <Zap className="size-4" /> {jammed ? 'Jalan sesak? Drivers shared shortcuts here' : 'Community shortcuts on this route'}
+        <Zap className="size-4" /> {jammed ? t('Jalan sesak? Pemandu kongsi jalan pintas di sini', 'Jalan sesak? Drivers shared shortcuts here') : t('Jalan pintas komuniti di laluan ini', 'Community shortcuts on this route')}
       </p>
       <ul className="mt-2 space-y-1.5">
         {suggestions.map((s) => (
@@ -59,7 +59,7 @@ export function ShortcutSuggestions() {
               </span>
             </button>
             <button type="button" onClick={() => applyShortcut(s, destination)} className="shrink-0 rounded-lg bg-violet-500 px-3 py-1.5 text-xs font-semibold text-white">
-              Use
+              {t('Guna', 'Use')}
             </button>
           </li>
         ))}

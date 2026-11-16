@@ -57,7 +57,11 @@ CI (`.github/workflows/ci.yml`) runs `npm ci`, typecheck, test and build on ever
 
 ## Web rules
 
-- **Language:** Malay first. Write strings as `t('Malay', 'English')` using `useT()` from `lib/i18n`.
+- **Language (every new screen, every string):** Malay first, never hard-coded.
+  - Visible text, `aria-label`, `title`, `placeholder`, `alt`, toasts and `setError` messages go through `t('Malay', 'English')` from `const [t] = useT()` (`lib/i18n`).
+  - Labels kept in constants or data are `Msg` objects (`{ ms, en }`) rendered with `t(label)`, not plain strings.
+  - Thai, Indonesian and Filipino are coming: `Msg` already takes optional `th`, `id` and `fil`, and missing ones fall back to English. Adding a language means extending `Lang`, the language picker and the voice prompts; do not add a second i18n system.
+  - `src/i18n.guard.test.ts` fails CI on bare user-facing text. Brand names, units and codes go in its `SAME`/`NEUTRAL` lists; admin-only screens are skipped.
 - Label demo or sample data in the UI. Never present a guess as live data.
 - Keep pure logic in `utils/` and give it Vitest tests. Check UI flows with Playwright, mocking `/api/*` and Supabase.
 - Mobile first: test at phone width, and with the map pane and bottom panels open.

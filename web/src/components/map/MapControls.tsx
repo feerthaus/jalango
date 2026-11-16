@@ -6,9 +6,11 @@ import { useMapContext } from '@/contexts/MapContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { PITCH_3D } from '@/lib/map3d';
 import { MapModeToggle } from './MapModeToggle';
+import { useT } from '@/lib/i18n';
 
 /** Right-hand stack: theme, compass, zoom. Locate button lives separately (bottom). */
 export function MapControls() {
+  const [t] = useT();
   const { map, mapMode } = useMapContext();
   const { theme, toggle } = useTheme();
   const [bearing, setBearing] = useState(0);
@@ -36,20 +38,20 @@ export function MapControls() {
     <div className="flex flex-col gap-2">
       <MapModeToggle />
       {/* On short phones the bottom button stack reaches this high; theme stays available in Profil */}
-      <IconButton label={theme === 'dark' ? 'Switch to light map' : 'Switch to dark map'} onClick={toggle} className="[@media(max-height:620px)]:hidden">
+      <IconButton label={theme === 'dark' ? t('Tukar ke peta cerah', 'Switch to light map') : t('Tukar ke peta gelap', 'Switch to dark map')} onClick={toggle} className="[@media(max-height:620px)]:hidden">
         {theme === 'dark' ? <Sun className="size-5" /> : <Moon className="size-5" />}
       </IconButton>
       {rotated && (
-        <IconButton label="Reset map to north" onClick={() => map?.easeTo({ bearing: 0, pitch: mapMode === '3d' ? PITCH_3D : 0 })}>
+        <IconButton label={t('Kembalikan peta ke utara', 'Reset map to north')} onClick={() => map?.easeTo({ bearing: 0, pitch: mapMode === '3d' ? PITCH_3D : 0 })}>
           <Navigation2 className="size-5 text-red-500" style={{ transform: `rotate(${-bearing}deg)` }} fill="currentColor" />
         </IconButton>
       )}
       <div className="pointer-events-auto hidden flex-col overflow-hidden rounded-2xl bg-white shadow-float sm:flex dark:bg-ink-800">
-        <button type="button" aria-label="Zoom in" title="Zoom in" onClick={() => map?.zoomIn()} className="grid size-11 place-items-center hover:bg-ink-50 dark:hover:bg-ink-700">
+        <button type="button" aria-label={t('Zum masuk', 'Zoom in')} title={t('Zum masuk', 'Zoom in')} onClick={() => map?.zoomIn()} className="grid size-11 place-items-center hover:bg-ink-50 dark:hover:bg-ink-700">
           <Plus className="size-5" />
         </button>
         <span className="mx-2 h-px bg-ink-100 dark:bg-ink-700" />
-        <button type="button" aria-label="Zoom out" title="Zoom out" onClick={() => map?.zoomOut()} className="grid size-11 place-items-center hover:bg-ink-50 dark:hover:bg-ink-700">
+        <button type="button" aria-label={t('Zum keluar', 'Zoom out')} title={t('Zum keluar', 'Zoom out')} onClick={() => map?.zoomOut()} className="grid size-11 place-items-center hover:bg-ink-50 dark:hover:bg-ink-700">
           <Minus className="size-5" />
         </button>
       </div>
