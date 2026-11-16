@@ -225,6 +225,8 @@ Pelan penuh ada dalam `docs/MARKETPLACE.md`. Fasa 0 hanya pendaftaran dan penges
 
 - **Laluan dan arahan belokan:** laluan Mapbox dengan trafik langsung, beberapa pilihan laluan, dan pilihan **Elak tol**.
 - **Panduan suara BM/EN:** arahan dalam Bahasa Melayu atau Inggeris, dengan had laju dan nombor jalan.
+- **Bahasa paparan ikut tetapan BM/EN:** semua teks skrin (butang, label, mesej ralat, label kemudahan/jenis/hari) bertukar bila bahasa ditukar ke English. Ujian `i18n.guard.test.ts` gagalkan CI jika ada teks baru tanpa `t()`. Sedia untuk Thai, Indonesia dan Filipino (`Msg` terima `th`/`id`/`fil`, jatuh ke English jika tiada).
+- **Butang "Tengah" (navigasi):** bulat, di atas bulatan laju kenderaan, muncul bila peta dialih dari kereta.
 - **Laluan semula automatik:** bila pemandu tersasar dari laluan, laluan baru dicari secara automatik.
 - **Mod isyarat lemah:** laluan disimpan dalam telefon, dan banner luar talian dipaparkan bila internet terputus.
 - **Itinerari:** beberapa hentian dalam satu perjalanan.

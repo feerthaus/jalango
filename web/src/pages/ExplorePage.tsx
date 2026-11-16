@@ -80,7 +80,7 @@ export function ExplorePage() {
         <ChevronRight className="size-5" />
       </Link>
       <h2 className="px-1 pb-2 pt-2 text-xs font-semibold uppercase tracking-wider text-ink-400">{t('Berhampiran', 'Nearby')}</h2>
-      <div className="flex gap-2 overflow-x-auto pb-2" role="tablist" aria-label="Nearby categories">
+      <div className="flex gap-2 overflow-x-auto pb-2" role="tablist" aria-label={t('Kategori berhampiran', 'Nearby categories')}>
         {CATEGORIES.map(({ id, label, icon: Icon }) => (
           <button
             key={id}
@@ -216,12 +216,12 @@ function NearbyResults(props: {
   }
   if (!live) {
     return (
-      <EmptyState icon={AlertTriangle} title="Live place data not connected">
+      <EmptyState icon={AlertTriangle} title={t('Data tempat langsung belum disambungkan', 'Live place data not connected')}>
         <p>
-          Nearby petrol stations, R&amp;Rs and other places come from Mapbox and need the server’s <code>MAPBOX_ACCESS_TOKEN</code>.
+          {t('Stesen minyak, R&R dan tempat lain berhampiran datang dari Mapbox dan perlukan', 'Nearby petrol stations, R&Rs and other places come from Mapbox and need the server’s')} <code>MAPBOX_ACCESS_TOKEN</code>.
         </p>
         <p className="mt-2">
-          <DemoBadge label="Demo mode" /> We don’t show made-up locations.
+          <DemoBadge label={t('Mod demo', 'Demo mode')} /> {t('Kami tidak paparkan lokasi rekaan.', 'We don’t show made-up locations.')}
         </p>
       </EmptyState>
     );
@@ -240,7 +240,7 @@ function NearbyResults(props: {
       <EmptyState icon={AlertTriangle} title={t('Tak dapat muat tempat berhampiran', 'Couldn’t load nearby places')}>
         <p>{state.error}</p>
         <Button variant="secondary" className="mt-3" onClick={onRetry}>
-          <RefreshCw className="size-4" /> Try again
+          <RefreshCw className="size-4" /> {t('Cuba lagi', 'Try again')}
         </Button>
       </EmptyState>
     );
@@ -254,7 +254,7 @@ function NearbyResults(props: {
         {t(`Berhampiran ${originLabel ?? 'anda'}`, `Near ${originLabel ?? 'you'}`)}
         {(category === 'homestay' || category === 'car_rental' || category === 'food') && t(' · dari peta, belum disemak JalanGo', ' · from map data, not checked by JalanGo')}
       </p>
-      <ul role="listbox" aria-label="Nearby places">
+      <ul role="listbox" aria-label={t('Tempat berhampiran', 'Nearby places')}>
         {state.results.map((p) => (
           <PlaceRow key={p.id} place={p} onSelect={onSelect} />
         ))}
@@ -279,7 +279,7 @@ function CommunityShortcuts() {
       <div className="rounded-2xl bg-white p-2 shadow-sm ring-1 ring-ink-200 dark:bg-ink-900 dark:ring-ink-800">
         {shortcuts.length === 0 ? (
           <p className="p-3 text-sm text-ink-500 dark:text-ink-400">
-            No shortcuts shared around here yet. After a trip, open <strong>Saved → Trips</strong> and tap <strong>Shortcut</strong> to share the road you took.
+            {t('Belum ada jalan pintas dikongsi di sini. Selepas perjalanan, buka', 'No shortcuts shared around here yet. After a trip, open')} <strong>{t('Simpanan → Perjalanan', 'Saved → Trips')}</strong> {t('dan tekan', 'and tap')} <strong>{t('Jalan pintas', 'Shortcut')}</strong> {t('untuk kongsi jalan yang anda lalui.', 'to share the road you took.')}
           </p>
         ) : (
           <ul>

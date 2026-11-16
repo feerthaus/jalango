@@ -1,4 +1,4 @@
-import { ListOrdered, Megaphone, Radio, Users, Utensils, WifiOff } from 'lucide-react';
+import { ListOrdered, Megaphone, Radio, Users, Utensils, WifiOff, LocateFixed } from 'lucide-react';
 import { AlongRouteSheet } from '@/components/along/AlongRouteSheet';
 import { AlongLayerChip, AlongPlaceCard } from '@/components/along/AlongMarkers';
 import { ConvoyBanner } from '@/components/convoy/ConvoyBanner';
@@ -37,7 +37,7 @@ import { useT } from '@/lib/i18n';
 
 export function MapPage() {
   const [t] = useT();
-  const { selectedPlace, clearSelection, tileError } = useMapContext();
+  const { selectedPlace, clearSelection, tileError, following, setFollowing } = useMapContext();
   const { status } = useRouting();
   const { selectedReport, selectReport } = useReports();
   const { selectedShortcut, selectShortcut } = useShortcuts();
@@ -74,7 +74,7 @@ export function MapPage() {
   const onSearchOpenChange = useCallback((open: boolean) => setSearchOpen(open), []);
 
   const reportButton = (
-    <IconButton label="Report a road incident" size="lg" onClick={() => setReportOpen(true)} className="!bg-amber-400 !text-ink-950 hover:!bg-amber-300">
+    <IconButton label={t('Lapor insiden jalan', 'Report a road incident')} size="lg" onClick={() => setReportOpen(true)} className="!bg-amber-400 !text-ink-950 hover:!bg-amber-300">
       <Megaphone className="size-6" />
     </IconButton>
   );
@@ -86,11 +86,28 @@ export function MapPage() {
         {status === 'navigating' && (
           <div className="absolute inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+6.5rem+var(--host-badge-h))] z-20 space-y-3 p-3 md:bottom-28 md:w-[420px] md:p-4">
             <div className="flex items-end justify-between">
-              <SpeedIndicator />
+              {/* Re-centre sits right above the speed circle, same round shape */}
+              <div className="flex flex-col items-start gap-3">
+                {!following && (
+                  <button
+                    type="button"
+                    onClick={() => setFollowing(true)}
+                    aria-label={t('Ke tengah', 'Re-centre')}
+                    title={t('Ke tengah', 'Re-centre')}
+                    className="pointer-events-auto grid size-16 place-items-center rounded-full bg-white text-ink-900 shadow-float ring-1 ring-ink-900/5 transition active:scale-95 dark:bg-ink-800 dark:text-white dark:ring-white/10"
+                  >
+                    <span className="flex flex-col items-center gap-0.5">
+                      <LocateFixed className="size-6 text-jade-600 dark:text-jade-400" />
+                      <span className="text-[9px] font-bold uppercase tracking-wide">{t('Tengah', 'Centre')}</span>
+                    </span>
+                  </button>
+                )}
+                <SpeedIndicator />
+              </div>
               <div className="ml-auto flex flex-col items-end gap-3">
                 <MapModeToggle />
                 <ConvoyButton onOpen={() => setConvoyOpen({ code: null })} />
-                <IconButton label="Tempat makan & menarik sepanjang laluan" onClick={() => setAlongOpen(true)}>
+                <IconButton label={t('Tempat makan & menarik sepanjang laluan', 'Food & sights along the route')} onClick={() => setAlongOpen(true)}>
                   <Utensils className="size-5 text-violet-600 dark:text-violet-400" />
                 </IconButton>
                 {reportButton}
@@ -144,7 +161,7 @@ export function MapPage() {
               <ItineraryButton onOpen={() => setItineraryOpen(true)} />
               <ShareSpotButton />
               <ConvoyButton onOpen={() => setConvoyOpen({ code: null })} />
-              <IconButton label="Share live location" onClick={() => setShareOpen(true)}>
+              <IconButton label={t('Kongsi lokasi live', 'Share live location')} onClick={() => setShareOpen(true)}>
                 <Radio className="size-5 text-jade-600 dark:text-jade-400" />
               </IconButton>
               {reportButton}
@@ -191,10 +208,11 @@ export function MapPage() {
 
 /** Konvoi button; shows how many cars are in your convoy. */
 function ConvoyButton({ onOpen }: { onOpen: () => void }) {
+  const [t] = useT();
   const { convoy, members } = useConvoy();
   return (
     <div className="relative">
-      <IconButton label="Konvoi (group travel)" onClick={onOpen} active={Boolean(convoy)}>
+      <IconButton label={t('Konvoi (group travel)', 'Convoy (group travel)')} onClick={onOpen} active={Boolean(convoy)}>
         <Users className="size-5 text-violet-600 dark:text-violet-400" />
       </IconButton>
       {convoy && (
@@ -208,11 +226,12 @@ function ConvoyButton({ onOpen }: { onOpen: () => void }) {
 
 /** Itinerary button; shows how many stops are left. */
 function ItineraryButton({ onOpen }: { onOpen: () => void }) {
+  const [t] = useT();
   const { stops } = useItinerary();
   const left = stops.filter((s) => !s.done).length;
   return (
     <div className="relative">
-      <IconButton label="Itinerari (senarai hentian)" onClick={onOpen} active={left > 0}>
+      <IconButton label={t('Itinerari (senarai hentian)', 'Itinerary (list of stops)')} onClick={onOpen} active={left > 0}>
         <ListOrdered className="size-5 text-violet-700 dark:text-violet-300" />
       </IconButton>
       {left > 0 && (

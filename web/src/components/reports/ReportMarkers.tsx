@@ -6,6 +6,7 @@ import { useReports } from '@/contexts/ReportsContext';
 import { cn } from '@/lib/cn';
 import { reportMeta } from '@/lib/reportTypes';
 import type { TrafficReport } from '@/types';
+import { useT } from '@/lib/i18n';
 
 /**
  * Community reports as DOM markers. React renders each icon through a
@@ -63,6 +64,7 @@ export function ReportMarkers() {
 }
 
 function ReportPin({ report, selected, onClick }: { report: TrafficReport; selected: boolean; onClick: () => void }) {
+  const [t] = useT();
   const meta = reportMeta(report.report_type);
   const Icon = meta.icon;
   return (
@@ -72,7 +74,7 @@ function ReportPin({ report, selected, onClick }: { report: TrafficReport; selec
         e.stopPropagation();
         onClick();
       }}
-      aria-label={`${meta.label} report`}
+      aria-label={t(`Laporan ${meta.label}`, `${meta.label} report`)}
       className={cn('group relative flex flex-col items-center transition', selected ? 'z-10 scale-125' : 'hover:scale-110')}
     >
       <span className={cn('grid size-9 place-items-center rounded-full border-[3px] border-white shadow-[0_3px_8px_rgb(0_0_0/.35)]', meta.tone)}>

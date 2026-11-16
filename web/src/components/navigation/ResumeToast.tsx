@@ -1,9 +1,11 @@
 import { History, X } from 'lucide-react';
 import { useRouting } from '@/contexts/RoutingContext';
 import { useVoiceLang } from '@/hooks/useVoiceAlerts';
+import { useT } from '@/lib/i18n';
 
 /** "Continuing your trip to …" after the app reopens, with a way to cancel. */
 export function ResumeToast({ className = '' }: { className?: string }) {
+  const [t] = useT();
   const { resumedTo, dismissResumed, endNavigation } = useRouting();
   const [lang] = useVoiceLang();
   if (!resumedTo) return null;
@@ -16,7 +18,7 @@ export function ResumeToast({ className = '' }: { className?: string }) {
       <button type="button" onClick={endNavigation} className="rounded-lg px-2 py-1 text-sm font-semibold text-jade-300 hover:bg-white/10">
         {lang === 'ms' ? 'Batal' : 'Cancel'}
       </button>
-      <button type="button" onClick={dismissResumed} aria-label="Dismiss" className="grid size-8 place-items-center rounded-full text-ink-300 hover:bg-white/10">
+      <button type="button" onClick={dismissResumed} aria-label={t('Tutup', 'Dismiss')} className="grid size-8 place-items-center rounded-full text-ink-300 hover:bg-white/10">
         <X className="size-4" />
       </button>
     </div>

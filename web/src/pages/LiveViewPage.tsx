@@ -15,11 +15,13 @@ import { getPublicShare, type PublicLiveShare } from '@/services/liveShareServic
 import { formatRelativeTime } from '@/utils/format';
 import { lerp, lerpAngle } from '@/utils/motion';
 import { toKmh } from '@/utils/geo';
+import { useT } from '@/lib/i18n';
 
 const POLL_MS = 5_000;
 
 /** Public page behind a share link: someone's live position, smoothly animated. No sign-in needed. */
 export function LiveViewPage() {
+  const [t] = useT();
   const { token = '' } = useParams();
   const { theme } = useTheme();
   const containerRef = useRef<HTMLDivElement>(null);
@@ -99,12 +101,12 @@ export function LiveViewPage() {
     }
     const start = performance.now();
     const step = (now: number) => {
-      const t = Math.min(1, (now - start) / POLL_MS);
-      const cur = { lng: lerp(from.lng, target.lng, t), lat: lerp(from.lat, target.lat, t), bearing: lerpAngle(from.bearing, target.bearing, Math.min(1, t * 2)) };
+      const k = Math.min(1, (now - start) / POLL_MS);
+      const cur = { lng: lerp(from.lng, target.lng, k), lat: lerp(from.lat, target.lat, k), bearing: lerpAngle(from.bearing, target.bearing, Math.min(1, k * 2)) };
       shown.current = cur;
       car.setLngLat([cur.lng, cur.lat]).setRotation(cur.bearing);
       if (follow) map.setCenter([cur.lng, cur.lat]);
-      if (t < 1) frame.current = requestAnimationFrame(step);
+      if (k < 1) frame.current = requestAnimationFrame(step);
     };
     frame.current = requestAnimationFrame(step);
   }, [share, follow]);
@@ -123,7 +125,7 @@ export function LiveViewPage() {
       <header className="safe-top absolute inset-x-0 top-0 z-10 p-3">
         <div className="glass mx-auto flex max-w-md items-center gap-2 rounded-2xl p-2 pr-3 shadow-float">
           <LogoMark className="size-9" />
-          <p className="flex-1 text-sm font-semibold">JalanGo live location</p>
+          <p className="flex-1 text-sm font-semibold">{t('Lokasi live JalanGo', 'JalanGo live location')}</p>
           {live && (
             <span className="flex items-center gap-1 rounded-full bg-red-500 px-2 py-0.5 text-[11px] font-bold text-white">
               <Radio className="size-3 animate-pulse" /> LIVE
@@ -137,9 +139,9 @@ export function LiveViewPage() {
           {share === undefined ? (
             <Loader2 className="mx-auto size-6 animate-spin text-ink-400" />
           ) : share === null ? (
-            <Ended icon={MapPinOff} title="Link not found" text="This live location link doesn’t exist or was removed." />
+            <Ended icon={MapPinOff} title={t('Pautan tidak dijumpai', 'Link not found')} text="This live location link doesn’t exist or was removed." />
           ) : !live ? (
-            <Ended icon={MapPinOff} title={`${share.display_name} stopped sharing`} text="Their location is no longer available." />
+            <Ended icon={MapPinOff} title={t(`${share.display_name} berhenti berkongsi`, `${share.display_name} stopped sharing`)} text="Their location is no longer available." />
           ) : (
             <>
               {share.driver_plate || share.driver_vehicle ? (
@@ -148,14 +150,14 @@ export function LiveViewPage() {
                 <p className="text-lg font-bold">{share.display_name}</p>
               )}
               <p className="text-sm text-ink-500 dark:text-ink-300">
-                {share.latitude === null ? 'Waiting for location…' : stale ? `Last seen ${formatRelativeTime(share.position_at!)}` : `Updated ${Math.max(0, Math.round((Date.now() - Date.parse(share.position_at!)) / 1000))} s ago`}
+                {share.latitude === null ? t('Menunggu lokasi…', 'Waiting for location…') : stale ? t(`Kali terakhir dilihat ${formatRelativeTime(share.position_at!)}`, `Last seen ${formatRelativeTime(share.position_at!)}`) : t(`Dikemas kini ${Math.max(0, Math.round((Date.now() - Date.parse(share.position_at!)) / 1000))} saat lalu`, `Updated ${Math.max(0, Math.round((Date.now() - Date.parse(share.position_at!)) / 1000))} s ago`)}
                 {share.speed_mps !== null && share.speed_mps > 1 && !stale && ` · ${toKmh(share.speed_mps)} km/h`}
               </p>
               {share.destination_name && (
                 <p className="mt-2 flex items-center gap-2 text-sm">
                   <Flag className="size-4 shrink-0 text-red-500" />
                   <span className="truncate">
-                    Heading to <strong>{share.destination_name}</strong>
+                    {t('Menuju ke', 'Heading to')} <strong>{share.destination_name}</strong>
                     {etaMin !== null && ` · arriving in ~${etaMin} min`}
                   </span>
                 </p>
@@ -165,24 +167,24 @@ export function LiveViewPage() {
                 <p className="mt-2 flex items-center gap-2 rounded-xl bg-violet-500/10 px-3 py-2 text-sm">
                   <ListOrdered className="size-4 shrink-0 text-violet-600" />
                   <span className="min-w-0 flex-1 truncate">
-                    Next stop: <strong>{share.next_stop_name}</strong>
+                    {t('Hentian seterusnya:', 'Next stop:')} <strong>{share.next_stop_name}</strong>
                   </span>
-                  {typeof share.stops_left === 'number' && share.stops_left > 1 && <span className="shrink-0 text-xs text-ink-500">{share.stops_left} left</span>}
+                  {typeof share.stops_left === 'number' && share.stops_left > 1 && <span className="shrink-0 text-xs text-ink-500">{share.stops_left} {t('lagi', 'left')}</span>}
                 </p>
               )}
               <p className="mt-2 flex items-center gap-1.5 text-xs text-ink-400">
-                <Clock className="size-3.5" /> Sharing ends {new Date(share.expires_at).toLocaleTimeString('en-MY', { hour: 'numeric', minute: '2-digit' })}
+                <Clock className="size-3.5" /> {t('Perkongsian tamat', 'Sharing ends')} {new Date(share.expires_at).toLocaleTimeString('en-MY', { hour: 'numeric', minute: '2-digit' })}
               </p>
               {!follow && (
                 <button type="button" onClick={() => setFollow(true)} className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-ink-100 py-2 text-sm font-semibold dark:bg-ink-800">
-                  <Navigation className="size-4" /> Follow {share.display_name}
+                  <Navigation className="size-4" /> {t('Ikut', 'Follow')} {share.display_name}
                 </button>
               )}
             </>
           )}
           {error && <p className="mt-2 text-xs text-red-600">{error}</p>}
           <Link to="/" className="mt-3 block text-center text-xs font-semibold text-jade-700 dark:text-jade-400">
-            Get JalanGo — free navigation for Malaysia
+            {t('Dapatkan JalanGo — navigasi percuma untuk Malaysia', 'Get JalanGo — free navigation for Malaysia')}
           </Link>
         </div>
       </div>
@@ -202,17 +204,18 @@ function Ended({ icon: Icon, title, text }: { icon: typeof MapPinOff; title: str
 
 /** Who is coming: name, vehicle, a big plate number to spot the car, and ways to reach the driver. */
 function DriverCard({ share }: { share: PublicLiveShare }) {
+  const [t] = useT();
   const phone = share.driver_phone;
   return (
     <div className="mb-2">
-      <p className="text-xs font-semibold uppercase tracking-wide text-ink-400">Your driver · Pemandu anda</p>
+      <p className="text-xs font-semibold uppercase tracking-wide text-ink-400">{t('Pemandu anda', 'Your driver')}</p>
       <div className="mt-1 flex items-center gap-3">
         <div className="min-w-0 flex-1">
           <p className="truncate text-lg font-bold">{share.display_name}</p>
           {share.driver_vehicle && <p className="truncate text-sm text-ink-500 dark:text-ink-300">{share.driver_vehicle}</p>}
         </div>
         {share.driver_plate && (
-          <span className="shrink-0 rounded-lg border-2 border-ink-900 bg-ink-950 px-3 py-1.5 font-mono text-lg font-black tracking-wider text-white dark:border-white" aria-label={`Plate number ${share.driver_plate}`}>
+          <span className="shrink-0 rounded-lg border-2 border-ink-900 bg-ink-950 px-3 py-1.5 font-mono text-lg font-black tracking-wider text-white dark:border-white" aria-label={t(`Nombor plat ${share.driver_plate}`, `Plate number ${share.driver_plate}`)}>
             {share.driver_plate}
           </span>
         )}
@@ -223,7 +226,7 @@ function DriverCard({ share }: { share: PublicLiveShare }) {
             <MessageCircle className="size-4" /> WhatsApp
           </a>
           <a href={`tel:+${phone}`} className="flex items-center justify-center gap-1.5 rounded-xl bg-ink-100 py-2.5 text-sm font-semibold dark:bg-ink-800">
-            <Phone className="size-4" /> Call
+            <Phone className="size-4" /> {t('Telefon', 'Call')}
           </a>
         </div>
       )}
@@ -254,6 +257,7 @@ interface ArrivalAlert {
  * when they choose it; that position never leaves this phone).
  */
 function useArrivalAlert(share: PublicLiveShare | null | undefined): ArrivalAlert {
+  const [t] = useT();
   const [armed, setArmed] = useState(false);
   const [arrived, setArrived] = useState(false);
   // Closing the banner hides it; arrival stays recorded so the next poll doesn't ring again
@@ -275,7 +279,7 @@ function useArrivalAlert(share: PublicLiveShare | null | undefined): ArrivalAler
     setMineError(null);
     const id = navigator.geolocation.watchPosition(
       (p) => setMine({ lat: p.coords.latitude, lng: p.coords.longitude }),
-      () => setMineError('Lokasi anda tidak dapat dibaca. Benarkan lokasi untuk pelayar ini.'),
+      () => setMineError(t('Lokasi anda tidak dapat dibaca. Benarkan lokasi untuk pelayar ini.', 'Your location could not be read. Allow location for this browser.')),
       { enableHighAccuracy: true, maximumAge: 15_000, timeout: 20_000 },
     );
     return () => navigator.geolocation.clearWatch(id);
@@ -290,7 +294,7 @@ function useArrivalAlert(share: PublicLiveShare | null | undefined): ArrivalAler
     const position = share.latitude !== null && share.longitude !== null ? { lat: share.latitude, lng: share.longitude } : null;
     if (!hasArrived({ status: share.status, position, target, previousStatus: was })) return;
     setArrived(true);
-    document.title = `🟢 ${share.display_name} dah sampai!`;
+    document.title = t(`🟢 ${share.display_name} dah sampai!`, `🟢 ${share.display_name} has arrived!`);
     if (armed) {
       ring();
       setRinging(true);
@@ -338,7 +342,7 @@ function useArrivalAlert(share: PublicLiveShare | null | undefined): ArrivalAler
     armed,
     arrived: arrived && !hidden,
     ringing,
-    targetLabel: useMine ? 'lokasi anda' : share?.destination_name ?? 'destinasi',
+    targetLabel: useMine ? t('lokasi anda', 'your location') : share?.destination_name ?? t('destinasi', 'the destination'),
     useMine,
     mineError,
     noTarget: !useMine && !dest,
@@ -353,13 +357,14 @@ function useArrivalAlert(share: PublicLiveShare | null | undefined): ArrivalAler
 
 /** The "Beritahu saya bila sampai" button and, once on, what it is measuring to. */
 function ArrivalAlertControls({ share, alert }: { share: PublicLiveShare; alert: ArrivalAlert }) {
+  const [t] = useT();
   if (!alert.armed) {
     return (
       <div className="mt-3">
         <button type="button" onClick={() => void alert.start()} className="flex w-full items-center justify-center gap-2 rounded-xl bg-jade-500 py-3 text-sm font-bold text-ink-950">
-          <Bell className="size-4" /> Beritahu saya bila sampai
+          <Bell className="size-4" /> {t('Beritahu saya bila sampai', 'Tell me when they arrive')}
         </button>
-        <p className="mt-1 text-center text-[11px] text-ink-500">Bunyi bip bila {share.display_name} sampai. Biarkan halaman ini terbuka.</p>
+        <p className="mt-1 text-center text-[11px] text-ink-500">{t('Bunyi bip bila', 'Beeps when')} {share.display_name} {t('sampai. Biarkan halaman ini terbuka.', 'arrives. Keep this page open.')}</p>
       </div>
     );
   }
@@ -368,38 +373,39 @@ function ArrivalAlertControls({ share, alert }: { share: PublicLiveShare; alert:
       <div className="flex items-center gap-2">
         <Bell className="size-4 shrink-0 animate-pulse text-jade-600" />
         <p className="min-w-0 flex-1 font-semibold">
-          Amaran aktif · <span className="font-normal">bila sampai di {alert.targetLabel}</span>
+          {t('Amaran aktif ·', 'Alert on ·')} <span className="font-normal">{t('bila sampai di', 'on arrival at')} {alert.targetLabel}</span>
         </p>
-        <button type="button" onClick={alert.stop} className="flex shrink-0 items-center gap-1 text-xs font-semibold text-ink-500" aria-label="Matikan amaran">
-          <BellOff className="size-3.5" /> Matikan
+        <button type="button" onClick={alert.stop} className="flex shrink-0 items-center gap-1 text-xs font-semibold text-ink-500" aria-label={t('Matikan amaran', 'Turn off alert')}>
+          <BellOff className="size-3.5" /> {t('Matikan', 'Turn off')}
         </button>
       </div>
-      {alert.noTarget && <p className="mt-1 text-xs text-amber-700 dark:text-amber-300">{share.display_name} tiada destinasi. Tekan &ldquo;Beritahu bila dekat dengan saya&rdquo;.</p>}
+      {alert.noTarget && <p className="mt-1 text-xs text-amber-700 dark:text-amber-300">{share.display_name} {t('tiada destinasi. Tekan “Beritahu bila dekat dengan saya”.', 'has no destination. Tap “Tell me when they’re near me”.')}</p>}
       <button type="button" onClick={() => alert.setUseMine(!alert.useMine)} className="mt-2 flex items-center gap-1.5 text-xs font-semibold text-jade-700 dark:text-jade-300">
-        <LocateFixed className="size-3.5" /> {alert.useMine ? 'Guna destinasi pemandu' : 'Beritahu bila dekat dengan saya'}
+        <LocateFixed className="size-3.5" /> {alert.useMine ? t('Guna destinasi pemandu', 'Use the driver’s destination') : t('Beritahu bila dekat dengan saya', 'Tell me when they’re near me')}
       </button>
-      {alert.useMine && <p className="mt-0.5 text-[11px] text-ink-500">Lokasi anda hanya digunakan dalam telefon ini untuk kira jarak, tidak dihantar ke mana-mana.</p>}
+      {alert.useMine && <p className="mt-0.5 text-[11px] text-ink-500">{t('Lokasi anda hanya digunakan dalam telefon ini untuk kira jarak, tidak dihantar ke mana-mana.', 'Your location is only used on this phone to work out the distance and is never sent anywhere.')}</p>}
       {alert.mineError && <p className="mt-1 text-xs text-red-600">{alert.mineError}</p>}
-      <p className="mt-1 text-[11px] text-ink-500">{alert.noWakeLock ? 'Biarkan skrin terbuka: bunyi tidak keluar bila telefon dikunci.' : 'Skrin dikekalkan hidup. Bunyi tidak keluar jika telefon dikunci atau halaman ditutup.'}</p>
+      <p className="mt-1 text-[11px] text-ink-500">{alert.noWakeLock ? t('Biarkan skrin terbuka: bunyi tidak keluar bila telefon dikunci.', 'Keep the screen on: no sound plays while the phone is locked.') : t('Skrin dikekalkan hidup. Bunyi tidak keluar jika telefon dikunci atau halaman ditutup.', 'The screen stays on. No sound plays if the phone is locked or the page is closed.')}</p>
     </div>
   );
 }
 
 function ArrivedBanner({ name, where, ringing, onStop, onClose }: { name: string; where: string; ringing: boolean; onStop: () => void; onClose: () => void }) {
+  const [t] = useT();
   return (
     <div role="alert" className="safe-top absolute inset-x-0 top-0 z-20 p-3">
       <div className="mx-auto flex max-w-md animate-slide-up items-center gap-3 rounded-3xl bg-jade-500 p-4 text-ink-950 shadow-float">
         <CheckCircle2 className="size-9 shrink-0" />
         <div className="min-w-0 flex-1">
-          <p className="text-lg font-black leading-tight">{name} dah sampai!</p>
-          <p className="truncate text-sm">di {where}</p>
+          <p className="text-lg font-black leading-tight">{name} {t('dah sampai!', 'has arrived!')}</p>
+          <p className="truncate text-sm">{t('di', 'icon at the')} {where}</p>
         </div>
         {ringing ? (
           <button type="button" onClick={onStop} className="flex shrink-0 items-center gap-1 rounded-xl bg-ink-950 px-3 py-2 text-sm font-bold text-white">
-            <VolumeX className="size-4" /> Hentikan bunyi
+            <VolumeX className="size-4" /> {t('Hentikan bunyi', 'Stop sound')}
           </button>
         ) : (
-          <button type="button" onClick={onClose} aria-label="Tutup" className="grid size-9 shrink-0 place-items-center rounded-full bg-ink-950/15">
+          <button type="button" onClick={onClose} aria-label={t('Tutup', 'Close')} className="grid size-9 shrink-0 place-items-center rounded-full bg-ink-950/15">
             <X className="size-5" />
           </button>
         )}

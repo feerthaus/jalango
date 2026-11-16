@@ -1,4 +1,4 @@
-import { ChevronDown, ChevronUp, Flag, ListOrdered, LocateFixed, Loader2, Volume2, VolumeX, X } from 'lucide-react';
+import { ChevronDown, ChevronUp, Flag, ListOrdered, Loader2, Volume2, VolumeX, X } from 'lucide-react';
 import { useRouteAlerts } from '@/hooks/useRouteAlerts';
 import { useAccidentAlerts } from '@/hooks/useAccidentAlerts';
 import { useTollAlerts } from '@/hooks/useTollAlerts';
@@ -33,22 +33,22 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { DemoBadge } from '@/components/ui/DemoBadge';
 import { IconButton } from '@/components/ui/IconButton';
-import { useMapContext } from '@/contexts/MapContext';
 import { useRouting } from '@/contexts/RoutingContext';
 import { cn } from '@/lib/cn';
 import { formatDuration } from '@/utils/format';
 import { formatDistance } from '@/utils/geo';
 import { arrivalClock } from '@/utils/time';
 import { ManeuverIcon } from './ManeuverIcon';
+import { useT } from '@/lib/i18n';
 
 /** Turn-by-turn banner (top) and trip bar (bottom) while navigating. */
 export function NavigationHud() {
+  const [t] = useT();
   const { status, selectedRoute: route, progress, destination, endNavigation, rerouting, finishedTripId } = useRouting();
   const { getTrip } = useTrips();
   const itinerary = useItinerary();
   const nextStop = itinerary.nextIndex !== -1 ? itinerary.stops[itinerary.nextIndex] : null;
   const finishedTrip = finishedTripId ? getTrip(finishedTripId) : undefined;
-  const { following, setFollowing } = useMapContext();
   const [showSteps, setShowSteps] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
   const [alongOpen, setAlongOpen] = useState(false);
@@ -139,11 +139,11 @@ export function NavigationHud() {
           )}
           {demo && (
             <div className="flex items-center gap-2 border-t border-white/10 px-4 py-2 text-xs text-ink-300">
-              <DemoBadge label="Demo" /> Straight-line guidance only — follow road signs.
+              <DemoBadge label="Demo" /> {t('Panduan garis lurus sahaja — ikut papan tanda jalan.', 'Straight-line guidance only — follow road signs.')}
             </div>
           )}
           {showSteps && (
-            <ol id="nav-steps" aria-label="Turn-by-turn directions" className="max-h-[45dvh] overflow-y-auto border-t border-white/10 py-1">
+            <ol id="nav-steps" aria-label={t('Arahan langkah demi langkah', 'Turn-by-turn directions')} className="max-h-[45dvh] overflow-y-auto border-t border-white/10 py-1">
               {route.steps.map((s, i) => (
                 <li key={i} className={cn('flex items-center gap-3 px-4 py-2.5 text-sm', i <= stepIndex ? 'opacity-40' : i === stepIndex + 1 && 'bg-white/5')}>
                   <ManeuverIcon step={s} className="size-5 shrink-0" />
@@ -177,14 +177,6 @@ export function NavigationHud() {
 
       {/* Trip bar */}
       <div className="absolute inset-x-0 bottom-0 z-30 space-y-3 p-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem+var(--host-badge-h))] md:w-[420px] md:p-4">
-        {!following && (
-          // centred so it never covers the speed badge (left) or the report button (right)
-          <div className="flex justify-center">
-            <IconButton label="Re-centre" onClick={() => setFollowing(true)} className="!w-auto gap-2 px-4 text-sm font-semibold">
-              <LocateFixed className="size-5" /> {lang === 'ms' ? 'Ke tengah' : 'Re-centre'}
-            </IconButton>
-          </div>
-        )}
         <div className="glass pointer-events-auto flex items-center gap-2 rounded-3xl p-3 pl-4 shadow-float ring-1 ring-ink-900/5 dark:ring-white/10">
           <div className="min-w-0 flex-1 overflow-hidden">
             <p className="whitespace-nowrap text-xl font-black tabular-nums leading-tight text-jade-600 min-[400px]:text-2xl dark:text-jade-400">
@@ -195,16 +187,16 @@ export function NavigationHud() {
               {formatDistance(remainingMeters)} · {arrivalClock(remainingSeconds)}
             </p>
           </div>
-          <IconButton label="Share live location" onClick={() => setShareOpen(true)}>
+          <IconButton label={t('Kongsi lokasi live', 'Share live location')} onClick={() => setShareOpen(true)}>
             <Radio className="size-5 text-jade-600 dark:text-jade-400" />
           </IconButton>
-          <IconButton label={voiceOn ? 'Mute voice guidance' : 'Unmute voice guidance'} onClick={() => setVoiceOn(!voiceOn)}>
+          <IconButton label={voiceOn ? t('Senyapkan panduan suara', 'Mute voice guidance') : t('Hidupkan panduan suara', 'Unmute voice guidance')} onClick={() => setVoiceOn(!voiceOn)}>
             {voiceOn ? <Volume2 className="size-5" /> : <VolumeX className="size-5 text-ink-400" />}
           </IconButton>
-          <IconButton label={showSteps ? 'Hide directions list' : 'Show directions list'} active={showSteps} onClick={() => setShowSteps((s) => !s)}>
+          <IconButton label={showSteps ? t('Sembunyi senarai arahan', 'Hide directions list') : t('Tunjuk senarai arahan', 'Show directions list')} active={showSteps} onClick={() => setShowSteps((s) => !s)}>
             <ListOrdered className="size-5" />
           </IconButton>
-          <Button variant="danger" className="h-11 shrink-0 px-3" onClick={endNavigation} aria-label="End navigation">
+          <Button variant="danger" className="h-11 shrink-0 px-3" onClick={endNavigation} aria-label={t('Tamatkan navigasi', 'End navigation')}>
             <X className="size-5 min-[420px]:size-4" /> <span className="hidden min-[420px]:inline">{lang === 'ms' ? 'Tamat' : 'End'}</span>
           </Button>
         </div>

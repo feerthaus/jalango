@@ -71,7 +71,7 @@ export function LocationStatusBanner() {
           </Button>
         )}
       </div>
-      <button type="button" aria-label="Dismiss" onClick={() => setDismissed(status)} className="grid size-8 place-items-center rounded-full text-ink-400 hover:bg-ink-100 dark:hover:bg-ink-800">
+      <button type="button" aria-label={t('Tutup', 'Dismiss')} onClick={() => setDismissed(status)} className="grid size-8 place-items-center rounded-full text-ink-400 hover:bg-ink-100 dark:hover:bg-ink-800">
         <X className="size-4" />
       </button>
     </div>

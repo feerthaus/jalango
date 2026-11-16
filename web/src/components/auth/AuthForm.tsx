@@ -6,9 +6,11 @@ import { Button } from '@/components/ui/Button';
 import { useOAuthProviders } from '@/hooks/useOAuthProviders';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/cn';
+import { useT } from '@/lib/i18n';
 
 /** Email + password sign in / register (Supabase Auth). */
 export function AuthForm({ compact = false, onDone }: { compact?: boolean; onDone?: () => void }) {
+  const [t] = useT();
   const { available, signIn, signUp, signInWithProvider, authError } = useAuth();
   const providers = useOAuthProviders();
   const anySocial = Boolean(providers?.google || providers?.facebook);
@@ -21,7 +23,7 @@ export function AuthForm({ compact = false, onDone }: { compact?: boolean; onDon
   const [checkEmail, setCheckEmail] = useState(false);
 
   if (!available) {
-    return <p className="text-sm text-ink-500 dark:text-ink-400">Accounts aren’t available yet — the community database is not connected.</p>;
+    return <p className="text-sm text-ink-500 dark:text-ink-400">{t('Akaun belum tersedia — pangkalan data komuniti belum disambungkan.', 'Accounts aren’t available yet — the community database is not connected.')}</p>;
   }
 
   if (checkEmail) {
@@ -29,12 +31,12 @@ export function AuthForm({ compact = false, onDone }: { compact?: boolean; onDon
       <div className="flex items-start gap-3 text-sm">
         <MailCheck className="mt-0.5 size-5 shrink-0 text-jade-500" />
         <div>
-          <p className="font-semibold">Check your email</p>
+          <p className="font-semibold">{t('Semak emel anda', 'Check your email')}</p>
           <p className="text-ink-500 dark:text-ink-300">
-            We sent a confirmation link to <strong>{email}</strong>. Open it, then sign in here.
+            {t('Kami telah menghantar pautan pengesahan ke', 'We sent a confirmation link to')} <strong>{email}</strong>{t('. Buka pautan itu, kemudian log masuk di sini.', '. Open it, then sign in here.')}
           </p>
           <button type="button" className="mt-2 text-sm font-semibold text-jade-600 dark:text-jade-400" onClick={() => { setCheckEmail(false); setMode('signin'); }}>
-            Back to sign in
+            {t('Kembali ke log masuk', 'Back to sign in')}
           </button>
         </div>
       </div>
@@ -114,7 +116,7 @@ export function AuthForm({ compact = false, onDone }: { compact?: boolean; onDon
       )}
       {anySocial && (
       <div className="flex items-center gap-3 py-1 text-xs text-ink-400">
-        <span className="h-px flex-1 bg-ink-200 dark:bg-ink-700" /> or with email <span className="h-px flex-1 bg-ink-200 dark:bg-ink-700" />
+        <span className="h-px flex-1 bg-ink-200 dark:bg-ink-700" /> {t('atau dengan emel', 'or with email')} <span className="h-px flex-1 bg-ink-200 dark:bg-ink-700" />
       </div>
       )}
       {!compact && (
@@ -128,13 +130,13 @@ export function AuthForm({ compact = false, onDone }: { compact?: boolean; onDon
               onClick={() => { setMode(m); setError(null); }}
               className={cn('rounded-lg py-2 text-sm font-semibold', mode === m ? 'bg-white shadow-sm dark:bg-ink-700' : 'text-ink-500')}
             >
-              {m === 'signin' ? 'Sign in' : 'Create account'}
+              {m === 'signin' ? t('Log masuk', 'Sign in') : t('Daftar akaun', 'Create account')}
             </button>
           ))}
         </div>
       )}
       {mode === 'signup' && (
-        <input className={input} placeholder="Name (optional)" autoComplete="name" value={name} maxLength={80} onChange={(e) => setName(e.target.value)} aria-label="Name" />
+        <input className={input} placeholder={t('Nama (pilihan)', 'Name (optional)')} autoComplete="name" value={name} maxLength={80} onChange={(e) => setName(e.target.value)} aria-label={t('Nama', 'Name')} />
       )}
       <input className={input} type="email" required placeholder="Email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} aria-label="Email" />
       <input
@@ -142,11 +144,11 @@ export function AuthForm({ compact = false, onDone }: { compact?: boolean; onDon
         type="password"
         required
         minLength={8}
-        placeholder={mode === 'signup' ? 'Password (min. 8 characters)' : 'Password'}
+        placeholder={mode === 'signup' ? t('Kata laluan (min. 8 aksara)', 'Password (min. 8 characters)') : t('Kata laluan', 'Password')}
         autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
         value={password}
         onChange={(e) => setPassword(e.target.value)}
-        aria-label="Password"
+        aria-label={t('Kata laluan', 'Password')}
       />
       {error && (
         <p role="alert" className="text-sm text-red-600 dark:text-red-400">
@@ -155,24 +157,24 @@ export function AuthForm({ compact = false, onDone }: { compact?: boolean; onDon
       )}
       <Button type="submit" className="w-full py-3" disabled={busy || !email || !password}>
         {busy && <Loader2 className="size-4 animate-spin" />}
-        {mode === 'signin' ? 'Sign in' : 'Create account'}
+        {mode === 'signin' ? t('Log masuk', 'Sign in') : t('Daftar akaun', 'Create account')}
       </Button>
       <p className="text-center text-[11px] text-ink-400">
-        By continuing you agree to the{' '}
+        {t('Dengan meneruskan, anda bersetuju dengan', 'By continuing you agree to the')}{' '}
         <Link to="/terms" className="underline">
-          Terms
+          {t('Terma', 'Terms')}
         </Link>{' '}
-        and{' '}
+        {t('dan', 'and')}{' '}
         <Link to="/privacy" className="underline">
-          Privacy Policy
+          {t('Dasar Privasi', 'Privacy Policy')}
         </Link>
         .
       </p>
       {compact && (
         <p className="text-center text-xs text-ink-500">
-          {mode === 'signin' ? 'New to JalanGo?' : 'Have an account?'}{' '}
+          {mode === 'signin' ? t('Baru di JalanGo?', 'New to JalanGo?') : t('Sudah ada akaun?', 'Have an account?')}{' '}
           <button type="button" className="font-semibold text-jade-600 dark:text-jade-400" onClick={() => setMode(mode === 'signin' ? 'signup' : 'signin')}>
-            {mode === 'signin' ? 'Create an account' : 'Sign in'}
+            {mode === 'signin' ? t('Daftar akaun', 'Create an account') : t('Log masuk', 'Sign in')}
           </button>
         </p>
       )}

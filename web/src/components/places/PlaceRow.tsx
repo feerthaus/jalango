@@ -4,6 +4,7 @@ import { cn } from '@/lib/cn';
 import type { Place } from '@/types';
 import { formatDistance } from '@/utils/geo';
 import { placeIcon } from './placeIcon';
+import { useT } from '@/lib/i18n';
 
 interface PlaceRowProps {
   place: Place;
@@ -15,6 +16,7 @@ interface PlaceRowProps {
 }
 
 export function PlaceRow({ place, onSelect, active, leadingIcon, trailing, id }: PlaceRowProps) {
+  const [t] = useT();
   const Icon = placeIcon(place);
   return (
     <li id={id} role="option" aria-selected={active} className="flex items-center gap-1">
@@ -32,7 +34,7 @@ export function PlaceRow({ place, onSelect, active, leadingIcon, trailing, id }:
         <span className="min-w-0 flex-1">
           <span className="flex items-center gap-2">
             <span className="truncate font-medium">{place.name}</span>
-            {place.source === 'demo' && <DemoBadge label="Sample" className="shrink-0" />}
+            {place.source === 'demo' && <DemoBadge label={t('Contoh', 'Sample')} className="shrink-0" />}
             {place.source === 'google' && <span className="shrink-0 text-[10px] font-medium text-ink-400" translate="no">Google Maps</span>}
           </span>
           <span className="block truncate text-sm text-ink-500 dark:text-ink-300">{place.address || place.category || '—'}</span>

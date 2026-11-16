@@ -10,6 +10,7 @@ import { fetchPlaceInfo, type PlaceInfo } from '@/services/geocodingService';
 import { isOpenNow } from '@/utils/openingHours';
 import { labelledIds, pinHtml } from '@/utils/alongPins';
 import { aheadText, ListingLine, StopReviewButtons } from './AlongRouteSheet';
+import { useT } from '@/lib/i18n';
 
 /** JalanGo's own "along the route" layer: one pin per place, tap for details. */
 export function AlongMarkers() {
@@ -42,7 +43,7 @@ export function AlongMarkers() {
         const el = document.createElement('button');
         el.type = 'button';
         el.style.position = 'relative';
-        el.setAttribute('aria-label', `${meta.label}: ${r.place.name}`);
+        el.setAttribute('aria-label', `${meta.label.ms}: ${r.place.name}`);
         el.innerHTML = pinHtml(meta.color, meta.glyph, r.listing ? 'verified' : r.pick ? 'pick' : null, label);
         const id = r.place.id;
         el.addEventListener('click', (e) => {
@@ -73,6 +74,7 @@ export function AlongMarkers() {
 
 /** Card for a tapped pin. */
 export function AlongPlaceCard() {
+  const [t] = useT();
   const { selected, select, category } = useAlong();
   const { addStop, stop } = useRouting();
   const [info, setInfo] = useState<PlaceInfo | null | 'loading'>(null);
@@ -90,7 +92,7 @@ export function AlongPlaceCard() {
   const meta = alongMeta(category);
   const r = selected;
   return (
-    <article aria-label={`Selected: ${r.place.name}`} className="glass pointer-events-auto animate-slide-up rounded-3xl p-4 shadow-float ring-1 ring-ink-900/5 dark:ring-white/10">
+    <article aria-label={t(`Dipilih: ${r.place.name}`, `Selected: ${r.place.name}`)} className="glass pointer-events-auto animate-slide-up rounded-3xl p-4 shadow-float ring-1 ring-ink-900/5 dark:ring-white/10">
       <div className="flex items-start gap-3">
         <span className="grid size-11 shrink-0 place-items-center rounded-2xl text-white" style={{ background: r.pick ? '#10b981' : meta.color }}>
           <meta.icon className="size-5" />
@@ -105,7 +107,7 @@ export function AlongPlaceCard() {
           <PlaceFacts r={r} info={info} />
           <p className="mt-1 flex flex-wrap items-center gap-x-2 text-xs text-ink-500">
             <strong className="text-ink-800 dark:text-ink-100">{aheadText(r)}</strong>
-            <span>{r.offset < 200 ? 'tepi jalan' : `${formatDistance(r.offset)} dari laluan`}</span>
+            <span>{r.offset < 200 ? t('tepi jalan', 'roadside') : t(`${formatDistance(r.offset)} dari laluan`, `${formatDistance(r.offset)} off the route`)}</span>
             {r.pick && (
               <span className="flex items-center gap-0.5 text-jade-600">
                 <ThumbsUp className="size-3" /> {r.pick.recommend_count}
@@ -114,7 +116,7 @@ export function AlongPlaceCard() {
           </p>
         </div>
         <StopReviewButtons r={r} current={stop?.id === r.place.id} onStop={() => (addStop(r.place), select(null))} />
-        <button type="button" onClick={() => select(null)} aria-label="Close" className="-mr-1 -mt-1 grid size-8 place-items-center rounded-full text-ink-500 hover:bg-ink-100 dark:hover:bg-ink-800">
+        <button type="button" onClick={() => select(null)} aria-label={t('Tutup', 'Close')} className="-mr-1 -mt-1 grid size-8 place-items-center rounded-full text-ink-500 hover:bg-ink-100 dark:hover:bg-ink-800">
           <X className="size-4" />
         </button>
       </div>
@@ -124,17 +126,18 @@ export function AlongPlaceCard() {
 
 /** ⭐ rating · Buka/Tutup: from the shop's own hours (checked by JalanGo) or Google. */
 function PlaceFacts({ r, info }: { r: AlongRow; info: PlaceInfo | null | 'loading' }) {
+  const [t] = useT();
   if (r.listing) {
     return (
       <>
         <p className="mt-0.5 flex items-center gap-1 text-xs font-semibold text-jade-700 dark:text-jade-300">
-          <BadgeCheck className="size-3.5 shrink-0" /> Disemak JalanGo
+          <BadgeCheck className="size-3.5 shrink-0" /> {t('Disemak JalanGo', 'Checked by JalanGo')}
         </p>
         <p className="truncate text-xs text-ink-500"><ListingLine l={r.listing} /></p>
       </>
     );
   }
-  if (info === 'loading') return <p className="mt-0.5 h-4 w-28 animate-pulse rounded bg-ink-200 dark:bg-ink-700" aria-label="Memuatkan rating" />;
+  if (info === 'loading') return <p className="mt-0.5 h-4 w-28 animate-pulse rounded bg-ink-200 dark:bg-ink-700" aria-label={t('Memuatkan rating', 'Loading rating')} />;
   if (!info || (info.rating === null && info.openNow === null)) return null;
   return (
     <p className="mt-0.5 flex flex-wrap items-center gap-x-1.5 text-xs">
@@ -144,7 +147,7 @@ function PlaceFacts({ r, info }: { r: AlongRow; info: PlaceInfo | null | 'loadin
           {info.ratings ? <span className="font-normal text-ink-500">({info.ratings >= 1000 ? `${(info.ratings / 1000).toFixed(1)}k` : info.ratings})</span> : null}
         </span>
       )}
-      {info.openNow !== null && <span className={info.openNow ? 'font-semibold text-jade-600' : 'font-semibold text-red-600'}>{info.openNow ? 'Buka sekarang' : 'Tutup sekarang'}</span>}
+      {info.openNow !== null && <span className={info.openNow ? 'font-semibold text-jade-600' : 'font-semibold text-red-600'}>{info.openNow ? t('Buka sekarang', 'Open now') : t('Tutup sekarang', 'Closed now')}</span>}
       <span className="text-[10px] text-ink-400" translate="no">Google</span>
     </p>
   );
@@ -152,6 +155,7 @@ function PlaceFacts({ r, info }: { r: AlongRow; info: PlaceInfo | null | 'loadin
 
 /** "Makan di peta (12) ✕" chip while the layer is on. */
 export function AlongLayerChip({ onOpen }: { onOpen: () => void }) {
+  const [t] = useT();
   const { category, rows, setCategory } = useAlong();
   if (!category) return null;
   const meta = alongMeta(category);
@@ -161,10 +165,10 @@ export function AlongLayerChip({ onOpen }: { onOpen: () => void }) {
       <button type="button" onClick={onOpen} className="flex min-w-0 flex-1 items-center gap-1.5">
         <meta.icon className="size-4 shrink-0" />
         <span className="truncate">
-          {meta.label} di peta{n !== undefined ? ` (${n})` : ''}
+          {t(meta.label)} {t('di peta', 'on the map')}{n !== undefined ? ` (${n})` : ''}
         </span>
       </button>
-      <button type="button" onClick={() => setCategory(null)} aria-label="Buang dari peta" className="grid size-7 place-items-center rounded-full bg-white/20">
+      <button type="button" onClick={() => setCategory(null)} aria-label={t('Buang dari peta', 'Remove from map')} className="grid size-7 place-items-center rounded-full bg-white/20">
         <X className="size-3.5" />
       </button>
     </div>

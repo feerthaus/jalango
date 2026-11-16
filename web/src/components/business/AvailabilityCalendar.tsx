@@ -1,6 +1,7 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { cn } from '@/lib/cn';
+import { useT } from '@/lib/i18n';
 
 const todayMY = () => new Date(Date.now() + 8 * 3600_000).toISOString().slice(0, 10);
 const iso = (y: number, m: number, d: number) => `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
@@ -21,6 +22,7 @@ export function AvailabilityCalendar({
   busyDay?: string | null;
   pick?: { from: string | null; to: string | null; onPick: (day: string) => void };
 }) {
+  const [t] = useT();
   const today = todayMY();
   const [offset, setOffset] = useState(0);
   const { year, month, cells, label } = useMemo(() => {
@@ -39,11 +41,11 @@ export function AvailabilityCalendar({
   return (
     <div>
       <div className="mb-2 flex items-center justify-between">
-        <button type="button" onClick={() => setOffset((o) => Math.max(0, o - 1))} disabled={offset === 0} aria-label="Bulan sebelum" className="grid size-8 place-items-center rounded-lg disabled:opacity-30">
+        <button type="button" onClick={() => setOffset((o) => Math.max(0, o - 1))} disabled={offset === 0} aria-label={t('Bulan sebelum', 'Previous month')} className="grid size-8 place-items-center rounded-lg disabled:opacity-30">
           <ChevronLeft className="size-4" />
         </button>
         <p className="text-sm font-semibold" aria-live="polite">{label}</p>
-        <button type="button" onClick={() => setOffset((o) => Math.min(11, o + 1))} disabled={offset === 11} aria-label="Bulan seterusnya" className="grid size-8 place-items-center rounded-lg disabled:opacity-30">
+        <button type="button" onClick={() => setOffset((o) => Math.min(11, o + 1))} disabled={offset === 11} aria-label={t('Bulan seterusnya', 'Next month')} className="grid size-8 place-items-center rounded-lg disabled:opacity-30">
           <ChevronRight className="size-4" />
         </button>
       </div>
@@ -59,7 +61,7 @@ export function AvailabilityCalendar({
               disabled={day < today || busyDay === day || (pick && blocked.has(day))}
               onClick={() => (pick ? pick.onPick(day) : onToggle?.(day, !blocked.has(day)))}
               aria-pressed={pick ? inRange(day) : blocked.has(day)}
-              aria-label={`${day}${blocked.has(day) ? ', penuh' : ''}`}
+              aria-label={`${day}${blocked.has(day) ? t(', penuh', ', full') : ''}`}
               className={cn(
                 'aspect-square rounded-lg text-sm font-semibold tabular-nums disabled:opacity-30',
                 pick
@@ -82,9 +84,9 @@ export function AvailabilityCalendar({
         )}
       </div>
       {pick ? (
-        <p className="mt-2 text-xs text-ink-500"><span className="mr-1 inline-block size-3 rounded bg-ink-300 align-middle" /> Penuh. Tekan tarikh mula, kemudian tarikh akhir.</p>
+        <p className="mt-2 text-xs text-ink-500"><span className="mr-1 inline-block size-3 rounded bg-ink-300 align-middle" /> {t('Penuh. Tekan tarikh mula, kemudian tarikh akhir.', 'Full. Tap a start date, then an end date.')}</p>
       ) : (
-        <p className="mt-2 text-xs text-ink-500"><span className="mr-1 inline-block size-3 rounded bg-red-600 align-middle" /> Penuh / tidak tersedia. Tekan tarikh untuk tukar.</p>
+        <p className="mt-2 text-xs text-ink-500"><span className="mr-1 inline-block size-3 rounded bg-red-600 align-middle" /> {t('Penuh / tidak tersedia. Tekan tarikh untuk tukar.', 'Full / not available. Tap a date to change it.')}</p>
       )}
     </div>
   );

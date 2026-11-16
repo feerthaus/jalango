@@ -10,9 +10,11 @@ import { toPlace } from '@/services/communityPlacesService';
 import type { CommunityCategory } from '@/types';
 import { formatDistance, haversineMeters } from '@/utils/geo';
 import { RecommendPlaceSheet } from './RecommendPlaceSheet';
+import { useT } from '@/lib/i18n';
 
 /** Explore section: best food, attractions… recommended by JalanGo users nearby. */
 export function CommunityPicks() {
+  const [t] = useT();
   const { available, places, loading } = useCommunityPlaces();
   const { fix } = useLocation();
   const showOnMap = useShowOnMap();
@@ -34,13 +36,13 @@ export function CommunityPicks() {
   return (
     <>
       <div className="flex items-center justify-between px-1 pb-2 pt-6">
-        <h2 className="text-xs font-semibold uppercase tracking-wider text-ink-400">Community picks · best spots</h2>
+        <h2 className="text-xs font-semibold uppercase tracking-wider text-ink-400">{t('Pilihan komuniti · tempat terbaik', 'Community picks · best spots')}</h2>
         <Button variant="ghost" className="px-2 py-1 text-xs" onClick={() => setAdding(true)} disabled={!fix}>
-          <Plus className="size-4" /> Share a spot here
+          <Plus className="size-4" /> {t('Kongsi tempat di sini', 'Share a spot here')}
         </Button>
       </div>
-      <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-2" role="tablist" aria-label="Pick category">
-        {[{ id: 'all' as const, label: 'All' }, ...COMMUNITY_CATEGORIES].map((c) => (
+      <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-2" role="tablist" aria-label={t('Pilih kategori', 'Pick category')}>
+        {[{ id: 'all' as const, label: 'All', labelMs: 'Semua' }, ...COMMUNITY_CATEGORIES].map((c) => (
           <button
             key={c.id}
             type="button"
@@ -49,7 +51,7 @@ export function CommunityPicks() {
             onClick={() => setFilter(c.id)}
             className={cn('shrink-0 rounded-full px-3 py-1.5 text-sm font-semibold', filter === c.id ? 'bg-jade-500 text-ink-950' : 'bg-white ring-1 ring-ink-200 dark:bg-ink-900 dark:ring-ink-800')}
           >
-            {c.label}
+            {t(c.labelMs, c.label)}
           </button>
         ))}
       </div>
@@ -58,10 +60,10 @@ export function CommunityPicks() {
           <div className="h-16 animate-pulse rounded-xl bg-ink-100 dark:bg-ink-800" />
         ) : list.length === 0 ? (
           <p className="p-3 text-sm text-ink-500 dark:text-ink-400">
-            No picks here yet. Know a great nasi lemak, café or view? Search it and tap <strong>Recommend</strong>, or use <strong>Share a spot here</strong>.
+            {t('Belum ada pilihan di sini. Tahu nasi lemak, kafe atau pemandangan yang best? Cari dan tekan', 'No picks here yet. Know a great nasi lemak, café or view? Search it and tap')} <strong>{t('Syorkan', 'Recommend')}</strong>{t(', atau guna', ', or use')} <strong>{t('Kongsi tempat di sini', 'Share a spot here')}</strong>.
           </p>
         ) : (
-          <ul aria-label="Community picks">
+          <ul aria-label={t('Pilihan komuniti', 'Community picks')}>
             {list.map(({ p, d }) => {
               const meta = categoryMeta(p.category);
               const Icon = meta.icon;
@@ -73,7 +75,7 @@ export function CommunityPicks() {
                     </span>
                     <span className="min-w-0 flex-1">
                       <span className="block truncate font-medium">{p.name}</span>
-                      <span className="block truncate text-xs text-ink-500 dark:text-ink-400">{p.description || meta.label}</span>
+                      <span className="block truncate text-xs text-ink-500 dark:text-ink-400">{p.description || t(meta.labelMs, meta.label)}</span>
                     </span>
                     <span className="shrink-0 text-right text-xs">
                       <span className="flex items-center justify-end gap-1 font-semibold text-jade-600 dark:text-jade-400">

@@ -9,6 +9,7 @@ import { COMMUNITY_CATEGORIES } from '@/lib/communityCategories';
 import { cn } from '@/lib/cn';
 import type { CommunityCategory, Coordinates } from '@/types';
 import { isInMalaysia } from '@/utils/geo';
+import { useT } from '@/lib/i18n';
 
 /** Share a favourite food spot / attraction with other JalanGo users. */
 export function RecommendPlaceSheet({
@@ -18,6 +19,7 @@ export function RecommendPlaceSheet({
   initial: { name: string; address: string; coordinates: Coordinates; category?: CommunityCategory };
   onClose: () => void;
 }) {
+  const [t] = useT();
   const { user } = useAuth();
   const { available, add } = useCommunityPlaces();
   const [name, setName] = useState(initial.name);
@@ -45,13 +47,13 @@ export function RecommendPlaceSheet({
 
   const input = 'w-full rounded-xl bg-ink-100 px-3 py-2.5 text-base outline-none ring-jade-500 focus:ring-2 dark:bg-ink-800';
   let body: React.ReactNode;
-  if (!available) body = <p className="text-sm text-ink-500">Community features aren’t connected yet.</p>;
+  if (!available) body = <p className="text-sm text-ink-500">{t('Ciri komuniti belum disambungkan.', 'Community features aren’t connected yet.')}</p>;
   else if (!user) body = <AuthForm compact />;
   else if (done)
     body = (
       <div className="flex flex-col items-center py-4 text-center">
         <CheckCircle2 className="size-12 text-jade-500" />
-        <p className="mt-2 font-semibold">Shared! Other drivers can find it in Explore.</p>
+        <p className="mt-2 font-semibold">{t('Dikongsi! Pemandu lain boleh jumpa di Teroka.', 'Shared! Other drivers can find it in Explore.')}</p>
       </div>
     );
   else
@@ -61,8 +63,8 @@ export function RecommendPlaceSheet({
           <MapPin className="size-4 shrink-0 text-jade-500" />
           <span className="truncate">{initial.address || 'At this location'}</span>
         </p>
-        <input className={input} placeholder="Place name" maxLength={80} value={name} onChange={(e) => setName(e.target.value)} aria-label="Place name" />
-        <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label="Category">
+        <input className={input} placeholder={t('Nama tempat', 'Place name')} maxLength={80} value={name} onChange={(e) => setName(e.target.value)} aria-label={t('Nama tempat', 'Place name')} />
+        <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label={t('Kategori', 'Category')}>
           {COMMUNITY_CATEGORIES.map(({ id, label, labelMs, icon: Icon }) => (
             <button
               key={id}
@@ -82,17 +84,17 @@ export function RecommendPlaceSheet({
           className={`${input} resize-none`}
           rows={3}
           maxLength={280}
-          placeholder="Why is it the best? e.g. Nasi lemak sambal sotong, buka pukul 7 pagi"
+          placeholder={t('Kenapa ia terbaik? cth. Nasi lemak sambal sotong, buka pukul 7 pagi', 'Why is it the best? e.g. Nasi lemak sambal sotong, buka pukul 7 pagi')}
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          aria-label="Why it's great"
+          aria-label={t('Kenapa ia terbaik', 'Why it\'s great')}
         />
-        {outside && <p className="text-xs text-red-600">Only places in Malaysia can be shared.</p>}
+        {outside && <p className="text-xs text-red-600">{t('Hanya tempat di Malaysia boleh dikongsi.', 'Only places in Malaysia can be shared.')}</p>}
         {error && <p role="alert" className="text-sm text-red-600">{error}</p>}
         <Button className="w-full py-3" onClick={submit} disabled={busy || !category || name.trim().length < 2 || outside}>
-          {busy && <Loader2 className="size-4 animate-spin" />} Share this place
+          {busy && <Loader2 className="size-4 animate-spin" />} {t('Kongsi tempat ini', 'Share this place')}
         </Button>
-        <p className="text-center text-[11px] text-ink-400">Share real places you’ve been to. Ads and spam will be removed.</p>
+        <p className="text-center text-[11px] text-ink-400">{t('Kongsi tempat sebenar yang pernah anda pergi. Iklan dan spam akan dibuang.', 'Share real places you’ve been to. Ads and spam will be removed.')}</p>
       </div>
     );
 
@@ -100,8 +102,8 @@ export function RecommendPlaceSheet({
     <div className="pointer-events-auto fixed inset-0 z-50 flex items-end justify-center bg-ink-950/50 md:items-center" onClick={onClose}>
       <div role="dialog" aria-modal="true" aria-labelledby="rec-title" onClick={(e) => e.stopPropagation()} className="safe-bottom max-h-[90dvh] w-full max-w-md animate-slide-up overflow-y-auto rounded-t-3xl bg-white p-5 shadow-float md:rounded-3xl dark:bg-ink-900">
         <div className="mb-4 flex items-center justify-between">
-          <h2 id="rec-title" className="text-xl font-bold">Recommend a place</h2>
-          <button type="button" onClick={onClose} aria-label="Close" className="grid size-9 place-items-center rounded-full hover:bg-ink-100 dark:hover:bg-ink-800">
+          <h2 id="rec-title" className="text-xl font-bold">{t('Syorkan tempat', 'Recommend a place')}</h2>
+          <button type="button" onClick={onClose} aria-label={t('Tutup', 'Close')} className="grid size-9 place-items-center rounded-full hover:bg-ink-100 dark:hover:bg-ink-800">
             <X className="size-5" />
           </button>
         </div>

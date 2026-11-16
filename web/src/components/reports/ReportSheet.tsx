@@ -157,14 +157,14 @@ export function ReportSheet({ onClose }: { onClose: () => void }) {
       >
         <div className="mb-4 flex items-center gap-2">
           {type && !done && (
-            <button type="button" onClick={() => { setType(null); setError(null); }} aria-label="Back" className="grid size-9 place-items-center rounded-full hover:bg-ink-100 dark:hover:bg-ink-800">
+            <button type="button" onClick={() => { setType(null); setError(null); }} aria-label={t('Kembali', 'Back')} className="grid size-9 place-items-center rounded-full hover:bg-ink-100 dark:hover:bg-ink-800">
               <ArrowLeft className="size-5" />
             </button>
           )}
           <h2 id="report-title" className="flex-1 text-xl font-bold">
             {meta && !done ? (lang === 'en' ? meta.label : meta.labelMs) : t('Lapor di jalan', 'Report on the road')}
           </h2>
-          <button type="button" onClick={onClose} aria-label="Close" className="grid size-9 place-items-center rounded-full hover:bg-ink-100 dark:hover:bg-ink-800">
+          <button type="button" onClick={onClose} aria-label={t('Tutup', 'Close')} className="grid size-9 place-items-center rounded-full hover:bg-ink-100 dark:hover:bg-ink-800">
             <X className="size-5" />
           </button>
         </div>

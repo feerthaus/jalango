@@ -65,13 +65,13 @@ function AskCard({ alerts, onDone }: { alerts: RouteAlertsState; onDone: () => v
   };
 
   return (
-    <div role="dialog" aria-label="Is the report still there?" className="pointer-events-auto animate-slide-up rounded-2xl bg-white p-3 shadow-float dark:bg-ink-800">
+    <div role="dialog" aria-label={t('Laporan ini masih ada?', 'Is the report still there?')} className="pointer-events-auto animate-slide-up rounded-2xl bg-white p-3 shadow-float dark:bg-ink-800">
       <div className="flex items-center gap-3">
         <span className={`grid size-10 shrink-0 place-items-center rounded-xl ${meta.tone}`}>
           <Icon className="size-5" />
         </span>
         <p className="flex-1 font-bold">{thanks ? t('Terima kasih kerana membantu pemandu lain!', 'Thanks for helping other drivers!') : t(`${meta.labelMs} — masih ada?`, `${meta.label} — still there?`)}</p>
-        <button type="button" onClick={onDone} aria-label="Dismiss" className="grid size-8 place-items-center rounded-full text-ink-400 hover:bg-ink-100 dark:hover:bg-ink-700">
+        <button type="button" onClick={onDone} aria-label={t('Tutup', 'Dismiss')} className="grid size-8 place-items-center rounded-full text-ink-400 hover:bg-ink-100 dark:hover:bg-ink-700">
           <X className="size-4" />
         </button>
       </div>

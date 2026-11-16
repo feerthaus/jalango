@@ -8,6 +8,7 @@ import { useRouting } from '@/contexts/RoutingContext';
 import { memberStatus } from '@/utils/convoy';
 import { haversineMeters } from '@/utils/geo';
 import { lerp } from '@/utils/motion';
+import { useT } from '@/lib/i18n';
 
 interface Car {
   marker: mapboxgl.Marker;
@@ -22,6 +23,7 @@ const esc = (s: string) => s.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`)
 
 /** Other convoy members as coloured cars with their name, gliding between updates. */
 export function ConvoyMarkers() {
+  const [t] = useT();
   const { map } = useMapContext();
   const { members, me, convoy, meetPoint, destination } = useConvoy();
   const { destination: routeDest } = useRouting();
@@ -79,8 +81,8 @@ export function ConvoyMarkers() {
         car.marker.setLngLat([target.lng, target.lat]);
       } else {
         const start = performance.now();
-        const step = (t: number) => {
-          const k = Math.min(1, (t - start) / 1500);
+        const step = (now: number) => {
+          const k = Math.min(1, (now - start) / 1500);
           car.shown = { lng: lerp(from.lng, target.lng, k), lat: lerp(from.lat, target.lat, k) };
           car.marker.setLngLat([car.shown.lng, car.shown.lat]);
           car.frame = k < 1 ? requestAnimationFrame(step) : null;
@@ -110,8 +112,8 @@ export function ConvoyMarkers() {
   const showDest = destination && !(routeDest && haversineMeters(routeDest.coordinates, destination.coordinates) < 50);
   return (
     <>
-      {convoy && meetPoint && <PinMarker place={meetPoint} color="#a855f7" label={`Berkumpul · ${meetPoint.name}`} />}
-      {convoy && showDest && <PinMarker place={destination} color="#0ea5e9" label={`Destinasi konvoi · ${destination.name}`} />}
+      {convoy && meetPoint && <PinMarker place={meetPoint} color="#a855f7" label={t(`Berkumpul · ${meetPoint.name}`, `Meet · ${meetPoint.name}`)} />}
+      {convoy && showDest && <PinMarker place={destination} color="#0ea5e9" label={t(`Destinasi konvoi · ${destination.name}`, `Convoy destination · ${destination.name}`)} />}
     </>
   );
 }

@@ -20,7 +20,7 @@ export function BottomNav() {
   const admin = useAdminCounts();
   return (
     <nav
-      aria-label="Main"
+      aria-label={t('Utama', 'Main')}
       className="safe-bottom absolute inset-x-0 bottom-0 z-30 border-t border-ink-200 bg-white/95 backdrop-blur-md md:inset-y-0 md:right-auto md:w-20 md:border-t-0 md:border-r md:pb-0 dark:border-ink-800 dark:bg-ink-950/95"
     >
       <div className="hidden h-20 items-center justify-center md:flex">

@@ -6,16 +6,18 @@ import { Sheet } from '@/components/ui/Sheet';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/cn';
 import { FLAG_REASONS, flagContent, type FlagContentType, type FlagReason } from '@/services/moderationService';
+import { useT } from '@/lib/i18n';
 
 /** Small "Report abuse" link + sheet, for reports, shortcuts and community places. */
 export function FlagButton({ type, id, ownerId }: { type: FlagContentType; id: string; ownerId?: string | null }) {
+  const [t] = useT();
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
   if (user && ownerId && user.id === ownerId) return null;
   return (
     <>
       <button type="button" onClick={() => setOpen(true)} className="inline-flex items-center gap-1 text-[11px] font-medium text-ink-400 hover:text-red-500">
-        <Flag className="size-3" /> Report abuse
+        <Flag className="size-3" /> {t('Laporkan salah guna', 'Report abuse')}
       </button>
       {open && <FlagSheet type={type} id={id} onClose={() => setOpen(false)} signedIn={Boolean(user)} userId={user?.id} />}
     </>
@@ -23,6 +25,7 @@ export function FlagButton({ type, id, ownerId }: { type: FlagContentType; id: s
 }
 
 function FlagSheet({ type, id, onClose, signedIn, userId }: { type: FlagContentType; id: string; onClose: () => void; signedIn: boolean; userId?: string }) {
+  const [t] = useT();
   const [reason, setReason] = useState<FlagReason | null>(null);
   const [note, setNote] = useState('');
   const [busy, setBusy] = useState(false);
@@ -45,18 +48,18 @@ function FlagSheet({ type, id, onClose, signedIn, userId }: { type: FlagContentT
   };
 
   return (
-    <Sheet title="Report abuse" onClose={onClose}>
+    <Sheet title={t('Laporkan salah guna', 'Report abuse')} onClose={onClose}>
       {!signedIn ? (
         <AuthForm compact />
       ) : done ? (
         <div className="flex flex-col items-center py-4 text-center">
           <CheckCircle2 className="size-12 text-jade-500" />
-          <p className="mt-2 font-semibold">Thanks — we’ll review it.</p>
-          <p className="text-sm text-ink-500">Content reported by several people is hidden automatically.</p>
+          <p className="mt-2 font-semibold">{t('Terima kasih — kami akan semak.', 'Thanks — we’ll review it.')}</p>
+          <p className="text-sm text-ink-500">{t('Kandungan yang dilaporkan oleh beberapa orang disembunyikan secara automatik.', 'Content reported by several people is hidden automatically.')}</p>
         </div>
       ) : (
         <div className="space-y-3">
-          <ul role="radiogroup" aria-label="Reason" className="space-y-1.5">
+          <ul role="radiogroup" aria-label={t('Sebab', 'Reason')} className="space-y-1.5">
             {FLAG_REASONS.map((r) => (
               <li key={r.id}>
                 <button
@@ -77,13 +80,13 @@ function FlagSheet({ type, id, onClose, signedIn, userId }: { type: FlagContentT
             maxLength={280}
             value={note}
             onChange={(e) => setNote(e.target.value)}
-            placeholder="Details (optional)"
-            aria-label="Details"
+            placeholder={t('Butiran (pilihan)', 'Details (optional)')}
+            aria-label={t('Butiran', 'Details')}
             className="w-full resize-none rounded-xl bg-ink-100 px-3 py-2 text-sm outline-none ring-jade-500 focus:ring-2 dark:bg-ink-800"
           />
           {error && <p role="alert" className="text-sm text-red-600">{error}</p>}
           <Button variant="danger" className="w-full py-3" onClick={send} disabled={!reason || busy}>
-            {busy && <Loader2 className="size-4 animate-spin" />} Send report
+            {busy && <Loader2 className="size-4 animate-spin" />} {t('Hantar laporan', 'Send report')}
           </Button>
         </div>
       )}

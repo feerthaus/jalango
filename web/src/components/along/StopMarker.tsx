@@ -3,6 +3,7 @@ import { MapPinPlus, X } from 'lucide-react';
 import { useEffect } from 'react';
 import { useMapContext } from '@/contexts/MapContext';
 import { useRouting } from '@/contexts/RoutingContext';
+import { useT } from '@/lib/i18n';
 
 /** Purple pin for the stop on the way (e.g. lunch). */
 export function StopMarker() {
@@ -30,14 +31,15 @@ export function StopMarker() {
 
 /** "Singgah: Restoran X" pill during navigation. */
 export function StopBanner() {
+  const [t] = useT();
   const { stop, clearStop } = useRouting();
   if (!stop) return null;
   return (
     <div role="status" className="pointer-events-auto flex items-center gap-2 rounded-full bg-violet-600 py-1.5 pl-3 pr-1.5 text-xs font-semibold text-white shadow-float">
       <MapPinPlus className="size-4 shrink-0" />
-      <span className="min-w-0 flex-1 truncate">Singgah: {stop.name}</span>
-      <button type="button" onClick={clearStop} aria-label="Batal singgah" className="flex items-center gap-1 rounded-full bg-white px-2.5 py-1 text-violet-700">
-        <X className="size-3.5" /> Batal
+      <span className="min-w-0 flex-1 truncate">{t('Singgah:', 'Stop:')} {stop.name}</span>
+      <button type="button" onClick={clearStop} aria-label={t('Batal singgah', 'Cancel stop')} className="flex items-center gap-1 rounded-full bg-white px-2.5 py-1 text-violet-700">
+        <X className="size-3.5" /> {t('Batal', 'Cancel')}
       </button>
     </div>
   );

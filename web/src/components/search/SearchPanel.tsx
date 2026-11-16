@@ -55,7 +55,7 @@ export function SearchPanel({ query, search, activeIndex, onSelect }: SearchPane
 
           {favourites.length > 0 && (
             <Section title={t('Kegemaran', 'Favourites')}>
-              <ul role="listbox" aria-label="Favourites">
+              <ul role="listbox" aria-label={t('Kegemaran', 'Favourites')}>
                 {favourites.slice(0, 5).map((p) => (
                   <PlaceRow key={p.id} place={p} onSelect={onSelect} leadingIcon={<Star className="size-5 text-amber-500" fill="currentColor" />} />
                 ))}
@@ -74,9 +74,9 @@ export function SearchPanel({ query, search, activeIndex, onSelect }: SearchPane
             }
           >
             {recents.length === 0 ? (
-              <p className="px-3 pb-3 text-sm text-ink-500 dark:text-ink-400">Destinations you pick will appear here.</p>
+              <p className="px-3 pb-3 text-sm text-ink-500 dark:text-ink-400">{t('Destinasi yang anda pilih akan dipaparkan di sini.', 'Destinations you pick will appear here.')}</p>
             ) : (
-              <ul role="listbox" aria-label="Recent destinations">
+              <ul role="listbox" aria-label={t('Destinasi terkini', 'Recent destinations')}>
                 {recents.map((p) => (
                   <PlaceRow
                     key={p.id}
@@ -87,7 +87,7 @@ export function SearchPanel({ query, search, activeIndex, onSelect }: SearchPane
                       <button
                         type="button"
                         onClick={() => removeRecent(p.id)}
-                        aria-label={`Remove ${p.name} from recent`}
+                        aria-label={t(`Buang ${p.name} dari terkini`, `Remove ${p.name} from recent`)}
                         className="grid size-9 shrink-0 place-items-center rounded-full text-ink-400 hover:bg-ink-100 hover:text-ink-700 dark:hover:bg-ink-800"
                       >
                         <X className="size-4" />
@@ -111,7 +111,7 @@ function Results({ search, activeIndex, onSelect, pending }: { search: PlaceSear
       <div className="flex items-start gap-3 p-3 text-sm">
         <AlertTriangle className="mt-0.5 size-5 shrink-0 text-amber-500" />
         <div>
-          <p className="font-medium">Search failed</p>
+          <p className="font-medium">{t('Carian gagal', 'Search failed')}</p>
           <p className="text-ink-500 dark:text-ink-300">{search.error}</p>
         </div>
       </div>
@@ -146,7 +146,7 @@ function Results({ search, activeIndex, onSelect, pending }: { search: PlaceSear
             {t('Tiada tempat ditemui untuk', 'No places found for')} “<span className="font-medium text-ink-800 dark:text-ink-100">{search.query}</span>”.
           </p>
         )}
-        {search.mode === 'demo' && <p className="text-xs">Offline sample data only covers major Malaysian cities and landmarks.</p>}
+        {search.mode === 'demo' && <p className="text-xs">{t('Data contoh luar talian hanya meliputi bandar dan mercu tanda utama Malaysia.', 'Offline sample data only covers major Malaysian cities and landmarks.')}</p>}
         {!link && search.mode !== 'demo' && <GoogleMapsHelp query={search.query} />}
       </div>
     );
@@ -160,7 +160,7 @@ function Results({ search, activeIndex, onSelect, pending }: { search: PlaceSear
           <span>{search.notice ?? t('Carian langsung tidak tersedia — hasil daripada sampel kecil tempat di Malaysia.', 'Live search not configured — results come from a small offline sample of Malaysian places.')}</span>
         </div>
       )}
-      <ul role="listbox" aria-label="Search results">
+      <ul role="listbox" aria-label={t('Hasil carian', 'Search results')}>
         {search.results.map((p, i) => (
           <PlaceRow key={p.id} id={optionId(i)} place={p} onSelect={onSelect} active={i === activeIndex} />
         ))}
