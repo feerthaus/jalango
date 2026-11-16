@@ -1,5 +1,6 @@
 import type { Map as MapboxMap } from 'mapbox-gl';
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
+import { readMapMode, saveMapMode, type MapMode } from '@/lib/map3d';
 import type { Coordinates, Place } from '@/types';
 
 interface MapContextValue {
@@ -16,6 +17,9 @@ interface MapContextValue {
   /** Basemap tiles are currently failing to load */
   tileError: boolean;
   setTileError: (failed: boolean) => void;
+  /** 2D standard (default) or 3D navigation mode; remembered on this device */
+  mapMode: MapMode;
+  setMapMode: (m: MapMode) => void;
 }
 
 const MapContext = createContext<MapContextValue | null>(null);
@@ -25,6 +29,11 @@ export function MapProvider({ children }: { children: ReactNode }) {
   const [following, setFollowing] = useState(false);
   const [selectedPlace, setSelectedPlace] = useState<Place | null>(null);
   const [tileError, setTileError] = useState(false);
+  const [mapMode, setMapModeState] = useState<MapMode>(readMapMode);
+  const setMapMode = useCallback((m: MapMode) => {
+    setMapModeState(m);
+    saveMapMode(m);
+  }, []);
 
   const flyTo = useCallback(
     (to: Coordinates, zoom?: number) => {
@@ -48,8 +57,8 @@ export function MapProvider({ children }: { children: ReactNode }) {
   const clearSelection = useCallback(() => setSelectedPlace(null), []);
 
   const value = useMemo(
-    () => ({ map, setMap, following, setFollowing, selectedPlace, selectPlace, clearSelection, flyTo, tileError, setTileError }),
-    [map, following, selectedPlace, selectPlace, clearSelection, flyTo, tileError],
+    () => ({ map, setMap, following, setFollowing, selectedPlace, selectPlace, clearSelection, flyTo, tileError, setTileError, mapMode, setMapMode }),
+    [map, following, selectedPlace, selectPlace, clearSelection, flyTo, tileError, mapMode, setMapMode],
   );
   return <MapContext.Provider value={value}>{children}</MapContext.Provider>;
 }

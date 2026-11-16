@@ -18,6 +18,7 @@ import { InstallBanner } from '@/components/pwa/InstallBanner';
 import { InstallNudge } from '@/components/pwa/InstallNudge';
 import { DemoModeBanner } from '@/components/layout/DemoModeBanner';
 import { LocateButton, MapControls } from '@/components/map/MapControls';
+import { MapModeToggle } from '@/components/map/MapModeToggle';
 import { LocationStatusBanner } from '@/components/map/LocationStatusBanner';
 import { SpeedIndicator } from '@/components/map/SpeedIndicator';
 import { NavigationHud } from '@/components/navigation/NavigationHud';
@@ -87,6 +88,7 @@ export function MapPage() {
             <div className="flex items-end justify-between">
               <SpeedIndicator />
               <div className="ml-auto flex flex-col items-end gap-3">
+                <MapModeToggle />
                 <ConvoyButton onOpen={() => setConvoyOpen({ code: null })} />
                 <IconButton label="Tempat makan & menarik sepanjang laluan" onClick={() => setAlongOpen(true)}>
                   <Utensils className="size-5 text-violet-600 dark:text-violet-400" />

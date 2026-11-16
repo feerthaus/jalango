@@ -5,6 +5,16 @@ Kemas kini fail ini dalam PR yang sama setiap kali fungsi baru ditambah atau diu
 
 ---
 
+## Peta 2D / 3D
+
+- **Butang 2D/3D** di lajur kawalan kanan peta (dan dalam paparan memandu). Butang tunjuk mod semasa; **3D** berwarna hijau. Pilihan diingat pada telefon. Lalai: **2D**.
+- **2D (standard):** sama seperti sebelum ini. Melayari peta: rata, menghala utara. Memandu: kamera condong 50° mengikut arah perjalanan.
+- **3D:** kamera condong **55°** dan **bangunan 3D** (zoom 14 ke atas). Bila bertukar ke 3D, arah semasa dikekalkan; semasa memandu, arah ikut perjalanan. Bertukar ke 2D: kembali rata dan menghala utara (semasa memandu: kamera memandu biasa).
+- Kamera hanya bergerak **sekali** bila mod ditukar; ia tidak melawan pengguna yang memutar atau menyengetkan peta sendiri.
+- **Bangunan:** dikesan semasa app berjalan ikut gaya peta. Gaya Mapbox Navigation (sekarang) → satu lapisan `fill-extrusion` daripada data bangunan Mapbox Streets, di bawah laluan dan label supaya laluan sentiasa kelihatan. Gaya berasaskan Mapbox Standard → `setConfigProperty('basemap','show3dObjects')`. Peta demo (tiada token Mapbox) → condong sahaja, tiada bangunan.
+- Tiada panggilan API tambahan: bangunan datang daripada jubin peta yang sama.
+- Telefon pendek (tinggi ≤ 620px, cth. iPhone SE): butang tema gelap/cerah di peta disembunyikan supaya tidak bertindih; tema masih di Profil.
+
 ## Panduan lorong 3D
 
 **Apa:** bila simpang tinggal kurang 800 m, banner navigasi memaparkan jalan di depan dalam 3D.
