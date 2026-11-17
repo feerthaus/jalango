@@ -6,6 +6,7 @@ import { errorHandler, notFound } from './middleware/errorHandler.js';
 import { rateLimit } from './middleware/rateLimit.js';
 import { directionsRouter } from './routes/directions.js';
 import { geocodingRouter } from './routes/geocoding.js';
+import { transitRouter } from './routes/transit.js';
 import { fuelRouter } from './routes/fuel.js';
 import { probesRouter } from './routes/probes.js';
 import { accountRouter, feedbackRouter } from './routes/account.js';
@@ -36,6 +37,7 @@ export function createApp() {
   app.use('/api/geo/miss', rateLimit({ name: 'geo-miss', windowMs: 10 * 60_000, max: 20 }));
   app.use('/api/geo', rateLimit({ name: 'geo', windowMs: 60_000, max: 120 }), geocodingRouter);
   app.use('/api/fuel', rateLimit({ name: 'fuel', windowMs: 60_000, max: 30 }), fuelRouter);
+  app.use('/api/transit', rateLimit({ name: 'transit', windowMs: 60_000, max: 30 }), transitRouter);
   app.use('/api/directions', rateLimit({ name: 'directions', windowMs: 60_000, max: 60 }), directionsRouter);
   app.use('/api/probes', rateLimit({ name: 'probes', windowMs: 60_000, max: 12 }), probesRouter);
   app.use('/api/account', rateLimit({ name: 'account', windowMs: 10 * 60_000, max: 5 }), accountRouter);
