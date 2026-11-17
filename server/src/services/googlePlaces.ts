@@ -5,8 +5,9 @@ import type { Coordinates, Place } from '../types.js';
 import { boxAround } from './mapbox.js';
 
 /**
- * Google Places API (New), used only to fill in nearby homestays and car
- * rentals when Mapbox finds few. Results are shown as they come (labelled
+ * Google Places API (New), used to fill in nearby homestays and car rentals
+ * when Mapbox finds few, and to place a shared Google Maps link that has no
+ * coordinates. Results are shown as they come (labelled
  * Google) and never stored: Google's terms don't allow caching place content.
  */
 const BASE = 'https://places.googleapis.com/v1/places';
@@ -78,6 +79,20 @@ export async function googleHomestays(near: Coordinates, limit = 10): Promise<Pl
       regionCode: 'MY',
     }),
   );
+}
+
+/** One place by its text ("Name, address" from a Google Maps share link), near the user if known. */
+export async function googleFindPlace(text: string, near?: Coordinates): Promise<Place | null> {
+  const [first] = toPlaces(
+    await post('searchText', {
+      textQuery: text,
+      pageSize: 1,
+      ...(near ? { locationBias: { circle: { center: { latitude: near.lat, longitude: near.lng }, radius: 50_000 } } } : {}),
+      languageCode: 'ms',
+      regionCode: 'MY',
+    }),
+  );
+  return first ?? null;
 }
 
 /** Map entries named only "homestay" / "kereta sewa" etc. are not useful to a renter. */

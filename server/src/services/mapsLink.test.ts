@@ -1,7 +1,24 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import type { Place } from '../types.js';
+
+const google = vi.hoisted(() => ({ enabled: false, find: vi.fn() }));
+const mapbox = vi.hoisted(() => ({ search: vi.fn() }));
+vi.mock('./googlePlaces.js', () => ({ googlePlacesEnabled: () => google.enabled, googleFindPlace: google.find }));
+vi.mock('./mapbox.js', async (orig) => ({ ...(await orig<typeof import('./mapbox.js')>()), searchPlaces: mapbox.search }));
+
 import { isMapsLink, parseGoogleMapsUrl, parseLatLng, placeFromMapsLink } from './mapsLink.js';
 
-afterEach(() => vi.unstubAllGlobals());
+afterEach(() => {
+  vi.unstubAllGlobals();
+  google.enabled = false;
+  google.find.mockReset();
+  mapbox.search.mockReset();
+});
+
+const place = (name: string, lat: number, lng: number, source: Place['source'] = 'mapbox'): Place => ({ id: name, name, address: '', coordinates: { lat, lng }, kind: 'poi', source });
+// What an iPhone "Share" link from Google Maps expands to: name and address, no coordinates
+const SHARE = 'https://maps.google.com/?q=Celik+Mata+Optometry+HQ,+No+19+G,+Jalan+CyberSouth+1,+Cybersouth,+43800+Dengkil,+Selangor&ftid=0x31cdb5:0x1&entry=gps&g_st=ic';
+const shortTo = (location: string) => vi.stubGlobal('fetch', async () => new Response(null, { status: 302, headers: { location } }));
 
 describe('Google Maps links', () => {
   it('prefers the place pin over the map centre, and reads the name', () => {
@@ -10,7 +27,7 @@ describe('Google Maps links', () => {
   });
   it('reads ?q=lat,lng and ?query=name', () => {
     expect(parseGoogleMapsUrl('https://maps.google.com/?q=3.1579,101.7116')?.coordinates).toEqual({ lat: 3.1579, lng: 101.7116 });
-    expect(parseGoogleMapsUrl('https://www.google.com/maps/search/?api=1&query=Awana+Skyway%2C+Genting')).toEqual({ name: 'Awana Skyway' });
+    expect(parseGoogleMapsUrl('https://www.google.com/maps/search/?api=1&query=Awana+Skyway%2C+Genting')).toEqual({ name: 'Awana Skyway', query: 'Awana Skyway, Genting' });
   });
   it('unwraps the consent page', () => {
     const inner = encodeURIComponent('https://www.google.com/maps/place/KLCC/@3.1579,101.7116,15z');
@@ -40,5 +57,37 @@ describe('Google Maps links', () => {
   });
   it('ignores places outside Malaysia', async () => {
     expect(await placeFromMapsLink('https://www.google.com/maps/place/Eiffel/@48.858,2.294,17z')).toBeNull();
+  });
+
+  it('keeps the full place text of a share link without coordinates', () => {
+    expect(parseGoogleMapsUrl(SHARE)).toEqual({ name: 'Celik Mata Optometry HQ', query: 'Celik Mata Optometry HQ, No 19 G, Jalan CyberSouth 1, Cybersouth, 43800 Dengkil, Selangor' });
+  });
+  it('places a name-only share link with Google, using name and address', async () => {
+    shortTo(SHARE);
+    google.enabled = true;
+    google.find.mockResolvedValue(place('Celik Mata Optometry HQ', 2.8692, 101.66, 'google'));
+    const p = await placeFromMapsLink('https://maps.app.goo.gl/Xh97?g_st=ic', { lat: 5.47, lng: 100.49 });
+    expect(google.find).toHaveBeenCalledWith('Celik Mata Optometry HQ, No 19 G, Jalan CyberSouth 1, Cybersouth, 43800 Dengkil, Selangor', { lat: 5.47, lng: 100.49 });
+    expect(p).toMatchObject({ name: 'Celik Mata Optometry HQ', source: 'google' });
+    expect(mapbox.search).not.toHaveBeenCalled();
+  });
+  it('never returns a lookalike: a street named "Lorong 19" is not the shop', async () => {
+    shortTo(SHARE);
+    mapbox.search.mockResolvedValue([place('Lorong 19', 5.478, 100.488, 'osm')]);
+    expect(await placeFromMapsLink('https://maps.app.goo.gl/Xh97')).toBeNull();
+  });
+  it('falls back to our own search when Google is off or wrong, matching the name', async () => {
+    shortTo(SHARE);
+    google.enabled = true;
+    google.find.mockResolvedValue(place('Kedai Lain', 2.9, 101.7, 'google'));
+    mapbox.search.mockResolvedValue([place('Kacha Mata Optometry', 2.92, 101.68), place('Celik Mata Optometry HQ', 2.8692, 101.66)]);
+    expect(await placeFromMapsLink('https://maps.app.goo.gl/Xh97')).toMatchObject({ name: 'Celik Mata Optometry HQ', source: 'mapbox' });
+  });
+  it('still works when the Google call fails', async () => {
+    shortTo(SHARE);
+    google.enabled = true;
+    google.find.mockRejectedValue(new Error('quota'));
+    mapbox.search.mockResolvedValue([place('Celik Mata Optometry HQ', 2.8692, 101.66)]);
+    expect(await placeFromMapsLink('https://maps.app.goo.gl/Xh97')).toMatchObject({ name: 'Celik Mata Optometry HQ' });
   });
 });
