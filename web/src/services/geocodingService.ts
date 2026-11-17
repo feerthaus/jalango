@@ -97,27 +97,3 @@ export async function searchAlongRoute(category: AlongCategory, points: Coordina
   );
   return results;
 }
-
-export interface PlaceInfo {
-  rating: number | null;
-  ratings: number | null;
-  openNow: boolean | null;
-  googleMapsUri: string | null;
-}
-
-const infoCache = new Map<string, PlaceInfo | null>();
-
-/**
- * Google rating and "open now" for one tapped place (server-side, daily cap).
- * Remembered for this session only, so tapping the same pin again is free.
- */
-export async function fetchPlaceInfo(place: Pick<Place, 'id' | 'name' | 'coordinates'>, signal?: AbortSignal): Promise<PlaceInfo | null> {
-  if (infoCache.has(place.id)) return infoCache.get(place.id) ?? null;
-  try {
-    const { info } = await apiGet<{ info: PlaceInfo | null }>('/geo/place-info', { name: place.name, lng: place.coordinates.lng, lat: place.coordinates.lat }, signal);
-    infoCache.set(place.id, info);
-    return info;
-  } catch {
-    return null; // cap reached or no Google key: just don't show it
-  }
-}

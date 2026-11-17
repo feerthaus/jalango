@@ -1,5 +1,4 @@
 import type { Coordinates, Place } from '../types.js';
-import { googleFindPlace, googlePlacesEnabled } from './googlePlaces.js';
 import { nameHasAllTokens, searchPlaces } from './mapbox.js';
 
 /**
@@ -7,9 +6,10 @@ import { nameHasAllTokens, searchPlaces } from './mapbox.js';
  * on WhatsApp) → the place it points to. We only read the link itself:
  * coordinates and name in the URL. Share links from the Google Maps app
  * often carry only "?q=Name, address" (no coordinates): then the place is
- * looked up by that full text, Google Places first (the same place the link
+ * looked up by name with our own search (Mapbox, then OpenStreetMap; the same place the link
  * points to), and a lookup that doesn't match the name returns nothing rather
- * than a wrong place. No Google data is stored.
+ * than a wrong place. No Google API is called: Google Places data may not be
+ * used on a non-Google map such as ours.
  */
 
 /** Hosts we follow redirects for (short links only lead to Google Maps). */
@@ -122,27 +122,17 @@ export async function placeFromMapsLink(text: string, near?: Coordinates): Promi
 }
 
 /**
- * The link names a place but has no coordinates. Google first (the link is
- * Google's own place, so its full "name, address" text finds it exactly),
- * then our own search, keeping only a result whose name has every word of
- * the link's name. Nothing is better than sending the driver to a lookalike.
+ * The link names a place but has no coordinates: search the name, then the
+ * full "name, address" text, keeping only a result whose name has every word
+ * of the link's name. Nothing is better than sending the driver to a lookalike.
  */
 async function lookUpByName(name: string, query: string | undefined, near?: Coordinates): Promise<Place | null> {
-  if (googlePlacesEnabled()) {
-    try {
-      const g = await googleFindPlace(query ?? name, near);
-      if (g && inMalaysia(g.coordinates) && (nameHasAllTokens(g.name, name) || nameHasAllTokens(name, g.name))) return g;
-    } catch (err) {
-      console.warn('[maps_link] google lookup skipped:', err instanceof Error ? err.message : err);
-    }
-  }
   for (const q of query ? [name, query] : [name]) {
     const match = (await searchPlaces(q, near, 5)).find((p) => nameHasAllTokens(p.name, name));
     if (match) return match;
   }
   return null;
 }
-
 function pinPlace(c: Coordinates, name?: string): Place {
   return {
     id: `link:${c.lat.toFixed(6)},${c.lng.toFixed(6)}`,

@@ -136,7 +136,7 @@ async function geocodeStreets(q: string, near: Coordinates | undefined, limit: n
   return toPlaces(await request(url));
 }
 
-interface PhotonFeature {
+export interface PhotonFeature {
   geometry?: { coordinates?: [number, number] };
   properties?: {
     osm_id?: number;
