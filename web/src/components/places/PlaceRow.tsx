@@ -35,7 +35,7 @@ export function PlaceRow({ place, onSelect, active, leadingIcon, trailing, id }:
           <span className="flex items-center gap-2">
             <span className="truncate font-medium">{place.name}</span>
             {place.source === 'demo' && <DemoBadge label={t('Contoh', 'Sample')} className="shrink-0" />}
-            {place.source === 'jalango' && <span className="shrink-0 rounded-full bg-jade-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-jade-700 dark:text-jade-300">{t('Disahkan', 'Verified')}</span>}
+            {(place.source === 'jalango' || place.pinned) && <span className="shrink-0 rounded-full bg-jade-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-jade-700 dark:text-jade-300">{t('Disahkan', 'Verified')}</span>}
           </span>
           <span className="block truncate text-sm text-ink-500 dark:text-ink-300">{place.address || place.category || '—'}</span>
         </span>

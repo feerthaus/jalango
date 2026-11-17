@@ -48,8 +48,9 @@ export function SearchMissSheet({ query, onClose, onGo }: { query: string; onClo
       await reportSearchMiss({
         query: looking.trim().slice(0, 120),
         kind: 'reported',
-        note: note.trim() || undefined,
-        hint: found ? { name: found.name.slice(0, 120), lat: found.coordinates.lat, lng: found.coordinates.lng } : undefined,
+        note: [note.trim(), found && found.source !== 'link' ? `→ ${found.name}` : ''].filter(Boolean).join(' ').slice(0, 280) || undefined,
+        // Coordinates only when the link itself carried them (a name-only link was looked up on the map: not stored)
+        hint: found && found.source === 'link' ? { name: found.name.slice(0, 120), lat: found.coordinates.lat, lng: found.coordinates.lng } : undefined,
       });
       setDone(true);
     } catch {

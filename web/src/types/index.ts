@@ -32,6 +32,8 @@ export interface Place {
   distanceMeters?: number;
   postcode?: string;
   state?: string;
+  /** Put first by an admin for this search (Admin → Carian) */
+  pinned?: boolean;
 }
 
 export interface SavedPlace extends Place {

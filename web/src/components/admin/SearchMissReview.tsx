@@ -6,14 +6,14 @@ import { cn } from '@/lib/cn';
 import { placeFromLink, searchPlaces } from '@/services/geocodingService';
 import {
   addSearchPlace,
+  addSearchRedirect,
   addSearchSynonym,
   fetchSearchMisses,
   fetchSearchRules,
   retireSearchRule,
   setSearchMissStatus,
   type SearchMissRow,
-  type SearchPlaceRow,
-  type SearchSynonymRow,
+  type SearchRules,
 } from '@/services/searchAdmin';
 import type { Place } from '@/types';
 import { formatRelativeTime } from '@/utils/format';
@@ -25,7 +25,7 @@ import { formatRelativeTime } from '@/utils/format';
  */
 export function SearchMissReview() {
   const [misses, setMisses] = useState<SearchMissRow[] | null>(null);
-  const [rules, setRules] = useState<{ synonyms: SearchSynonymRow[]; places: SearchPlaceRow[] } | null>(null);
+  const [rules, setRules] = useState<SearchRules | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(() => {
@@ -135,7 +135,7 @@ function MissItem({ miss, onDone }: { miss: SearchMissRow; onDone: () => void })
       </div>
       {error && <p role="alert" className="mt-2 text-xs text-red-600">{error}</p>}
 
-      {mode === 'pin' && <PinForm miss={miss} busy={busy} onSave={(p) => act(() => addSearchPlace(p, miss.query_norm))} />}
+      {mode === 'pin' && <PinForm miss={miss} busy={busy} onSave={(r) => act(() => addSearchRedirect(r, miss.query_norm))} />}
       {mode === 'place' && <PlaceForm miss={miss} busy={busy} onSave={(p) => act(() => addSearchPlace(p, miss.query_norm))} />}
       {mode === 'synonym' && <SynonymForm miss={miss} busy={busy} onSave={(w, alts) => act(() => addSearchSynonym(w, alts, miss.query_norm))} />}
     </li>
@@ -144,8 +144,12 @@ function MissItem({ miss, onDone }: { miss: SearchMissRow; onDone: () => void })
 
 type NewPlace = { name: string; address: string; lat: number; lng: number; keywords: string[] };
 
-/** Search again (as typed or reworded) and pin the right result for this search text. */
-function PinForm({ miss, busy, onSave }: { miss: SearchMissRow; busy: boolean; onSave: (p: NewPlace) => void }) {
+/**
+ * Search again (as typed or reworded) and pin the right result for this search text.
+ * Only its name and a search text are saved; it is looked up again on every
+ * search (Mapbox results may not be stored).
+ */
+function PinForm({ miss, busy, onSave }: { miss: SearchMissRow; busy: boolean; onSave: (r: { targetName: string; targetQuery: string; keywords: string[] }) => void }) {
   const [q, setQ] = useState(miss.sample);
   const [results, setResults] = useState<Place[] | null>(null);
   const [loading, setLoading] = useState(false);
@@ -164,7 +168,7 @@ function PinForm({ miss, busy, onSave }: { miss: SearchMissRow; busy: boolean; o
   }, []);
   return (
     <div className="mt-3 rounded-xl bg-ink-50 p-3 dark:bg-ink-800/60">
-      <p className="mb-2 text-xs text-ink-500">Cari dengan perkataan lain kalau perlu (cth. "stesen ktmb gemas"), kemudian pilih tempat yang betul. Ia akan keluar paling atas untuk “{miss.sample}”.</p>
+      <p className="mb-2 text-xs text-ink-500">Cari dengan perkataan lain kalau perlu (cth. "stesen ktmb gemas"), kemudian pilih tempat yang betul. Ia akan keluar paling atas untuk “{miss.sample}”. Hanya nama dan teks carian ini disimpan; tempat dicari semula setiap kali.</p>
       <div className="flex gap-2">
         <input value={q} onChange={(e) => setQ(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && void run()} className="min-w-0 flex-1 rounded-lg bg-white px-3 py-2 text-sm dark:bg-ink-900" />
         <Button variant="secondary" className="px-3 py-2 text-xs" onClick={() => void run()} disabled={loading}>
@@ -179,7 +183,7 @@ function PinForm({ miss, busy, onSave }: { miss: SearchMissRow; busy: boolean; o
               <span className="block truncate font-semibold">{p.name}</span>
               <span className="block truncate text-xs text-ink-500">{p.address}</span>
             </span>
-            <Button className="shrink-0 px-2.5 py-1 text-xs" disabled={busy} onClick={() => onSave({ name: p.name, address: p.address, lat: p.coordinates.lat, lng: p.coordinates.lng, keywords: [miss.query_norm] })}>
+            <Button className="shrink-0 px-2.5 py-1 text-xs" disabled={busy} onClick={() => onSave({ targetName: p.name, targetQuery: q.trim() || p.name, keywords: [miss.query_norm] })}>
               <Pin className="size-3.5" /> Pin
             </Button>
           </li>
@@ -189,7 +193,11 @@ function PinForm({ miss, busy, onSave }: { miss: SearchMissRow; busy: boolean; o
   );
 }
 
-/** A place the map doesn't have: from the user's link, a Google Maps link or "lat, lng". */
+/**
+ * A place the map doesn't have: coordinates straight from a Google Maps link
+ * that carries them, or typed "lat, lng". Map-search results are not accepted
+ * here (use Pin instead), so no Mapbox data is stored.
+ */
 function PlaceForm({ miss, busy, onSave }: { miss: SearchMissRow; busy: boolean; onSave: (p: NewPlace) => void }) {
   const [name, setName] = useState(miss.hint_name ?? miss.sample);
   const [address, setAddress] = useState('');
@@ -204,8 +212,8 @@ function PlaceForm({ miss, busy, onSave }: { miss: SearchMissRow; busy: boolean;
     try {
       const p = await placeFromLink(where);
       if (!p) return setErr('Tak dapat baca lokasi. Guna pautan Google Maps atau "lat, lng" di Malaysia.');
+      if (p.source !== 'link') return setErr('Pautan ini tiada koordinat (hanya nama). Buka tempat itu di Google Maps, tekan pin pada peta, kongsi pautan itu, atau taip "lat, lng". Atau guna "Pin hasil yang betul".');
       setCoords(p.coordinates);
-      if (!address && p.address && !/^-?\d/.test(p.address)) setAddress(p.address);
     } catch {
       setErr('Tak dapat semak sekarang.');
     }
@@ -274,8 +282,8 @@ function SynonymForm({ miss, busy, onSave }: { miss: SearchMissRow; busy: boolea
   );
 }
 
-function RulesList({ rules, onChange }: { rules: { synonyms: SearchSynonymRow[]; places: SearchPlaceRow[] }; onChange: () => void }) {
-  const retire = async (kind: 'synonym' | 'place', id: string | number) => {
+function RulesList({ rules, onChange }: { rules: SearchRules; onChange: () => void }) {
+  const retire = async (kind: 'synonym' | 'place' | 'redirect', id: string | number) => {
     if (!window.confirm('Matikan peraturan ini?')) return;
     await retireSearchRule(kind, id);
     onChange();
@@ -283,11 +291,23 @@ function RulesList({ rules, onChange }: { rules: { synonyms: SearchSynonymRow[];
   return (
     <section>
       <h2 className="mb-2 text-sm font-bold">Pembetulan aktif</h2>
-      {rules.synonyms.length === 0 && rules.places.length === 0 && <p className="text-xs text-ink-500">Belum ada. Sinonim terbina (ktm, lrt, mrt, hosp, rnr, masjid) sentiasa aktif.</p>}
+      {rules.synonyms.length === 0 && rules.places.length === 0 && rules.redirects.length === 0 && <p className="text-xs text-ink-500">Belum ada. Sinonim terbina (ktm, lrt, mrt, hosp, rnr, masjid) sentiasa aktif.</p>}
       <ul className="space-y-2">
+        {rules.redirects.map((r) => (
+          <li key={r.id} className="flex items-center gap-2 rounded-xl bg-white px-3 py-2 text-sm ring-1 ring-ink-200 dark:bg-ink-900 dark:ring-ink-800">
+            <Pin className="size-4 shrink-0 text-jade-600" />
+            <span className="min-w-0 flex-1">
+              <span className="block truncate font-semibold">{r.target_name}</span>
+              <span className="block truncate text-xs text-ink-500">pin untuk: {r.keywords.join(', ')}</span>
+            </span>
+            <button type="button" aria-label={`Matikan ${r.target_name}`} onClick={() => void retire('redirect', r.id)} className="grid size-8 place-items-center rounded-full text-ink-400 hover:bg-ink-100 hover:text-red-600 dark:hover:bg-ink-800">
+              <Trash2 className="size-4" />
+            </button>
+          </li>
+        ))}
         {rules.places.map((p) => (
           <li key={p.id} className="flex items-center gap-2 rounded-xl bg-white px-3 py-2 text-sm ring-1 ring-ink-200 dark:bg-ink-900 dark:ring-ink-800">
-            <Pin className="size-4 shrink-0 text-jade-600" />
+            <MapPin className="size-4 shrink-0 text-jade-600" />
             <span className="min-w-0 flex-1">
               <span className="block truncate font-semibold">{p.name}</span>
               <span className="block truncate text-xs text-ink-500">untuk: {p.keywords.join(', ') || p.name}</span>

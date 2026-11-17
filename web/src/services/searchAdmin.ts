@@ -49,12 +49,31 @@ export async function fetchSearchMisses(): Promise<SearchMissRow[]> {
   return check(await db().rpc('admin_search_misses')) ?? [];
 }
 
-export async function fetchSearchRules(): Promise<{ synonyms: SearchSynonymRow[]; places: SearchPlaceRow[] }> {
-  const [syn, pl] = await Promise.all([
+export interface SearchRedirectRow {
+  id: string;
+  keywords: string[];
+  target_name: string;
+  target_query: string;
+  created_at: string;
+}
+
+export interface SearchRules {
+  synonyms: SearchSynonymRow[];
+  places: SearchPlaceRow[];
+  redirects: SearchRedirectRow[];
+}
+
+export async function fetchSearchRules(): Promise<SearchRules> {
+  const [syn, pl, rd] = await Promise.all([
     db().from('search_synonyms').select('id, word, alternatives, created_at').eq('active', true).order('word'),
     db().from('search_places').select('id, name, address, latitude, longitude, keywords, created_at').eq('active', true).order('created_at', { ascending: false }),
+    db().from('search_redirects').select('id, keywords, target_name, target_query, created_at').eq('active', true).order('created_at', { ascending: false }),
   ]);
-  return { synonyms: (check(syn) ?? []) as SearchSynonymRow[], places: (check(pl) ?? []) as SearchPlaceRow[] };
+  return {
+    synonyms: (check(syn) ?? []) as SearchSynonymRow[],
+    places: (check(pl) ?? []) as SearchPlaceRow[],
+    redirects: (check(rd) ?? []) as SearchRedirectRow[],
+  };
 }
 
 export async function setSearchMissStatus(query: string, status: 'open' | 'fixed' | 'ignored'): Promise<void> {
@@ -81,6 +100,12 @@ export async function addSearchPlace(p: { name: string; address: string; lat: nu
   adminChanged();
 }
 
-export async function retireSearchRule(kind: 'synonym' | 'place', id: string | number): Promise<void> {
+/** Pin a result for these search texts: only its name and a search text are kept (no Mapbox data). */
+export async function addSearchRedirect(r: { targetName: string; targetQuery: string; keywords: string[] }, query?: string): Promise<void> {
+  check(await db().rpc('admin_add_search_redirect', { p_target_name: r.targetName, p_target_query: r.targetQuery, p_keywords: r.keywords, p_query: query ?? null }));
+  adminChanged();
+}
+
+export async function retireSearchRule(kind: 'synonym' | 'place' | 'redirect', id: string | number): Promise<void> {
   check(await db().rpc('admin_retire_search_rule', { p_kind: kind, p_id: String(id) }));
 }

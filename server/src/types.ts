@@ -25,6 +25,8 @@ export interface Place {
   /** Where the record came from. `demo` records are sample data. */
   source: 'mapbox' | 'demo' | 'osm' | 'link' | 'jalango';
   distanceMeters?: number;
+  /** Put first by an admin for this search (Admin → Carian) */
+  pinned?: boolean;
 }
 
 export type Congestion = 'low' | 'moderate' | 'heavy' | 'severe' | 'unknown';

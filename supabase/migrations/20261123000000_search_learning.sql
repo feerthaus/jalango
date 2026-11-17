@@ -4,8 +4,10 @@
 --  2. Searches that found nothing, or where nothing was tapped, are counted.
 --     Only the search text and counts are kept: no user, no location, no IP.
 --     Rows are deleted 90 days after they were last seen.
---  3. Admins fix them without code: a synonym ("ktm" -> "stesen ktmb") or a
---     JalanGo place (pin an existing result, or add a place by coordinates).
+--  3. Admins fix them without code: a synonym ("ktm" -> "stesen ktmb"), a
+--     redirect (pin the right result: only its name is kept and it is looked
+--     up again on each search, so no Mapbox data is stored), or a JalanGo
+--     place added by coordinates from a link the user or admin gave.
 -- Written only through the API server (service role); admins read and decide.
 
 create table public.search_misses (
@@ -54,6 +56,21 @@ create table public.search_places (
 alter table public.search_places enable row level security;
 create policy "search_places: admins read" on public.search_places for select to authenticated using (public.is_admin());
 revoke insert, update, delete on public.search_places from anon, authenticated;
+
+-- Pinned results: these words also search target_query and put target_name first.
+-- Only text: no Mapbox coordinates or IDs are kept (Mapbox terms).
+create table public.search_redirects (
+  id            uuid primary key default gen_random_uuid(),
+  keywords      text[] not null check (cardinality(keywords) between 1 and 10),
+  target_name   text not null check (char_length(target_name) between 2 and 120),
+  target_query  text not null check (char_length(target_query) between 2 and 200),
+  active        boolean not null default true,
+  created_by    uuid references public.users (id) on delete set null,
+  created_at    timestamptz not null default now()
+);
+alter table public.search_redirects enable row level security;
+create policy "search_redirects: admins read" on public.search_redirects for select to authenticated using (public.is_admin());
+revoke insert, update, delete on public.search_redirects from anon, authenticated;
 
 create or replace function public.normalize_search(p text)
 returns text language sql immutable set search_path = ''
@@ -178,7 +195,32 @@ $$;
 revoke execute on function public.admin_add_search_place(text, text, double precision, double precision, text[], text) from public, anon;
 grant execute on function public.admin_add_search_place(text, text, double precision, double precision, text[], text) to authenticated;
 
--- Admin: switch a synonym or place off (kept for the record)
+-- Admin: pin the right result for these words (by name, looked up again each time)
+create or replace function public.admin_add_search_redirect(p_target_name text, p_target_query text, p_keywords text[], p_query text default null)
+returns uuid language plpgsql security definer set search_path = ''
+as $$
+declare
+  new_id uuid;
+  kws text[] := array(select distinct public.normalize_search(k) from unnest(coalesce(p_keywords, '{}')) k
+                      where char_length(public.normalize_search(k)) between 2 and 120);
+begin
+  if not public.is_admin() then raise exception 'Admins only.' using errcode = '42501'; end if;
+  if cardinality(kws) = 0 then raise exception 'Give at least one search text.' using errcode = 'P0001', hint = 'invalid'; end if;
+  insert into public.search_redirects (keywords, target_name, target_query, created_by)
+  values (kws[1:10], left(trim(p_target_name), 120), left(trim(p_target_query), 200), (select auth.uid()))
+  returning id into new_id;
+  if p_query is not null then
+    update public.search_misses set status = 'fixed' where query_norm = public.normalize_search(p_query);
+  end if;
+  insert into public.admin_actions (admin_id, action, target_type, target_id, note)
+  values ((select auth.uid()), 'search_redirect_added', 'search', new_id, left(trim(p_target_name), 120));
+  return new_id;
+end;
+$$;
+revoke execute on function public.admin_add_search_redirect(text, text, text[], text) from public, anon;
+grant execute on function public.admin_add_search_redirect(text, text, text[], text) to authenticated;
+
+-- Admin: switch a synonym, redirect or place off (kept for the record)
 create or replace function public.admin_retire_search_rule(p_kind text, p_id text)
 returns void language plpgsql security definer set search_path = ''
 as $$
@@ -188,6 +230,8 @@ begin
     update public.search_synonyms set active = false where id = p_id::bigint;
   elsif p_kind = 'place' then
     update public.search_places set active = false where id = p_id::uuid;
+  elsif p_kind = 'redirect' then
+    update public.search_redirects set active = false where id = p_id::uuid;
   else
     raise exception 'Unknown kind.' using errcode = 'P0001', hint = 'invalid';
   end if;

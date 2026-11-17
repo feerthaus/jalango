@@ -24,10 +24,13 @@ describe('search that learns', () => {
     expect(matchLearnedPlaces([station], 'stesen gem')).toHaveLength(1);
     expect(matchLearnedPlaces([station], 'ktm kajang')).toHaveLength(0);
     expect(matchLearnedPlaces([station], 'ktm gemas')[0]).not.toHaveProperty('keywords');
+    // a single common word doesn't pin it
+    expect(matchLearnedPlaces([station], 'stesen')).toHaveLength(0);
+    expect(matchLearnedPlaces([station], 'ktm')).toHaveLength(0);
   });
 
   it('puts the admin\'s place first, with its distance', async () => {
-    setLearned({ synonyms: {}, places: [station] });
+    setLearned({ synonyms: {}, places: [station], redirects: [] });
     vi.stubGlobal('fetch', async () => Response.json({ features: [feat('Ktm Mart'), feat('Nasi Ayam Gemas')] }));
     const r = await smartSearch('ktm gemas', { lat: 3, lng: 101.7 });
     expect(r[0]).toMatchObject({ name: 'Stesen KTMB Gemas', source: 'jalango' });
@@ -35,7 +38,7 @@ describe('search that learns', () => {
   });
 
   it('tries admin synonyms before the built-in ones', async () => {
-    setLearned({ synonyms: { pdrm: ['balai polis'] }, places: [] });
+    setLearned({ synonyms: { pdrm: ['balai polis'] }, places: [], redirects: [] });
     const asked: string[] = [];
     vi.stubGlobal('fetch', async (u: URL) => {
       const q = new URL(String(u)).searchParams.get('q') ?? '';
@@ -48,7 +51,7 @@ describe('search that learns', () => {
   });
 
   it('counts a search that found nothing, and nothing else', async () => {
-    setLearned({ synonyms: {}, places: [] });
+    setLearned({ synonyms: {}, places: [], redirects: [] });
     vi.stubGlobal('fetch', async () => Response.json({ features: [] }));
     expect(await smartSearch('zzqx nowhere', undefined)).toEqual([]);
     expect(rpc).toHaveBeenCalledWith('log_search_miss', expect.objectContaining({ p_query: 'zzqx nowhere', p_kind: 'no_results' }));
@@ -68,5 +71,23 @@ describe('search that learns', () => {
     expect(searchMissSchema.safeParse({ query: 'ktm gemas', kind: 'no_results' }).success).toBe(false);
     expect(searchMissSchema.safeParse({ query: 'k', kind: 'no_click' }).success).toBe(false);
     expect(searchMissSchema.safeParse({ query: 'a'.repeat(121), kind: 'no_click' }).success).toBe(false);
+  });
+
+  it('a pinned result is looked up again by its saved text and put first (nothing from Mapbox stored)', async () => {
+    setLearned({ synonyms: {}, places: [], redirects: [{ keywords: ['ktm gemas'], targetName: 'Stesen KTMB Gemas', targetQuery: 'stesen ktmb gemas' }] });
+    const asked: string[] = [];
+    vi.stubGlobal('fetch', async (u: URL) => {
+      const q = new URL(String(u)).searchParams.get('q') ?? '';
+      asked.push(q);
+      if (q === 'stesen ktmb gemas') return Response.json({ features: [feat('Belakang stesen KTMB Gemas'), feat('Stesen KTMB Gemas')] });
+      return Response.json({ features: [feat('Gemas'), feat('Ktm Mart'), feat('Nasi Ayam Gemas')] });
+    });
+    const r = await smartSearch('Ktm gemas', undefined);
+    expect(asked).toContain('stesen ktmb gemas');
+    expect(r[0]).toMatchObject({ name: 'Stesen KTMB Gemas', pinned: true, source: 'mapbox' });
+    // other searches with "ktm" alone don't follow it
+    asked.length = 0;
+    await smartSearch('ktm kajang', undefined);
+    expect(asked).not.toContain('stesen ktmb gemas');
   });
 });
