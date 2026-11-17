@@ -34,6 +34,7 @@ import { useMapContext } from '@/contexts/MapContext';
 import { useReports } from '@/contexts/ReportsContext';
 import { useIsNavigating, useRouting } from '@/contexts/RoutingContext';
 import { useT } from '@/lib/i18n';
+import { cn } from '@/lib/cn';
 
 export function MapPage() {
   const [t] = useT();
@@ -125,6 +126,8 @@ export function MapPage() {
     );
   }
 
+  const cardOpen = !planning && Boolean(selectedPlace || selectedReport || selectedShortcut);
+
   return (
     <>
       {/* Top: search + status (hidden on mobile while choosing a route) */}
@@ -149,22 +152,29 @@ export function MapPage() {
       </div>
 
       {/* Right: map controls */}
-      <div className="absolute right-3 top-[calc(env(safe-area-inset-top)+5.25rem)] z-10 md:right-4 md:top-4">
+      {/* With a card open on a short phone there is no room: the card comes first */}
+      <div className={cn('absolute right-3 top-[calc(env(safe-area-inset-top)+5.25rem)] z-10 md:right-4 md:top-4', cardOpen && '[@media(max-width:767px)_and_(max-height:760px)]:hidden')}>
         <MapControls />
       </div>
 
       {/* Bottom area (above nav on mobile) */}
       <div className="absolute inset-x-0 bottom-[calc(4rem+env(safe-area-inset-bottom))] z-10 space-y-3 p-3 md:bottom-0 md:p-4">
         {!planning && (
-          <div className="flex items-end justify-between gap-3">
+          <div className={cn('flex items-end justify-between gap-3', cardOpen && '[@media(max-width:767px)_and_(max-height:760px)]:hidden')}>
             <SpeedIndicator />
-            <div className="ml-auto flex flex-col items-end gap-3">
-              <ItineraryButton onOpen={() => setItineraryOpen(true)} />
-              <ShareSpotButton />
-              <ConvoyButton onOpen={() => setConvoyOpen({ code: null })} />
-              <IconButton label={t('Kongsi lokasi live', 'Share live location')} onClick={() => setShareOpen(true)}>
-                <Radio className="size-5 text-jade-600 dark:text-jade-400" />
-              </IconButton>
+            {/* With a card open the tall stack would climb into the top controls:
+                keep only Report and Locate, side by side */}
+            <div className={cardOpen ? 'ml-auto flex items-end gap-3' : 'ml-auto flex flex-col items-end gap-3'}>
+              {!cardOpen && (
+                <>
+                  <ItineraryButton onOpen={() => setItineraryOpen(true)} />
+                  <ShareSpotButton />
+                  <ConvoyButton onOpen={() => setConvoyOpen({ code: null })} />
+                  <IconButton label={t('Kongsi lokasi live', 'Share live location')} onClick={() => setShareOpen(true)}>
+                    <Radio className="size-5 text-jade-600 dark:text-jade-400" />
+                  </IconButton>
+                </>
+              )}
               {reportButton}
               <LocateButton />
             </div>
