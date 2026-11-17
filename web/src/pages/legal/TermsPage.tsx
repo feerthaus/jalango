@@ -82,7 +82,9 @@ const ms: LegalSection[] = [
     body: (
       <p>
         JalanGo menggunakan perkhidmatan pihak ketiga seperti Mapbox (peta dan laluan), Supabase (pangkalan data dan log masuk), Netlify (pengehosan) serta Google dan Facebook (log
-        masuk pilihan). Penggunaan anda juga tertakluk kepada terma pihak tersebut. Atribusi peta dipaparkan pada peta.
+        masuk pilihan). Penggunaan anda juga tertakluk kepada terma pihak tersebut. Atribusi peta dipaparkan pada peta. Jadual tren datang daripada KTMB melalui data.gov.my; tambang yang
+        dipaparkan ialah anggaran. Pautan tiket ke rakan (cth. 12Go) ialah pautan affiliate: JalanGo mungkin menerima komisen, dan pembelian, bayaran, pembatalan serta bayaran balik diurus
+        sepenuhnya oleh rakan tersebut di bawah terma mereka. Pautan ke laman rasmi KTMB sentiasa disediakan.
       </p>
     ),
   },
@@ -194,7 +196,9 @@ const en: LegalSection[] = [
     body: (
       <p>
         JalanGo uses third-party services such as Mapbox (maps and routing), Supabase (database and sign-in), Netlify (hosting) and Google and Facebook (optional sign-in). Your use is also
-        subject to their terms. Map attributions are shown on the map.
+        subject to their terms. Map attributions are shown on the map. Train times come from KTMB via data.gov.my; the fares shown are estimates. Ticket links to partners (e.g. 12Go) are
+        affiliate links: JalanGo may earn a commission, and purchase, payment, cancellation and refunds are handled entirely by that partner under their terms. A link to KTMB’s official
+        site is always provided.
       </p>
     ),
   },
