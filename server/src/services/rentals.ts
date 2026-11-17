@@ -16,7 +16,8 @@ function haversineMeters(a: Coordinates, b: Coordinates): number {
 
 /** Fewer useful Mapbox results than this and OpenStreetMap fills in. */
 export const OSM_FILL_BELOW = 5;
-const RADIUS_M = 25_000;
+/** Same reach as the Mapbox homestay search when it widens (rural OSM data is thin). */
+const RADIUS_M = 80_000;
 
 /** Map entries named only "homestay" / "kereta sewa" etc. are not useful to a renter. */
 const GENERIC = new Set(['homestay', 'homestays', 'home stay', 'kereta sewa', 'car rental', 'rental', 'sewa kereta']);
@@ -47,6 +48,8 @@ async function photon(q: string, tags: string[], near: Coordinates, limit: numbe
   url.searchParams.set('bbox', MALAYSIA_BBOX);
   url.searchParams.set('lat', String(near.lat));
   url.searchParams.set('lon', String(near.lng));
+  url.searchParams.set('location_bias_scale', '0.1'); // nearness counts more than name relevance
+  url.searchParams.set('zoom', '12');
   for (const t of tags) url.searchParams.append('osm_tag', t);
   try {
     const res = await fetch(url, { signal: AbortSignal.timeout(3500), headers: { 'User-Agent': 'JalanGo/1.0 (+https://jalango.netlify.app)' } });
@@ -58,7 +61,7 @@ async function photon(q: string, tags: string[], near: Coordinates, limit: numbe
   }
 }
 
-/** OpenStreetMap places of this kind within ~25 km, nearest first, generic names dropped. */
+/** OpenStreetMap places of this kind within 80 km, nearest first, generic names dropped. */
 export async function osmRentals(category: 'homestay' | 'car_rental', near: Coordinates, limit = 10): Promise<Place[]> {
   const { q, tags } = OSM_QUERY[category];
   const lists = await Promise.all(q.map((word) => photon(word, tags, near, limit)));

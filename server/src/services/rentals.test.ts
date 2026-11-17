@@ -24,11 +24,11 @@ describe('nearby homestays and car rentals', () => {
     expect(fetch).not.toHaveBeenCalled();
   });
 
-  it('fills in from OpenStreetMap: within 25 km, nearest first, no generic names, no duplicates', async () => {
+  it('fills in from OpenStreetMap: within 80 km, nearest first, no generic names, no duplicates', async () => {
     const urls: string[] = [];
     vi.stubGlobal('fetch', async (u: URL) => {
       urls.push(String(u));
-      return Response.json({ features: [feature('Teratak Bonda', 3.01, 101.5, 1), feature('Homestay', 3.0, 101.51, 2), feature('Far Away Stay', 3.5, 101.5, 3), feature('Laman Kita', 3.002, 101.5, 4)] });
+      return Response.json({ features: [feature('Teratak Bonda', 3.01, 101.5, 1), feature('Homestay', 3.0, 101.51, 2), feature('Far Away Stay', 4.0, 101.5, 3), feature('Laman Kita', 3.002, 101.5, 4)] });
     });
     mb.category.mockResolvedValue([place('Laman Kita', 3.002, 101.5)]);
     const r = await searchRentals('homestay', near);
