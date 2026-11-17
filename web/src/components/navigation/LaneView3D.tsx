@@ -17,7 +17,7 @@ export function LaneView3D({ step, lang }: { step: RouteStep; lang: 'ms' | 'en' 
   const pad = 30; // shoulders
   return (
     <div
-      className="relative h-36 overflow-hidden border-t border-white/10 bg-gradient-to-b from-sky-900/70 via-ink-900 to-ink-950"
+      className="relative h-36 overflow-hidden border-t short:h-20 border-white/10 bg-gradient-to-b from-sky-900/70 via-ink-900 to-ink-950"
       role="img"
       aria-label={lang === 'ms' ? `Guna ${valid} daripada ${n} lorong yang bertanda hijau` : `Use the ${valid} of ${n} lanes marked green`}
     >

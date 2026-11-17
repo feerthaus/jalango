@@ -28,14 +28,18 @@ export function NavigationCamera() {
   // ease of the same length, so camera and car glide together.
   useEffect(() => {
     if (!map || !navigating || !following || !pose) return;
-    const h = map.getContainer().clientHeight;
+    const { clientHeight: h, clientWidth: w } = map.getContainer();
+    // Wide screens (tablet, desktop, phone sideways) keep the driving panel on the left:
+    // centre the car in the map that's left visible
+    const left = w >= 768 || (w > h && h <= 500) ? Math.min(420, Math.round(w * 0.42)) : 0;
+    const short = w > h && h <= 500;
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     map.easeTo({
       center: [pose.position.lng, pose.position.lat],
       bearing: pose.bearing,
       pitch: mapMode === '3d' ? PITCH_3D : PITCH_2D_DRIVING,
       zoom: (fix?.speed ?? 0) > 22 ? 15.5 : 16.5,
-      padding: { top: Math.round(h * 0.4), bottom: 0, left: 0, right: 0 },
+      padding: { top: Math.round(h * (short ? 0.3 : 0.4)), bottom: 0, left, right: 0 },
       duration: reduceMotion ? 0 : pose.duration || 600,
       easing: (t) => t,
     });
