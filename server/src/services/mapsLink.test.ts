@@ -6,7 +6,7 @@ const mapbox = vi.hoisted(() => ({ search: vi.fn() }));
 vi.mock('./googlePlaces.js', () => ({ googlePlacesEnabled: () => google.enabled, googleFindPlace: google.find }));
 vi.mock('./mapbox.js', async (orig) => ({ ...(await orig<typeof import('./mapbox.js')>()), searchPlaces: mapbox.search }));
 
-import { isMapsLink, parseGoogleMapsUrl, parseLatLng, placeFromMapsLink } from './mapsLink.js';
+import { isMapsLink, parseGoogleMapsUrl, parseLatLng, placeFromMapsLink, placeName } from './mapsLink.js';
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -59,6 +59,14 @@ describe('Google Maps links', () => {
     expect(await placeFromMapsLink('https://www.google.com/maps/place/Eiffel/@48.858,2.294,17z')).toBeNull();
   });
 
+  it('finds the name when the share link puts the unit number first', () => {
+    // the owner's real link (17 Nov 2026), trimmed
+    const real = 'https://maps.google.com/?q=No+19+G,+Celik+Mata+Optometry+HQ,+Park+Place+1+Cybersouth,+Park+Place+1,+43800+Dengkil,+Selangor&ftid=0x31cc9f7db32da8fb:0xd6ed70dfe05e4080&entry=gps&g_st=ic';
+    expect(parseGoogleMapsUrl(real)).toEqual({ name: 'Celik Mata Optometry HQ', query: 'No 19 G, Celik Mata Optometry HQ, Park Place 1 Cybersouth, Park Place 1, 43800 Dengkil, Selangor' });
+    expect(placeName('Lot 5, Jalan Ampang, KLCC')).toBe('KLCC');
+    expect(placeName('Awana SkyWay')).toBe('Awana SkyWay');
+    expect(placeName('No 3, Jalan 1')).toBe('No 3');
+  });
   it('keeps the full place text of a share link without coordinates', () => {
     expect(parseGoogleMapsUrl(SHARE)).toEqual({ name: 'Celik Mata Optometry HQ', query: 'Celik Mata Optometry HQ, No 19 G, Jalan CyberSouth 1, Cybersouth, 43800 Dengkil, Selangor' });
   });

@@ -46,6 +46,19 @@ export interface ParsedLink {
   query?: string;
 }
 
+/** "No 19 G", "Lot 5", "Jalan …", "43800 Dengkil": parts of an address, not a place name. */
+const ADDRESS_PART = /^(no\.?|lot|unit|blok|block|level|tingkat|aras|jalan|jln|lorong|lrg|persiaran|lebuh(raya)?|taman|tmn|kampung|kg)\b|^[\d\s\-/]+[a-z]?$|^\d{5}\b/i;
+
+/**
+ * The place name in "Name, address" text. Google's share links sometimes put
+ * the unit number first ("No 19 G, Celik Mata Optometry HQ, …"), so skip
+ * leading address parts.
+ */
+export function placeName(text: string): string {
+  const parts = text.split(',').map((p) => p.trim()).filter(Boolean);
+  return parts.find((p) => !ADDRESS_PART.test(p)) ?? parts[0] ?? '';
+}
+
 /** Coordinates and/or place name from a full Google Maps URL. */
 export function parseGoogleMapsUrl(raw: string): ParsedLink | null {
   let u: URL;
@@ -72,7 +85,7 @@ export function parseGoogleMapsUrl(raw: string): ParsedLink | null {
   const place = path.match(/\/maps\/(?:place|search|dir\/[^/]*)\/([^/@]+)/);
   const text = (place?.[1] ?? (q && !qCoords ? q : '')).replace(/\+/g, ' ').replace(/\s+/g, ' ').trim();
   if (text && !parseLatLng(text)) {
-    out.name = text.split(',')[0].trim().slice(0, 120) || undefined;
+    out.name = placeName(text).slice(0, 120) || undefined;
     if (out.name && text.length > out.name.length) out.query = text.slice(0, 200);
   }
   return out.coordinates || out.name ? out : null;
