@@ -244,7 +244,7 @@ Pelan penuh ada dalam `docs/MARKETPLACE.md`. Fasa 0 hanya pendaftaran dan penges
 
 ## Komuniti
 
-- **Laporan jalan raya:** kemalangan, sesak, banjir, sekatan polis, dan lain-lain. Pengguna boleh undi "masih ada / dah tiada".
+- **Laporan jalan raya:** kemalangan, sesak, **Polis** (speed trap / peronda), **Sekatan jalan (SJR)**, jalan ditutup, bahaya, banjir, kenderaan rosak, kerja jalan dan kamera AWAS. Polis dan SJR luput selepas 2 jam (kecuali disahkan semula), dan diumumkan dengan suara bila di laluan hadapan. Pengguna boleh undi "masih ada / dah tiada".
 - **Jalan pintas komuniti:** laluan pendek (≤60 km) yang dikongsi dari sejarah perjalanan.
 - **Laluan komuniti:** laluan jauh alternatif untuk elak jem, contohnya ke Kelantan melalui Gua Musang. Termasuk laluan yang masuk semula ke jalan utama di tengah perjalanan, seperti Kuala Pilah → exit Gambang (`web/src/components/communityRoutes/`).
 - **Tempat disyorkan komuniti.**
