@@ -243,7 +243,61 @@ export async function searchPlaces(query: string, near?: Coordinates, limit = 8)
   // Still nothing: the name is half-typed ("Awana Sky") or split differently ("Awana Sky Way").
   // Search the complete words, keep places whose name holds every typed piece, and ask OpenStreetMap too.
   if (results.length === 0) results = await partialNameSearch(q, near, limit);
-  return results;
+
+  // No top result holds every typed word ("ktm gemas" finds "Ktm Mart" and "Nasi Ayam Gemas",
+  // not "Stesen KTMB Gemas"): try the usual Malaysian alternatives, then OpenStreetMap.
+  if (results.length > 0 && !results.slice(0, 3).some((p) => matchScore(p, q) === 2)) {
+    const variants = queryVariants(q).slice(0, 2);
+    const extra = (await Promise.all(variants.map((v) => searchBox(v, near, limit).catch(() => [] as Place[])))).flat();
+    results = mergePlaces(results, extra, limit * 3);
+    if (!results.some((p) => matchScore(p, q) > 0)) {
+      results = mergePlaces(results, (await searchOsm(q, near, limit)).filter((p) => matchScore(p, q) > 0), limit * 3);
+    }
+  }
+  return rankByMatch(results, q).slice(0, limit);
+}
+
+/**
+ * Common ways Malaysians write a place type differently from the map's name for it
+ * ("KTM" for "Stesen KTMB", "hosp" for "Hospital").
+ */
+const SYNONYMS: Record<string, string[]> = {
+  ktm: ['stesen ktmb', 'ktm station'],
+  ktmb: ['stesen ktmb'],
+  komuter: ['stesen ktm komuter'],
+  lrt: ['stesen lrt', 'lrt station'],
+  mrt: ['stesen mrt', 'mrt station'],
+  stesen: ['station'],
+  station: ['stesen'],
+  hosp: ['hospital'],
+  rnr: ['r&r'],
+  hentian: ['r&r'],
+  masjid: ['mosque'],
+  surau: ['musolla'],
+};
+
+/** The query with one known word swapped for its usual alternatives. */
+export function queryVariants(q: string): string[] {
+  const words = q.trim().split(/\s+/);
+  const out: string[] = [];
+  words.forEach((w, i) => {
+    for (const alt of SYNONYMS[w.toLowerCase()] ?? []) out.push([...words.slice(0, i), alt, ...words.slice(i + 1)].join(' '));
+  });
+  return out.filter((v, i) => v.toLowerCase() !== q.toLowerCase() && out.indexOf(v) === i);
+}
+
+/** 2: the name holds every typed word; 1: name and address together do; 0: neither. */
+export function matchScore(p: Pick<Place, 'name' | 'address'>, q: string): 0 | 1 | 2 {
+  if (nameHasAllTokens(p.name, q)) return 2;
+  return nameHasAllTokens(`${p.name} ${p.address ?? ''}`, q) ? 1 : 0;
+}
+
+/** Places matching every typed word first; otherwise the search's own order (nearness, relevance). */
+export function rankByMatch(list: Place[], q: string): Place[] {
+  return list
+    .map((p, i) => ({ p, i, s: matchScore(p, q) }))
+    .sort((a, b) => b.s - a.s || a.i - b.i)
+    .map((x) => x.p);
 }
 
 /** Lower-case letters and digits only: "Awana SkyWay" → "awanaskyway". */
