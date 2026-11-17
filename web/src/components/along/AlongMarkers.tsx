@@ -1,12 +1,11 @@
 import mapboxgl from 'mapbox-gl';
-import { BadgeCheck, Star, ThumbsUp, X } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { BadgeCheck, ThumbsUp, X } from 'lucide-react';
+import { useEffect, useRef } from 'react';
 import { useAlong, type AlongRow } from '@/contexts/AlongContext';
 import { useMapContext } from '@/contexts/MapContext';
 import { useRouting } from '@/contexts/RoutingContext';
 import { alongMeta } from '@/lib/alongCategories';
 import { formatDistance } from '@/utils/geo';
-import { fetchPlaceInfo, type PlaceInfo } from '@/services/geocodingService';
 import { isOpenNow } from '@/utils/openingHours';
 import { labelledIds, pinHtml } from '@/utils/alongPins';
 import { aheadText, ListingLine, StopReviewButtons } from './AlongRouteSheet';
@@ -77,17 +76,6 @@ export function AlongPlaceCard() {
   const [t] = useT();
   const { selected, select, category } = useAlong();
   const { addStop, stop } = useRouting();
-  const [info, setInfo] = useState<PlaceInfo | null | 'loading'>(null);
-  const sel = selected?.place;
-  const verified = Boolean(selected?.listing);
-  useEffect(() => {
-    setInfo(null);
-    if (!sel || verified || sel.source === 'demo') return;
-    const controller = new AbortController();
-    setInfo('loading');
-    fetchPlaceInfo(sel, controller.signal).then((i) => !controller.signal.aborted && setInfo(i));
-    return () => controller.abort();
-  }, [sel, verified]);
   if (!selected || !category) return null;
   const meta = alongMeta(category);
   const r = selected;
@@ -104,7 +92,7 @@ export function AlongPlaceCard() {
           ) : (
             r.place.address && <p className="truncate text-sm text-ink-500 dark:text-ink-300">{r.place.address}</p>
           )}
-          <PlaceFacts r={r} info={info} />
+          <PlaceFacts r={r} />
           <p className="mt-1 flex flex-wrap items-center gap-x-2 text-xs text-ink-500">
             <strong className="text-ink-800 dark:text-ink-100">{aheadText(r)}</strong>
             <span>{r.offset < 200 ? t('tepi jalan', 'roadside') : t(`${formatDistance(r.offset)} dari laluan`, `${formatDistance(r.offset)} off the route`)}</span>
@@ -124,32 +112,18 @@ export function AlongPlaceCard() {
   );
 }
 
-/** ⭐ rating · Buka/Tutup: from the shop's own hours (checked by JalanGo) or Google. */
-function PlaceFacts({ r, info }: { r: AlongRow; info: PlaceInfo | null | 'loading' }) {
+/** "Checked by JalanGo" and the business's own details. Unchecked map places show none
+ * (Google ratings may not be shown with our Mapbox map). */
+function PlaceFacts({ r }: { r: AlongRow }) {
   const [t] = useT();
-  if (r.listing) {
-    return (
-      <>
-        <p className="mt-0.5 flex items-center gap-1 text-xs font-semibold text-jade-700 dark:text-jade-300">
-          <BadgeCheck className="size-3.5 shrink-0" /> {t('Disemak JalanGo', 'Checked by JalanGo')}
-        </p>
-        <p className="truncate text-xs text-ink-500"><ListingLine l={r.listing} /></p>
-      </>
-    );
-  }
-  if (info === 'loading') return <p className="mt-0.5 h-4 w-28 animate-pulse rounded bg-ink-200 dark:bg-ink-700" aria-label={t('Memuatkan rating', 'Loading rating')} />;
-  if (!info || (info.rating === null && info.openNow === null)) return null;
+  if (!r.listing) return null;
   return (
-    <p className="mt-0.5 flex flex-wrap items-center gap-x-1.5 text-xs">
-      {info.rating !== null && (
-        <span className="flex items-center gap-0.5 font-semibold">
-          <Star className="size-3.5 text-amber-500" fill="currentColor" /> {info.rating.toFixed(1)}
-          {info.ratings ? <span className="font-normal text-ink-500">({info.ratings >= 1000 ? `${(info.ratings / 1000).toFixed(1)}k` : info.ratings})</span> : null}
-        </span>
-      )}
-      {info.openNow !== null && <span className={info.openNow ? 'font-semibold text-jade-600' : 'font-semibold text-red-600'}>{info.openNow ? t('Buka sekarang', 'Open now') : t('Tutup sekarang', 'Closed now')}</span>}
-      <span className="text-[10px] text-ink-400" translate="no">Google</span>
-    </p>
+    <>
+      <p className="mt-0.5 flex items-center gap-1 text-xs font-semibold text-jade-700 dark:text-jade-300">
+        <BadgeCheck className="size-3.5 shrink-0" /> {t('Disemak JalanGo', 'Checked by JalanGo')}
+      </p>
+      <p className="truncate text-xs text-ink-500"><ListingLine l={r.listing} /></p>
+    </>
   );
 }
 

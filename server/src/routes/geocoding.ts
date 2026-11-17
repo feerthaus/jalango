@@ -1,9 +1,8 @@
 import { Router } from 'express';
 import { z } from 'zod';
-import type { Place } from '../types.js';
 import { withUsagePolicy } from '../lib/usageGuard.js';
 import { placeFromMapsLink } from '../services/mapsLink.js';
-import { googleCarRentals, googleHomestays, googlePlaceInfo, googlePlacesEnabled, isGenericName, mergeWithGoogle } from '../services/googlePlaces.js';
+import { searchRentals } from '../services/rentals.js';
 import { CATEGORY_MAP, reverseGeocode, searchAlong, searchCategory, searchPlaces } from '../services/mapbox.js';
 
 const lng = z.coerce.number().min(-180).max(180);
@@ -69,14 +68,6 @@ geocodingRouter.get('/along', async (req, res) => {
   res.json({ results: await withUsagePolicy('optional', () => searchAlong(category, points)) });
 });
 
-const placeInfoQuery = z.object({ name: z.string().trim().min(2).max(100), lng, lat });
-
-/** Google rating + open now for one place the user tapped (own daily cap; null when unknown). */
-geocodingRouter.get('/place-info', async (req, res) => {
-  const { name, lng, lat } = placeInfoQuery.parse(req.query);
-  res.json({ info: await withUsagePolicy('optional', () => googlePlaceInfo(name, { lng, lat })) });
-});
-
 geocodingRouter.get('/category', async (req, res) => {
   const { category, lng, lat, limit } = categoryQuery.parse(req.query);
   const near = { lng, lat };
@@ -86,35 +77,3 @@ geocodingRouter.get('/category', async (req, res) => {
   }
   res.json({ results: await withUsagePolicy('optional', () => searchCategory(category, near, limit)) });
 });
-
-/** Fewer Mapbox results than this and Google Places (if configured) fills in. */
-export const GOOGLE_FILL_BELOW = 5;
-
-/**
- * Homestays and car rentals: Mapbox first; Google Places only when Mapbox
- * finds few with a real name, so most searches cost nothing on Google. Either side failing
- * still returns what the other found.
- */
-export async function searchRentals(category: 'homestay' | 'car_rental', near: { lng: number; lat: number }, limit?: number): Promise<Place[]> {
-  let mapbox: Place[] = [];
-  let mapboxError: unknown = null;
-  try {
-    mapbox = await searchCategory(category, near, limit);
-  } catch (err) {
-    mapboxError = err;
-  }
-  // Entries named only "homestay" don't count as real results
-  const useful = mapbox.filter((p) => !isGenericName(p.name)).length;
-  if (useful >= GOOGLE_FILL_BELOW || !googlePlacesEnabled()) {
-    if (mapboxError) throw mapboxError;
-    return mapbox;
-  }
-  try {
-    const google = category === 'car_rental' ? await googleCarRentals(near, limit) : await googleHomestays(near, limit);
-    return mergeWithGoogle(mapbox, google);
-  } catch (err) {
-    if (mapboxError) throw mapboxError;
-    console.warn('[google_places] skipped:', err instanceof Error ? err.message : err);
-    return mapbox;
-  }
-}

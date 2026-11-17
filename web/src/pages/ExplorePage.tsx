@@ -259,9 +259,9 @@ function NearbyResults(props: {
           <PlaceRow key={p.id} place={p} onSelect={onSelect} />
         ))}
       </ul>
-      {state.results.some((p) => p.source === 'google') && (
+      {state.results.some((p) => p.source === 'osm') && (
         <p className="px-2 pb-1 pt-2 text-[11px] text-ink-400">
-          {t('Sebahagian hasil daripada', 'Some results from')} <span translate="no">Google Maps</span>
+          {t('Sebahagian data © penyumbang OpenStreetMap', 'Some data © OpenStreetMap contributors')}
         </p>
       )}
     </>
