@@ -8,7 +8,7 @@ import { CommunityRouteSuggestions } from '@/components/communityRoutes/Communit
 import { ShortcutSuggestions } from '@/components/shortcuts/ShortcutSuggestions';
 import { reportsOnRoute } from '@/utils/routeAlerts';
 import { buildRouteIndex } from '@/utils/routeProgress';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { AlongRouteSheet } from '@/components/along/AlongRouteSheet';
 import { useAlong } from '@/contexts/AlongContext';
 import { useVerifiedFoodOnRoute } from '@/hooks/useVerifiedFoodOnRoute';
@@ -23,6 +23,7 @@ import { useT } from '@/lib/i18n';
 import { useLocation } from '@/contexts/LocationContext';
 import { haversineMeters } from '@/utils/geo';
 import { TrainOptions } from './TrainOptions';
+import { fetchTrainOptions } from '@/services/transitService';
 
 /** Trips at least this long (straight line) also offer KTMB trains. */
 const TRAIN_FROM_M = 30_000;
@@ -36,6 +37,13 @@ export function RoutePanel() {
   const { status, destination, routes, selectedIndex, selectRoute, mode, notice, error, avoidTolls, setAvoidTolls, startNavigation, clearRoute, retry } = useRouting();
   const { fix } = useLocation();
   const [travel, setTravel] = useState<'car' | 'train'>('car');
+  // Ask for trains as soon as a long trip is planned, so the "Tren" tab opens instantly
+  const far = Boolean(fix && destination && mode !== 'demo' && haversineMeters(fix.coordinates, destination.coordinates) >= TRAIN_FROM_M);
+  const prefetchKey = far && fix && destination ? `${fix.coordinates.lat.toFixed(2)},${fix.coordinates.lng.toFixed(2)}|${destination.coordinates.lat},${destination.coordinates.lng}` : '';
+  useEffect(() => {
+    if (prefetchKey && fix && destination) void fetchTrainOptions(fix.coordinates, destination.coordinates).catch(() => undefined);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [prefetchKey]);
   if (!destination) return null;
   const longTrip = Boolean(fix && mode !== 'demo' && haversineMeters(fix.coordinates, destination.coordinates) >= TRAIN_FROM_M);
   const showTrain = longTrip && travel === 'train';

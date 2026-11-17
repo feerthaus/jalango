@@ -49,10 +49,23 @@ export interface TrainOption {
   costMax: number;
 }
 
-/** KTMB trains (ETS, Intercity, Komuter) from here to there, leaving now. Fares are estimates. */
-export async function fetchTrainOptions(from: Coordinates, to: Coordinates, signal?: AbortSignal): Promise<TrainOption[]> {
-  const { options } = await apiGet<{ options: TrainOption[] }>('/transit/train', { from: `${from.lng.toFixed(5)},${from.lat.toFixed(5)}`, to: `${to.lng.toFixed(5)},${to.lat.toFixed(5)}` }, signal);
-  return options;
+const CACHE_MS = 3 * 60_000;
+const cache = new Map<string, { at: number; value: Promise<TrainOption[]> }>();
+const key = (p: Coordinates) => `${p.lng.toFixed(3)},${p.lat.toFixed(3)}`;
+
+/**
+ * KTMB trains (ETS, Intercity, Komuter) from here to there, leaving now. Fares
+ * are estimates. Remembered for 3 minutes, so the route panel can ask early
+ * (prefetch) and the "Tren" tab opens instantly.
+ */
+export function fetchTrainOptions(from: Coordinates, to: Coordinates): Promise<TrainOption[]> {
+  const k = `${key(from)}|${key(to)}`;
+  const hit = cache.get(k);
+  if (hit && Date.now() - hit.at < CACHE_MS) return hit.value;
+  const value = apiGet<{ options: TrainOption[] }>('/transit/train', { from: `${from.lng.toFixed(5)},${from.lat.toFixed(5)}`, to: `${to.lng.toFixed(5)},${to.lat.toFixed(5)}` }).then((r) => r.options);
+  value.catch(() => cache.delete(k)); // failures are not remembered
+  cache.set(k, { at: Date.now(), value });
+  return value;
 }
 
 /** Official KTMB ticketing (KITS). Phase 1: a link out; partner booking comes later. */

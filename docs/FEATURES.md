@@ -263,7 +263,9 @@ Pelan penuh ada dalam `docs/MARKETPLACE.md`. Fasa 0 hanya pendaftaran dan penges
 - **Tambang ialah anggaran** (data terbuka tiada tambang; KTMB guna Tambang Fleksi). Dilabel jelas di skrin.
 - **Beli tiket (Pilihan A):** butang "Beli tiket di KTMB" ke laman rasmi KTMB (online.ktmb.com.my) untuk ETS/Intercity/Shuttle. Komuter: tap kad Touch 'n Go. **Pilihan B:** butang kedua **"Beli melalui 12Go"** (pautan affiliate ke halaman laluan 12Go, cth. kuala-lumpur → ipoh; stesen lain ke halaman KTM 12Go) muncul bila `VITE_TWELVEGO_ID` diset di Netlify, dengan notis "rakan JalanGo, kami mungkin dapat komisen; harga mungkin berbeza dari KTMB". Butang KTMB rasmi sentiasa ada. Terma (BM/EN) menyebut pautan affiliate.
 - **Arah ke stesen:** kira laluan memandu ke stesen pertama.
-- Belum: laluan tren dilukis di peta, LRT/MRT/bas (Fasa 2), masa tren secara langsung.
+- **Di peta:** pilihan tren yang dibuka (atau yang pertama) dilukis: setiap tren ikut warna laluannya (ETS kuning, Komuter merah/biru…), garis putus-putus untuk Grab/jalan kaki ke dan dari stesen, dan bulatan stesen dengan nama. Laluan kereta disorok semasa tab Tren dibuka, dan peta dizum ke perjalanan itu.
+- **Laju:** pilihan tren diminta sebaik laluan jauh dirancang (sebelum tab Tren ditekan) dan diingat 3 minit di telefon dan di server. Pengiraan di server dioptimumkan (kira-kira 20–70 ms selepas jadual dimuat).
+- Belum: LRT/MRT/bas (Fasa 2), masa tren secara langsung.
 
 ## Perkongsian
 
