@@ -133,6 +133,7 @@ export type ReportType =
   | 'breakdown'
   | 'construction'
   | 'police'
+  | 'roadblock'
   | 'speed_camera';
 
 export type ReportStatus = 'active' | 'resolved' | 'expired' | 'removed';
