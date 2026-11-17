@@ -50,7 +50,13 @@ export async function makeNonce(): Promise<{ raw: string; hashed: string }> {
  * Render Google's official button into `el`. Calls onToken with the ID token
  * and the raw nonce when the person picks an account.
  */
-export async function renderGoogleButton(el: HTMLElement, onToken: (token: string, nonce: string) => void, width: number, isAlive: () => boolean = () => true): Promise<void> {
+export async function renderGoogleButton(
+  el: HTMLElement,
+  onToken: (token: string, nonce: string) => void,
+  width: number,
+  isAlive: () => boolean = () => true,
+  look: { dark?: boolean; locale?: string } = {},
+): Promise<void> {
   const gid = await loadGoogleIdentity();
   const { raw, hashed } = await makeNonce();
   if (!isAlive()) return;
@@ -63,5 +69,15 @@ export async function renderGoogleButton(el: HTMLElement, onToken: (token: strin
     itp_support: true,
     callback: (r: CredentialResponse) => onToken(r.credential, raw),
   });
-  gid.renderButton(el, { type: 'standard', theme: 'outline', size: 'large', shape: 'pill', text: 'continue_with', locale: 'ms', width: Math.max(200, Math.min(400, Math.round(width))) });
+  // Dark app: Google's black button. (Its frame stays transparent only when the
+  // container's color-scheme is light: see GoogleButton.)
+  gid.renderButton(el, {
+    type: 'standard',
+    theme: look.dark ? 'filled_black' : 'outline',
+    size: 'large',
+    shape: 'pill',
+    text: 'continue_with',
+    locale: look.locale ?? 'ms',
+    width: Math.max(200, Math.min(400, Math.round(width))),
+  });
 }
