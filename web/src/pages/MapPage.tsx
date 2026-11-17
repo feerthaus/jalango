@@ -84,8 +84,9 @@ export function MapPage() {
       <>
         <NavigationHud />
         {status === 'navigating' && (
-          <div className="absolute inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+6.5rem+var(--host-badge-h))] z-20 space-y-3 p-3 md:bottom-28 md:w-[420px] md:p-4">
-            <div className="flex items-end justify-between">
+          <div className="absolute inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+6.5rem+var(--host-badge-h))] z-20 space-y-3 p-3 md:bottom-28 md:w-[420px] md:p-4 short:inset-x-auto short:bottom-0 short:right-0 short:w-[360px] short:p-2 short:pb-[calc(env(safe-area-inset-bottom)+0.5rem)] short:pr-[calc(env(safe-area-inset-right)+2.25rem)]">
+            {/* Sideways phone: the panel fills the left, so these sit at the bottom right */}
+            <div className="flex items-end justify-between gap-3">
               {/* Re-centre sits right above the speed circle, same round shape */}
               <div className="flex flex-col items-start gap-3">
                 {!following && (

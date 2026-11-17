@@ -104,16 +104,16 @@ export function NavigationHud() {
   return (
     <>
       {/* Maneuver banner */}
-      <div className="absolute inset-x-0 top-0 z-30 space-y-2 p-3 pt-[calc(env(safe-area-inset-top)+0.75rem)] md:w-[420px] md:p-4">
+      <div className="absolute inset-x-0 top-0 z-30 space-y-2 p-3 pt-[calc(env(safe-area-inset-top)+0.75rem)] md:w-[420px] md:p-4 short:max-h-[calc(100dvh-5rem-env(safe-area-inset-bottom))] short:w-[400px] short:overflow-y-auto short:p-2 short:pl-[calc(env(safe-area-inset-left)+0.5rem)] short:pt-[calc(env(safe-area-inset-top)+0.5rem)]">
         <div className="pointer-events-auto overflow-hidden rounded-3xl bg-ink-950 text-white shadow-float">
-          <button type="button" onClick={() => setShowSteps((s) => !s)} className="flex w-full items-center gap-3 p-4 text-left" aria-expanded={showSteps} aria-controls="nav-steps">
-            <span className="grid size-14 shrink-0 place-items-center rounded-2xl bg-jade-500 text-ink-950">
-              <ManeuverIcon step={next} className="size-9" />
+          <button type="button" onClick={() => setShowSteps((s) => !s)} className="flex w-full items-center gap-3 p-4 text-left short:p-3" aria-expanded={showSteps} aria-controls="nav-steps">
+            <span className="grid size-14 shrink-0 place-items-center rounded-2xl bg-jade-500 text-ink-950 short:size-11">
+              <ManeuverIcon step={next} className="size-9 short:size-7" />
             </span>
             <span className="min-w-0 flex-1">
-              <span className="block text-3xl font-black tabular-nums leading-none">{progress ? formatDistance(progress.distanceToManeuver) : '–'}</span>
-              <span className="mt-1 line-clamp-2 block text-base font-semibold leading-snug">{displayInstruction(next, lang)}</span>
-              {lanesText && <span className="mt-1 block text-sm font-bold text-jade-300">{lanesText}</span>}
+              <span className="block text-3xl font-black tabular-nums leading-none short:text-2xl">{progress ? formatDistance(progress.distanceToManeuver) : '–'}</span>
+              <span className="mt-1 line-clamp-2 block text-base font-semibold leading-snug short:text-sm">{displayInstruction(next, lang)}</span>
+              {lanesText && <span className="mt-1 block text-sm font-bold short:mt-0.5 short:text-xs text-jade-300">{lanesText}</span>}
               {(next.roadRef || next.exits || next.roadName) && (
                 <span className="mt-1 flex min-w-0 items-center gap-1.5 text-sm text-ink-300">
                   <RoadShields roadRef={next.roadRef} exits={next.exits} className="shrink-0" />
@@ -127,7 +127,7 @@ export function NavigationHud() {
             progress.distanceToManeuver < 800 ? <LaneView3D step={next} lang={lang} /> : <LaneGuide step={next} />
           )}
           {after && !showSteps && (
-            <div className="flex items-center gap-2 border-t border-white/10 px-4 py-2 text-sm text-ink-300">
+            <div className="flex items-center gap-2 border-t border-white/10 px-4 py-2 text-sm text-ink-300 short:py-1.5 short:text-xs">
               {lang === 'ms' ? 'Kemudian' : 'Then'} <ManeuverIcon step={after} className="size-4 text-white" />
               <span className="truncate">{displayInstruction(after, lang)}</span>
             </div>
@@ -176,8 +176,8 @@ export function NavigationHud() {
       </div>
 
       {/* Trip bar */}
-      <div className="absolute inset-x-0 bottom-0 z-30 space-y-3 p-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem+var(--host-badge-h))] md:w-[420px] md:p-4">
-        <div className="glass pointer-events-auto flex items-center gap-2 rounded-3xl p-3 pl-4 shadow-float ring-1 ring-ink-900/5 dark:ring-white/10">
+      <div className="absolute inset-x-0 bottom-0 z-30 space-y-3 p-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem+var(--host-badge-h))] md:w-[420px] md:p-4 short:w-[400px] short:p-2 short:pb-[calc(env(safe-area-inset-bottom)+0.5rem)] short:pl-[calc(env(safe-area-inset-left)+0.5rem)]">
+        <div className="glass pointer-events-auto flex items-center gap-2 rounded-3xl p-3 pl-4 short:py-2 shadow-float ring-1 ring-ink-900/5 dark:ring-white/10">
           <div className="min-w-0 flex-1 overflow-hidden">
             <p className="whitespace-nowrap text-xl font-black tabular-nums leading-tight text-jade-600 min-[400px]:text-2xl dark:text-jade-400">
               {demo && '~'}
@@ -197,7 +197,7 @@ export function NavigationHud() {
             <ListOrdered className="size-5" />
           </IconButton>
           <Button variant="danger" className="h-11 shrink-0 px-3" onClick={endNavigation} aria-label={t('Tamatkan navigasi', 'End navigation')}>
-            <X className="size-5 min-[420px]:size-4" /> <span className="hidden min-[420px]:inline">{lang === 'ms' ? 'Tamat' : 'End'}</span>
+            <X className="size-5 min-[420px]:size-4 short:size-5" /> <span className="hidden min-[420px]:inline short:hidden">{lang === 'ms' ? 'Tamat' : 'End'}</span>
           </Button>
         </div>
       </div>
