@@ -6,6 +6,7 @@ export interface AdminCounts {
   flags: number;
   photos: number;
   feedback: number;
+  search: number;
   total: number;
 }
 
@@ -18,7 +19,7 @@ export async function fetchAdminCounts(): Promise<AdminCounts | null> {
   if (error || !data || typeof data !== 'object') return null;
   const d = data as Record<string, unknown>;
   const n = (k: string) => Math.max(0, Number(d[k]) || 0);
-  return { operators: n('operators'), listings: n('listings'), flags: n('flags'), photos: n('photos'), feedback: n('feedback'), total: n('total') };
+  return { operators: n('operators'), listings: n('listings'), flags: n('flags'), photos: n('photos'), feedback: n('feedback'), search: n('search'), total: n('total') };
 }
 
 /** Call after an admin action so every badge refreshes. */

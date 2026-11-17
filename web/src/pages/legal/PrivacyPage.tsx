@@ -29,6 +29,7 @@ const ms: LegalSection[] = [
         <li><strong>Konvoi (pilihan):</strong> jika anda mula atau sertai konvoi, nama paparan, warna, kedudukan terkini, kelajuan, arah, ETA dan status tiba anda boleh dilihat oleh <strong>ahli konvoi itu sahaja</strong>. Hanya kedudukan terkini disimpan (tiada sejarah). Kedudukan dipadam apabila anda keluar, dikeluarkan oleh ketua, atau konvoi ditamatkan; konvoi tamat sendiri selepas 12 jam. Nama konvoi dan senarai ahli kekal sehingga akaun dipadam.</li>
         <li><strong>Amaran “Jangan potong” (eksperimen, pilihan):</strong> jika dihidupkan, semasa navigasi kedudukan, arah dan kelajuan anda ditukar secara langsung dengan pemandu JalanGo berdekatan menggunakan ID rawak setiap perjalanan. Data ini tidak disimpan dalam pangkalan data.</li>
         <li><strong>Dalam peranti sahaja:</strong> tempat kegemaran, sejarah carian, tetapan dan perjalanan yang sedang berjalan disimpan dalam pelayar anda.</li>
+        <li><strong>Carian yang gagal (tanpa nama):</strong> bila carian tidak menemui tempat, atau anda tutup carian tanpa memilih hasil, JalanGo mengira teks carian itu. Jika anda tekan “Tak jumpa?”, teks carian, keterangan dan lokasi pautan Google Maps yang anda tampal (jika ada) juga disimpan. Ia tidak dikaitkan dengan akaun, alamat IP atau lokasi anda, dan hanya digunakan oleh admin untuk membetulkan carian.</li>
         <li><strong>Maklum balas dan laporan salah guna:</strong> mesej yang anda hantar melalui “Send feedback” (termasuk email/telefon jika anda beri) dan laporan kandungan yang anda tandakan.</li>
         <li><strong>Teknikal:</strong> alamat IP dan maklumat permintaan direkod sementara oleh pelayan untuk keselamatan dan had penggunaan (anti-spam).</li>
       </Ul>
@@ -88,6 +89,7 @@ const ms: LegalSection[] = [
       <Ul>
         <li>Laporan jalan raya tamat tempoh secara automatik (beberapa jam hingga 7 hari) dan tidak lagi dipaparkan.</li>
         <li>Data trafik tanpa nama dipadam selepas 30 hari.</li>
+        <li>Rekod carian yang gagal dipadam 90 hari selepas kali terakhir carian itu dibuat.</li>
         <li>Sejarah perjalanan, jalan pintas dan tempat disimpan sehingga anda memadamnya atau memadam akaun.</li>
         <li>Data dalam peranti boleh dipadam bila-bila masa melalui app atau tetapan pelayar.</li>
       </Ul>
@@ -155,6 +157,7 @@ const en: LegalSection[] = [
         <li><strong>Convoy (optional):</strong> if you start or join a convoy, your display name, colour, latest position, speed, direction, ETA and arrival status are visible to <strong>that convoy’s members only</strong>. Only the latest position is stored (no history). It is deleted when you leave, are removed by the leader, or the convoy is ended; convoys end on their own after 12 hours. The convoy name and member list remain until the account is deleted.</li>
         <li><strong>“Don’t overtake” alerts (experimental, optional):</strong> if switched on, while navigating your position, heading and speed are exchanged live with nearby JalanGo drivers under a random per-trip ID. This data is not stored in our database.</li>
         <li><strong>On your device only:</strong> favourites, search history, settings and the trip in progress are stored in your browser.</li>
+        <li><strong>Searches that didn’t work (anonymous):</strong> when a search finds nothing, or you close it without picking a result, JalanGo counts that search text. If you tap “Tak jumpa?”, the search text, your details and the location of a Google Maps link you paste (if any) are also kept. None of it is linked to your account, IP address or location, and it is only used by admins to fix search.</li>
         <li><strong>Feedback and abuse reports:</strong> messages you send via “Send feedback” (including an email/phone if you give one) and content you flag.</li>
         <li><strong>Technical:</strong> IP address and request details are logged temporarily by our servers for security and rate limiting (anti-spam).</li>
       </Ul>
@@ -213,6 +216,7 @@ const en: LegalSection[] = [
       <Ul>
         <li>Road reports expire automatically (hours to 7 days) and are no longer shown.</li>
         <li>Anonymous traffic data is deleted after 30 days.</li>
+        <li>Records of searches that didn’t work are deleted 90 days after that search was last made.</li>
         <li>Trip history, shortcuts and places are kept until you delete them or your account.</li>
         <li>On-device data can be cleared at any time in the app or your browser settings.</li>
       </Ul>
