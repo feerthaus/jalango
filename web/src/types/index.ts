@@ -19,7 +19,7 @@ export type PlaceKind =
   | 'other';
 
 /** Where a record came from. `demo` = bundled sample data, never live. */
-export type DataSource = 'mapbox' | 'demo' | 'community' | 'osm' | 'link';
+export type DataSource = 'mapbox' | 'demo' | 'community' | 'osm' | 'link' | 'jalango';
 
 export interface Place {
   id: string;
@@ -32,6 +32,8 @@ export interface Place {
   distanceMeters?: number;
   postcode?: string;
   state?: string;
+  /** Put first by an admin for this search (Admin → Carian) */
+  pinned?: boolean;
 }
 
 export interface SavedPlace extends Place {

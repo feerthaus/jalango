@@ -30,7 +30,7 @@ const SAME = new Set([
 const NEUTRAL = /\b(JalanGo|WhatsApp|RM|km|SSM|APAD|PDPA|EV|R&R|OK|Waze|Google|Mapbox|2D|3D|ETA|GPS|km\/h|PWA)\b/g;
 const ATTRS = new Set(['aria-label', 'title', 'placeholder', 'alt', 'label', 'heading', 'subtitle']);
 
-const hasWords = (s: string) => /[A-Za-z]{2,}/.test(s.replace(NEUTRAL, ''));
+const hasWords = (s: string) => /[A-Za-z]{2,}/.test(s.replace(/https?:\/\/\S+/g, '').replace(NEUTRAL, ''));
 
 function files(dir: string, out: string[] = []): string[] {
   for (const f of fs.readdirSync(dir)) {

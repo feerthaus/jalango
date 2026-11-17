@@ -33,6 +33,7 @@ export function createApp() {
 
   // Each along-route search fans out to up to 8 Mapbox calls
   app.use('/api/geo/along', rateLimit({ name: 'geo-along', windowMs: 60_000, max: 15 }));
+  app.use('/api/geo/miss', rateLimit({ name: 'geo-miss', windowMs: 10 * 60_000, max: 20 }));
   app.use('/api/geo', rateLimit({ name: 'geo', windowMs: 60_000, max: 120 }), geocodingRouter);
   app.use('/api/fuel', rateLimit({ name: 'fuel', windowMs: 60_000, max: 30 }), fuelRouter);
   app.use('/api/directions', rateLimit({ name: 'directions', windowMs: 60_000, max: 60 }), directionsRouter);

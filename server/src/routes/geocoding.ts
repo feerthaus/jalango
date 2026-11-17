@@ -3,7 +3,8 @@ import { z } from 'zod';
 import { withUsagePolicy } from '../lib/usageGuard.js';
 import { placeFromMapsLink } from '../services/mapsLink.js';
 import { searchRentals } from '../services/rentals.js';
-import { CATEGORY_MAP, reverseGeocode, searchAlong, searchCategory, searchPlaces } from '../services/mapbox.js';
+import { logMiss, smartSearch } from '../services/searchLearning.js';
+import { CATEGORY_MAP, reverseGeocode, searchAlong, searchCategory } from '../services/mapbox.js';
 
 const lng = z.coerce.number().min(-180).max(180);
 const lat = z.coerce.number().min(-90).max(90);
@@ -46,7 +47,23 @@ export const geocodingRouter = Router();
 geocodingRouter.get('/search', async (req, res) => {
   const { q, lng, lat, limit } = searchQuery.parse(req.query);
   const near = lng !== undefined && lat !== undefined ? { lng, lat } : undefined;
-  res.json({ results: await searchPlaces(q, near, limit) });
+  res.json({ results: await smartSearch(q, near, limit) });
+});
+
+/**
+ * "Tak jumpa?" and searches where nothing was tapped. Only the text (and an
+ * optional place the user pointed to) is kept, without who or where.
+ */
+export const searchMissSchema = z.object({
+  query: z.string().trim().min(2).max(120),
+  kind: z.enum(['no_click', 'reported']),
+  note: z.string().trim().max(280).optional(),
+  hint: z.object({ name: z.string().trim().min(1).max(120), lat, lng }).optional(),
+});
+geocodingRouter.post('/miss', async (req, res) => {
+  const body = searchMissSchema.parse(req.body);
+  await logMiss(body.query, body.kind, { note: body.note || undefined, hint: body.hint });
+  res.status(202).json({ ok: true });
 });
 
 /** A pasted Google Maps link (or "lat, lng") → the place it points to. */

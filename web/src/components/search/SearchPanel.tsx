@@ -1,4 +1,4 @@
-import { AlertTriangle, Clock, ExternalLink, Link2, SearchX, Star, Trash2, X } from 'lucide-react';
+import { AlertTriangle, Clock, ExternalLink, Flag, Link2, SearchX, Star, Trash2, X } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { PlaceRow } from '@/components/places/PlaceRow';
 import { DemoBadge } from '@/components/ui/DemoBadge';
@@ -18,13 +18,15 @@ interface SearchPanelProps {
   search: PlaceSearchState;
   activeIndex: number;
   onSelect: (place: Place) => void;
+  /** "Tak jumpa?": tell JalanGo this search went wrong */
+  onReport: (query: string) => void;
 }
 
 export function optionId(index: number) {
   return `search-option-${index}`;
 }
 
-export function SearchPanel({ query, search, activeIndex, onSelect }: SearchPanelProps) {
+export function SearchPanel({ query, search, activeIndex, onSelect, onReport }: SearchPanelProps) {
   const [t] = useT();
   const { recents, favourites, removeRecent, clearRecents } = useSavedPlaces();
   const typing = query.trim().length >= 2;
@@ -35,7 +37,7 @@ export function SearchPanel({ query, search, activeIndex, onSelect }: SearchPane
       className="pointer-events-auto mt-2 max-h-[calc(100dvh-10rem)] overflow-y-auto overscroll-contain rounded-2xl bg-white p-2 shadow-float ring-1 ring-ink-900/5 md:max-h-[70vh] dark:bg-ink-900 dark:ring-white/10"
     >
       {typing ? (
-        <Results search={search} activeIndex={activeIndex} onSelect={onSelect} pending={search.query !== query.trim()} />
+        <Results search={search} activeIndex={activeIndex} onSelect={onSelect} onReport={onReport} pending={search.query !== query.trim()} />
       ) : (
         <>
           <Section title={t('Bandar', 'Cities')}>
@@ -104,7 +106,7 @@ export function SearchPanel({ query, search, activeIndex, onSelect }: SearchPane
   );
 }
 
-function Results({ search, activeIndex, onSelect, pending }: { search: PlaceSearchState; activeIndex: number; onSelect: (p: Place) => void; pending: boolean }) {
+function Results({ search, activeIndex, onSelect, onReport, pending }: { search: PlaceSearchState; activeIndex: number; onSelect: (p: Place) => void; onReport: (q: string) => void; pending: boolean }) {
   const [t] = useT();
   if (search.error) {
     return (
@@ -147,7 +149,12 @@ function Results({ search, activeIndex, onSelect, pending }: { search: PlaceSear
           </p>
         )}
         {search.mode === 'demo' && <p className="text-xs">{t('Data contoh luar talian hanya meliputi bandar dan mercu tanda utama Malaysia.', 'Offline sample data only covers major Malaysian cities and landmarks.')}</p>}
-        {!link && search.mode !== 'demo' && <GoogleMapsHelp query={search.query} />}
+        {!link && search.mode !== 'demo' && (
+          <>
+            <ReportButton onClick={() => onReport(search.query)} />
+            <GoogleMapsHelp query={search.query} />
+          </>
+        )}
       </div>
     );
   }
@@ -166,7 +173,9 @@ function Results({ search, activeIndex, onSelect, pending }: { search: PlaceSear
         ))}
       </ul>
       {search.mode === 'live' && !looksLikeLinkOrCoords(search.query) && (
-        <div className="mt-1 border-t border-ink-100 px-2 pt-2 dark:border-ink-800">
+        <div className="mt-1 flex items-center gap-2 border-t border-ink-100 px-2 pt-2 text-xs text-ink-500 dark:border-ink-800">
+          <span className="min-w-0 flex-1">{t('Tak jumpa tempat yang betul?', 'Not the right place?')}</span>
+          <ReportButton onClick={() => onReport(search.query)} compact />
           <GoogleMapsHelp query={search.query} compact />
         </div>
       )}
@@ -182,15 +191,14 @@ function GoogleMapsHelp({ query, compact }: { query: string; compact?: boolean }
   const [t] = useT();
   const href = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${query}, Malaysia`)}`;
   return (
-    <div className={compact ? 'flex items-center gap-2 text-xs text-ink-500' : 'mt-1 flex w-full flex-col items-center gap-2'}>
-      {compact && <span className="min-w-0 flex-1">{t('Tak jumpa tempat yang betul?', 'Not the right place?')}</span>}
+    <div className={compact ? 'flex shrink-0 items-center text-xs text-ink-500' : 'mt-1 flex w-full flex-col items-center gap-2'}>
       <a
         href={href}
         target="_blank"
         rel="noopener noreferrer"
         className={compact ? 'flex shrink-0 items-center gap-1 rounded-lg bg-ink-100 px-2.5 py-1.5 font-semibold text-ink-700 dark:bg-ink-800 dark:text-ink-200' : 'flex items-center gap-1.5 rounded-xl bg-ink-100 px-3 py-2 font-semibold text-ink-800 dark:bg-ink-800 dark:text-ink-100'}
       >
-        <ExternalLink className="size-3.5" /> {t('Cari di Google Maps', 'Search in Google Maps')}
+        <ExternalLink className="size-3.5" /> {compact ? 'Google Maps' : t('Cari di Google Maps', 'Search in Google Maps')}
       </a>
       {!compact && (
         <p className="flex items-start gap-1.5 text-left text-xs">
@@ -199,6 +207,20 @@ function GoogleMapsHelp({ query, compact }: { query: string; compact?: boolean }
         </p>
       )}
     </div>
+  );
+}
+
+/** "Tak jumpa?" — opens SearchMissSheet. */
+function ReportButton({ onClick, compact }: { onClick: () => void; compact?: boolean }) {
+  const [t] = useT();
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={compact ? 'flex shrink-0 items-center gap-1 rounded-lg bg-jade-500/15 px-2.5 py-1.5 font-semibold text-jade-800 dark:text-jade-200' : 'flex items-center gap-1.5 rounded-xl bg-jade-500 px-3 py-2 font-semibold text-ink-950'}
+    >
+      <Flag className="size-3.5" /> {compact ? t('Laporkan', 'Report') : t('Laporkan carian ini', 'Report this search')}
+    </button>
   );
 }
 

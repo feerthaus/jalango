@@ -9,6 +9,7 @@ import { AdminTwoFactor } from '@/components/admin/AdminTwoFactor';
 import { StatsPanel } from '@/components/admin/StatsPanel';
 import { OperatorReview } from '@/components/admin/OperatorReview';
 import { ListingReview } from '@/components/admin/ListingReview';
+import { SearchMissReview } from '@/components/admin/SearchMissReview';
 import { AuthForm } from '@/components/auth/AuthForm';
 import { fetchAdminStatus } from '@/services/adminAuth';
 import { Button } from '@/components/ui/Button';
@@ -29,10 +30,10 @@ import {
 import { formatRelativeTime } from '@/utils/format';
 import type { ReportType } from '@/types';
 
-const ADMIN_TABS = ['stats', 'operators', 'listings', 'flags', 'photos', 'feedback'] as const;
+const ADMIN_TABS = ['stats', 'operators', 'listings', 'flags', 'photos', 'feedback', 'search'] as const;
 type AdminTab = (typeof ADMIN_TABS)[number];
 
-const TAB_COUNT = { operators: 'operators', listings: 'listings', flags: 'flags', photos: 'photos', feedback: 'feedback' } as const;
+const TAB_COUNT = { operators: 'operators', listings: 'listings', flags: 'flags', photos: 'photos', feedback: 'feedback', search: 'search' } as const;
 
 /** Moderation queue + feedback inbox. Only usable by users in public.admins (enforced in the database). */
 export function AdminPage() {
@@ -87,15 +88,15 @@ export function AdminPage() {
           <AdminTwoFactor onVerified={() => setCheck((n) => n + 1)} />
         ) : (
           <>
-            <div role="tablist" className="mb-4 grid grid-cols-3 gap-1 rounded-2xl sm:grid-cols-6 bg-ink-100 p-1 dark:bg-ink-900">
+            <div role="tablist" className="mb-4 grid grid-cols-4 gap-1 rounded-2xl sm:grid-cols-7 bg-ink-100 p-1 dark:bg-ink-900">
               {ADMIN_TABS.map((t) => (
                 <button key={t} type="button" role="tab" aria-selected={tab === t} onClick={() => setTab(t)} className={cn('flex items-center justify-center gap-1 rounded-xl px-1 py-2 text-xs font-semibold sm:text-sm', tab === t ? 'bg-white shadow-sm dark:bg-ink-700' : 'text-ink-500')}>
-                  {t === 'stats' ? 'Statistik' : t === 'operators' ? 'Operator' : t === 'listings' ? 'Listing' : t === 'flags' ? 'Laporan' : t === 'photos' ? 'Gambar kemalangan' : 'Mesej'}
+                  {t === 'stats' ? 'Statistik' : t === 'operators' ? 'Operator' : t === 'listings' ? 'Listing' : t === 'flags' ? 'Laporan' : t === 'photos' ? 'Gambar kemalangan' : t === 'feedback' ? 'Mesej' : 'Carian'}
                   {t !== 'stats' && <CountBadge n={counts?.[TAB_COUNT[t]] ?? 0} />}
                 </button>
               ))}
             </div>
-            {tab === 'stats' ? <StatsPanel /> : tab === 'operators' ? <OperatorReview /> : tab === 'listings' ? <ListingReview /> : tab === 'flags' ? <FlagQueue /> : tab === 'photos' ? <PhotoReviewQueue /> : <FeedbackInbox />}
+            {tab === 'stats' ? <StatsPanel /> : tab === 'operators' ? <OperatorReview /> : tab === 'listings' ? <ListingReview /> : tab === 'flags' ? <FlagQueue /> : tab === 'photos' ? <PhotoReviewQueue /> : tab === 'feedback' ? <FeedbackInbox /> : <SearchMissReview />}
           </>
         )}
       </main>

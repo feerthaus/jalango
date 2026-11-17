@@ -2,7 +2,7 @@ import { DEMO_PLACES } from '@/data/demoPlaces';
 import type { Coordinates, ExploreCategory, Place, SearchResponse } from '@/types';
 import { normalizeText } from '@/utils/format';
 import { haversineMeters } from '@/utils/geo';
-import { ApiError, apiGet, isServiceUnavailable } from './apiClient';
+import { ApiError, apiGet, apiPost, isServiceUnavailable } from './apiClient';
 
 /** Search the bundled demo dataset by name, address, postcode or state. */
 export function searchDemoPlaces(query: string, near?: Coordinates | null, limit = 8): Place[] {
@@ -96,4 +96,22 @@ export async function searchAlongRoute(category: AlongCategory, points: Coordina
     signal,
   );
   return results;
+}
+
+/** A Google Maps link or "lat, lng" → the place, for "Tak jumpa?" (null when unreadable). */
+export async function placeFromLink(text: string, near?: Coordinates | null): Promise<Place | null> {
+  const { result } = await apiGet<{ result: Place | null }>('/geo/link', { url: text.trim(), lng: near?.lng, lat: near?.lat });
+  return result;
+}
+
+export interface SearchMiss {
+  query: string;
+  kind: 'no_click' | 'reported';
+  note?: string;
+  hint?: { name: string; lat: number; lng: number };
+}
+
+/** Tell JalanGo a search didn't find the right place. Only the text is kept, not who or where. */
+export async function reportSearchMiss(miss: SearchMiss): Promise<void> {
+  await apiPost('/geo/miss', miss);
 }

@@ -7,6 +7,8 @@ import type { Place } from '@/types';
 import { VoiceSearchButton } from '@/components/voice/VoiceSearch';
 import { SearchBar } from './SearchBar';
 import { optionId, SearchPanel } from './SearchPanel';
+import { SearchMissSheet } from './SearchMissSheet';
+import { reportSearchMiss } from '@/services/geocodingService';
 
 /** Search bar + autocomplete panel. Selecting a result shows it on the map. */
 export function DestinationSearch({ onOpenChange }: { onOpenChange?: (open: boolean) => void }) {
@@ -18,6 +20,12 @@ export function DestinationSearch({ onOpenChange }: { onOpenChange?: (open: bool
   const search = usePlaceSearch(query);
   const { selectPlace } = useMapContext();
   const { addRecent } = useSavedPlaces();
+  const [reportFor, setReportFor] = useState<string | null>(null);
+  // Results were shown for this text; cleared once one is tapped or the search is reported
+  const shown = useRef<string | null>(null);
+  useEffect(() => {
+    if (search.mode === 'live' && search.results.length > 0 && search.query === query.trim() && !search.loading) shown.current = search.query;
+  }, [search, query]);
 
   useEffect(() => onOpenChange?.(open), [open, onOpenChange]);
   useEffect(() => setActiveIndex(-1), [search.results]);
@@ -26,10 +34,19 @@ export function DestinationSearch({ onOpenChange }: { onOpenChange?: (open: bool
   useEffect(() => {
     if (!open) return;
     const onPointer = (e: PointerEvent) => {
+      if (reportFor !== null) return; // the "Tak jumpa?" sheet sits above, outside this box
       if (rootRef.current && !rootRef.current.contains(e.target as Node)) setOpen(false);
     };
     document.addEventListener('pointerdown', onPointer);
     return () => document.removeEventListener('pointerdown', onPointer);
+  }, [open, reportFor]);
+
+  // Closed without tapping any result: count it (text only) so admins can see which searches miss
+  useEffect(() => {
+    if (open) return;
+    const q = shown.current;
+    shown.current = null;
+    if (q && q.length >= 3) void reportSearchMiss({ query: q, kind: 'no_click' }).catch(() => undefined);
   }, [open]);
 
   const close = () => {
@@ -38,6 +55,7 @@ export function DestinationSearch({ onOpenChange }: { onOpenChange?: (open: bool
   };
 
   const choose = (place: Place) => {
+    shown.current = null;
     selectPlace(place);
     addRecent(place);
     setQuery('');
@@ -86,7 +104,28 @@ export function DestinationSearch({ onOpenChange }: { onOpenChange?: (open: bool
           />
         }
       />
-      {open && <SearchPanel query={query} search={search} activeIndex={activeIndex} onSelect={choose} />}
+      {open && (
+        <SearchPanel
+          query={query}
+          search={search}
+          activeIndex={activeIndex}
+          onSelect={choose}
+          onReport={(q) => {
+            shown.current = null;
+            setReportFor(q);
+          }}
+        />
+      )}
+      {reportFor !== null && (
+        <SearchMissSheet
+          query={reportFor}
+          onClose={() => setReportFor(null)}
+          onGo={(place) => {
+            setReportFor(null);
+            choose(place);
+          }}
+        />
+      )}
     </div>
   );
 }

@@ -199,7 +199,7 @@ export async function searchOsm(q: string, near: Coordinates | undefined, limit:
 
 const isStreetLike = (p: Place) => p.kind === 'street' || p.kind === 'address';
 
-export async function searchPlaces(query: string, near?: Coordinates, limit = 8): Promise<Place[]> {
+export async function searchPlaces(query: string, near?: Coordinates, limit = 8, extraSynonyms: Record<string, string[]> = {}): Promise<Place[]> {
   const q = query.trim();
 
   // Malaysian postcodes (5 digits) resolve best through the geocoding endpoint.
@@ -247,7 +247,7 @@ export async function searchPlaces(query: string, near?: Coordinates, limit = 8)
   // No top result holds every typed word ("ktm gemas" finds "Ktm Mart" and "Nasi Ayam Gemas",
   // not "Stesen KTMB Gemas"): try the usual Malaysian alternatives, then OpenStreetMap.
   if (results.length > 0 && !results.slice(0, 3).some((p) => matchScore(p, q) === 2)) {
-    const variants = queryVariants(q).slice(0, 2);
+    const variants = queryVariants(q, extraSynonyms).slice(0, 2);
     const extra = (await Promise.all(variants.map((v) => searchBox(v, near, limit).catch(() => [] as Place[])))).flat();
     results = mergePlaces(results, extra, limit * 3);
     if (!results.some((p) => matchScore(p, q) > 0)) {
@@ -277,11 +277,12 @@ const SYNONYMS: Record<string, string[]> = {
 };
 
 /** The query with one known word swapped for its usual alternatives. */
-export function queryVariants(q: string): string[] {
+export function queryVariants(q: string, extra: Record<string, string[]> = {}): string[] {
   const words = q.trim().split(/\s+/);
   const out: string[] = [];
   words.forEach((w, i) => {
-    for (const alt of SYNONYMS[w.toLowerCase()] ?? []) out.push([...words.slice(0, i), alt, ...words.slice(i + 1)].join(' '));
+    // Admin-added synonyms (search_synonyms) come first, then the built-in ones
+    for (const alt of [...(extra[w.toLowerCase()] ?? []), ...(SYNONYMS[w.toLowerCase()] ?? [])]) out.push([...words.slice(0, i), alt, ...words.slice(i + 1)].join(' '));
   });
   return out.filter((v, i) => v.toLowerCase() !== q.toLowerCase() && out.indexOf(v) === i);
 }

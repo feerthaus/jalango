@@ -15,6 +15,7 @@ const QUEUES = [
   { key: 'flags', tab: 'flags', label: { ms: 'Laporan', en: 'Reports' } },
   { key: 'photos', tab: 'photos', label: { ms: 'Gambar', en: 'Photos' } },
   { key: 'feedback', tab: 'feedback', label: { ms: 'Mesej', en: 'Messages' } },
+  { key: 'search', tab: 'search', label: { ms: 'Carian', en: 'Search' } },
 ] as const;
 
 /**

@@ -244,6 +244,11 @@ Pelan penuh ada dalam `docs/MARKETPLACE.md`. Fasa 0 hanya pendaftaran dan penges
 
 ## Komuniti
 
+- **Carian yang belajar:** hasil yang namanya ada semua perkataan ditaip keluar dulu; sinonim tempatan terbina (ktm → stesen ktmb, lrt/mrt → stesen, hosp → hospital, rnr → r&r, masjid → mosque) dicuba bila hasil teratas tak padan, kemudian OpenStreetMap.
+  - **"Tak jumpa?"** dalam hasil carian (butang **Laporkan**): pengguna tulis apa yang dicari, keterangan, dan boleh tampal pautan Google Maps (lokasi dibaca dari pautan, boleh terus ke sana).
+  - **Admin → Carian:** carian yang dilaporkan, tiada hasil, atau tiada yang ditekan, paling banyak dahulu (nombor merah bila dilaporkan atau tiada hasil ≥ 3 kali). Betulkan tanpa kod: **Pin hasil yang betul** (cari semula, pilih; hanya nama dan teks carian disimpan, tempat dicari semula setiap kali kerana hasil Mapbox tidak boleh disimpan), **Tambah tempat** (pautan Google Maps yang ada koordinat / "lat, lng"; hanya nama, alamat, koordinat disimpan), **Sinonim** (satu perkataan → 1–3 gantian), **Dah okey**, **Abai**. Senarai pembetulan aktif boleh dimatikan.
+  - Tempat JalanGo keluar paling atas dengan tanda **Disahkan**. Peraturan dimuat semula setiap 5 minit.
+  - Privasi: hanya teks carian dan kiraan, tanpa akaun, IP atau lokasi; dipadam 90 hari selepas kali terakhir dicari.
 - **Laporan jalan raya:** kemalangan, sesak, **Polis** (speed trap / peronda), **Sekatan jalan (SJR)**, jalan ditutup, bahaya, banjir, kenderaan rosak, kerja jalan dan kamera AWAS. Polis dan SJR luput selepas 2 jam (kecuali disahkan semula), dan diumumkan dengan suara bila di laluan hadapan. Pengguna boleh undi "masih ada / dah tiada".
 - **Jalan pintas komuniti:** laluan pendek (≤60 km) yang dikongsi dari sejarah perjalanan.
 - **Laluan komuniti:** laluan jauh alternatif untuk elak jem, contohnya ke Kelantan melalui Gua Musang. Termasuk laluan yang masuk semula ke jalan utama di tengah perjalanan, seperti Kuala Pilah → exit Gambang (`web/src/components/communityRoutes/`).
