@@ -6,6 +6,7 @@ import { useRouting } from '@/contexts/RoutingContext';
 import { cn } from '@/lib/cn';
 import { useT } from '@/lib/i18n';
 import { useMyVehicle } from '@/lib/vehicle';
+import { twelveGoTrainUrl } from '@/lib/partners';
 import { loadFuel } from '@/services/fuelService';
 import { fetchTrainOptions, KTMB_BOOKING_URL, type AccessLeg, type TrainOption } from '@/services/transitService';
 import type { Place } from '@/types';
@@ -25,7 +26,7 @@ const rm = (n: number) => `RM${Number.isInteger(n) ? n : n.toFixed(2)}`;
  * on KTMB's own site for now.
  */
 export function TrainOptions() {
-  const [t] = useT();
+  const [t, lang] = useT();
   const { fix } = useLocation();
   const { destination, routes, selectedIndex, planRoute } = useRouting();
   const [vehicle] = useMyVehicle();
@@ -174,10 +175,24 @@ export function TrainOptions() {
                         <ExternalLink className="size-4" /> {t('Beli tiket di KTMB', 'Buy tickets at KTMB')}
                       </a>
                     )}
+                    {(() => {
+                      const ticketLeg = o.legs.find((l) => l.ticket);
+                      const partner = ticketLeg && twelveGoTrainUrl(ticketLeg.from.name, ticketLeg.to.name, lang);
+                      return partner ? (
+                        <a href={partner} target="_blank" rel="sponsored noopener noreferrer" className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-ink-100 px-3 py-2.5 text-sm font-bold text-ink-800 dark:bg-ink-900 dark:text-ink-100">
+                          <ExternalLink className="size-4" /> {t('Beli melalui 12Go', 'Buy via 12Go')}
+                        </a>
+                      ) : null;
+                    })()}
                     <Button variant="secondary" className="flex-1 py-2.5" onClick={() => goToStation(o.legs[0].from)}>
                       <Navigation className="size-4" /> {t('Arah ke stesen', 'Directions to station')}
                     </Button>
                   </div>
+                  {o.legs.some((l) => l.ticket && twelveGoTrainUrl(l.from.name, l.to.name)) && (
+                    <p className="text-[11px] leading-snug text-ink-400">
+                      {t('12Go ialah rakan JalanGo: kami mungkin dapat komisen jika anda beli di sana, tanpa kos tambahan daripada kami. Harga dan caj 12Go mungkin berbeza dari KTMB.', '12Go is a JalanGo partner: we may earn a commission if you buy there, at no extra cost from us. 12Go’s prices and fees may differ from KTMB’s.')}
+                    </p>
+                  )}
                 </div>
               )}
             </li>
