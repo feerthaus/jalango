@@ -24,7 +24,7 @@ const SKIP = /(^|\/)(pages\/legal\/|components\/admin\/(?!AdminCard|CountBadge)|
 const SAME = new Set([
   'Admin', 'Auto', 'Chrome', 'Deposit', 'Demo', 'Email', 'Exit', 'Facebook', 'Google Maps', 'Halal JAKIM', 'Homestay', 'Instagram',
   'K7M4-QX2P', 'Leader', 'LIVE', 'Listing', 'MAPBOX_ACCESS_TOKEN', 'Manual', 'Menu', 'Model', 'Myvi', 'PDF', 'Perodua', 'Review', 'Safari',
-  'jalango.netlify.app', 'sen', '"Open in Safari"', 'Bahasa Melayu', 'English',
+  'jalango.netlify.app', 'sen', '"Open in Safari"', 'Bahasa Melayu', 'English', 'ETS', 'Komuter', 'Shuttle', 'Intercity',
 ]);
 /** Words that never need translating inside longer text. */
 const NEUTRAL = /\b(JalanGo|WhatsApp|RM|km|SSM|APAD|PDPA|EV|R&R|OK|Waze|Google|Mapbox|2D|3D|ETA|GPS|km\/h|PWA)\b/g;

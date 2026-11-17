@@ -254,6 +254,17 @@ Pelan penuh ada dalam `docs/MARKETPLACE.md`. Fasa 0 hanya pendaftaran dan penges
 - **Laluan komuniti:** laluan jauh alternatif untuk elak jem, contohnya ke Kelantan melalui Gua Musang. Termasuk laluan yang masuk semula ke jalan utama di tengah perjalanan, seperti Kuala Pilah → exit Gambang (`web/src/components/communityRoutes/`).
 - **Tempat disyorkan komuniti.**
 
+## Tren antara bandar (Fasa 1)
+
+- **Tab Memandu | Tren** dalam panel laluan, untuk destinasi ≥ 30 km (garis lurus).
+- **Jadual rasmi KTMB** (GTFS dari data.gov.my, dikemas kini setiap hari): ETS (JB Sentral–Padang Besar), Intercity (Shuttle Timur, Ekspres Rakyat Timuran), Komuter dan Shuttle Tebrau. Server muat jadual dan simpan 6 jam (`/api/transit/train`).
+- **Pilihan tren:** stesen dalam 40 km dari lokasi dan destinasi, tren terus atau 1 tukar (masa tukar ≥ 10 min, tunggu ≤ 4 jam), dalam 24 jam akan datang: 3 yang paling awal sampai + 1 yang paling murah (jika lebih murah). Setiap pilihan: masa keluar rumah (perjalanan ke stesen + 10 min di platform), Grab/teksi atau jalan kaki ke/dari stesen (anggaran masa dan kos), stesen, masa, jarak dan anggaran tambang.
+- **Perbandingan kos sehala (anggaran):** kereta = minyak (RON95 BUDI95 semasa, 7 L/100 km; motosikal 3 L/100 km) + tol (~RM0.10/km jika laluan bertol; motosikal RM0) + **parking** di destinasi (jadual kadar harian pusat bandar, percuma di luar) × bilangan hari. Tren = tambang × bilangan orang + Grab/teksi ke/dari stesen (dikongsi). Pilihan **Orang** (1–4) dan **Hari di sana** (1, 2, 3, 5). Mesej: "Naik tren jimat sekurang-kurangnya RMx", "Kos lebih kurang sama" atau "memandu lebih murah".
+- **Tambang ialah anggaran** (data terbuka tiada tambang; KTMB guna Tambang Fleksi). Dilabel jelas di skrin.
+- **Beli tiket (Pilihan A):** butang "Beli tiket di KTMB" ke laman rasmi KTMB (online.ktmb.com.my) untuk ETS/Intercity/Shuttle. Komuter: tap kad Touch 'n Go. Rakan affiliate (Pilihan B) akan datang.
+- **Arah ke stesen:** kira laluan memandu ke stesen pertama.
+- Belum: laluan tren dilukis di peta, LRT/MRT/bas (Fasa 2), masa tren secara langsung.
+
 ## Perkongsian
 
 - **Butang Kongsi:** WhatsApp, Facebook, Instagram, Telegram, X, Threads, SMS, Email, Salin, dan menu kongsi telefon (`web/src/components/share/ShareSheet.tsx`).

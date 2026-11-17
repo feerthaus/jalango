@@ -1,15 +1,10 @@
 import { ArrowDown, ArrowUp, ChevronDown, Fuel } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { apiGet } from '@/services/apiClient';
+import { loadFuel } from '@/services/fuelService';
 import { cn } from '@/lib/cn';
 import { useT } from '@/lib/i18n';
 
-interface FuelPrices {
-  date: string;
-  prices: Record<string, number>;
-  change: Record<string, number>;
-  source: string;
-}
+import type { FuelPrices } from '@/services/fuelService';
 
 /** Display order and Malay labels for the data.gov.my columns we know; unknown columns still show under "Lain-lain". */
 const MAIN: [string, string, string?][] = [
@@ -24,15 +19,6 @@ const OTHER_LABELS: Record<string, string> = {
   diesel_budi: 'Diesel BUDI MADANI',
   diesel_skds: 'Diesel SKDS',
 };
-
-let cached: Promise<FuelPrices> | null = null;
-function loadFuel(): Promise<FuelPrices> {
-  cached ??= apiGet<FuelPrices>('/fuel').catch((err) => {
-    cached = null;
-    throw err;
-  });
-  return cached;
-}
 
 function formatDate(iso: string) {
   try {

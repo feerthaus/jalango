@@ -1,4 +1,4 @@
-import { AlertTriangle, ArrowLeft, BadgeCheck, Coins, Megaphone, Gauge, LocateFixed, Navigation, RefreshCw, Route as RouteIcon, ShieldCheck, Utensils } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, BadgeCheck, Car, Coins, Megaphone, Gauge, LocateFixed, Navigation, RefreshCw, Route as RouteIcon, ShieldCheck, TrainFront, Utensils } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { DemoBadge } from '@/components/ui/DemoBadge';
 import { useReports } from '@/contexts/ReportsContext';
@@ -20,6 +20,12 @@ import { formatDuration } from '@/utils/format';
 import { formatDistance } from '@/utils/geo';
 import { arrivalClock } from '@/utils/time';
 import { useT } from '@/lib/i18n';
+import { useLocation } from '@/contexts/LocationContext';
+import { haversineMeters } from '@/utils/geo';
+import { TrainOptions } from './TrainOptions';
+
+/** Trips at least this long (straight line) also offer KTMB trains. */
+const TRAIN_FROM_M = 30_000;
 
 /** Route preview: alternatives, ETA, tolls, avoid-tolls and Start. */
 export function RoutePanel() {
@@ -28,7 +34,11 @@ export function RoutePanel() {
   const verifiedFood = useVerifiedFoodOnRoute();
   const { setCategory: setAlongCategory } = useAlong();
   const { status, destination, routes, selectedIndex, selectRoute, mode, notice, error, avoidTolls, setAvoidTolls, startNavigation, clearRoute, retry } = useRouting();
+  const { fix } = useLocation();
+  const [travel, setTravel] = useState<'car' | 'train'>('car');
   if (!destination) return null;
+  const longTrip = Boolean(fix && mode !== 'demo' && haversineMeters(fix.coordinates, destination.coordinates) >= TRAIN_FROM_M);
+  const showTrain = longTrip && travel === 'train';
 
   const { reports } = useReports();
   // community reports lying on each route option
@@ -63,21 +73,40 @@ export function RoutePanel() {
         </label>
       </header>
 
+      {longTrip && (
+        <div role="tablist" aria-label={t('Cara perjalanan', 'How to travel')} className="mx-3 mb-2 grid grid-cols-2 gap-1 rounded-xl bg-ink-100 p-1 dark:bg-ink-900">
+          {(['car', 'train'] as const).map((m) => (
+            <button
+              key={m}
+              type="button"
+              role="tab"
+              aria-selected={travel === m}
+              onClick={() => setTravel(m)}
+              className={cn('flex items-center justify-center gap-1.5 rounded-lg py-1.5 text-sm font-semibold', travel === m ? 'bg-white shadow-sm dark:bg-ink-700' : 'text-ink-500')}
+            >
+              {m === 'car' ? <Car className="size-4" /> : <TrainFront className="size-4" />}
+              {m === 'car' ? t('Memandu', 'Drive') : t('Tren', 'Train')}
+            </button>
+          ))}
+        </div>
+      )}
+
       <div className="min-h-0 flex-1 overflow-y-auto px-3">
-        <ResumeToast className="mb-2" />
-        {status === 'needs-location' && (
+        {showTrain && <TrainOptions />}
+        {!showTrain && <ResumeToast className="mb-2" />}
+        {!showTrain && status === 'needs-location' && (
           <Message icon={LocateFixed} title={t('Menunggu lokasi anda', 'Waiting for your location')}>
             {t('Laluan bermula dari lokasi anda. Benarkan akses lokasi, atau ke kawasan terbuka untuk isyarat GPS.', 'Directions start from where you are. Allow location access, or move to an open area for a GPS fix.')}
           </Message>
         )}
-        {status === 'loading' && (
+        {!showTrain && status === 'loading' && (
           <ul aria-busy className="space-y-2 pb-2">
             {[0, 1].map((i) => (
               <li key={i} className="h-20 animate-pulse rounded-2xl bg-ink-100 dark:bg-ink-800" />
             ))}
           </ul>
         )}
-        {status === 'error' && (
+        {!showTrain && status === 'error' && (
           <Message icon={AlertTriangle} title={t('Tak dapat kira laluan', 'Couldn’t calculate a route')}>
             <p>{error}</p>
             <Button variant="secondary" className="mt-3" onClick={retry}>
@@ -85,7 +114,7 @@ export function RoutePanel() {
             </Button>
           </Message>
         )}
-        {status === 'ready' && (
+        {!showTrain && status === 'ready' && (
           <>
             {mode === 'demo' && (
               <div className="mb-2 flex items-start gap-2 rounded-xl bg-amber-400/10 px-3 py-2 text-xs text-amber-800 dark:text-amber-200">
@@ -104,7 +133,7 @@ export function RoutePanel() {
         )}
       </div>
 
-      {status === 'ready' && (
+      {!showTrain && status === 'ready' && (
         <footer className="space-y-2 p-3 pt-1">
           <ProbeConsentPrompt />
           {verifiedFood.length > 0 && (
