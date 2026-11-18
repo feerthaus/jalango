@@ -23,6 +23,8 @@ import { LocationStatusBanner } from '@/components/map/LocationStatusBanner';
 import { SpeedIndicator } from '@/components/map/SpeedIndicator';
 import { NavigationHud } from '@/components/navigation/NavigationHud';
 import { RoutePanel } from '@/components/navigation/RoutePanel';
+import { TransitTripPanel } from '@/components/navigation/TransitTripPanel';
+import { useTransitTrip } from '@/lib/transitTrip';
 import { PlaceCard } from '@/components/places/PlaceCard';
 import { ReportDetailCard } from '@/components/reports/ReportDetailCard';
 import { ReportSheet } from '@/components/reports/ReportSheet';
@@ -44,6 +46,8 @@ export function MapPage() {
   const { selectedShortcut, selectShortcut } = useShortcuts();
   const navigating = useIsNavigating();
   const planning = !navigating && status !== 'idle';
+  // Following a train/bus trip (Awam → Mula): its panel takes the bottom of the map
+  const transitTrip = useTransitTrip();
   const [searchOpen, setSearchOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
@@ -137,16 +141,17 @@ export function MapPage() {
         {!searchOpen && !planning && (
           <div className="space-y-2 max-md:mr-14">
             <LiveShareBanner />
-            <ConvoyBanner />
-            <ItineraryChip />
-            <DemoModeBanner />
-            {tileError && (
+            {/* During a train/bus trip, only what matters on the way: the trip panel has the room */}
+            {!transitTrip && <ConvoyBanner />}
+            {!transitTrip && <ItineraryChip />}
+            {!transitTrip && <DemoModeBanner />}
+            {tileError && !transitTrip && (
               <div role="status" className="pointer-events-auto inline-flex max-w-full items-center gap-2 rounded-full bg-ink-900/90 px-3 py-1.5 text-xs text-white shadow-float">
                 <WifiOff className="size-3.5 shrink-0" /> {t('Sebahagian peta gagal dimuat — semak sambungan anda', 'Some map tiles failed to load — check your connection')}
               </div>
             )}
             <LocationStatusBanner />
-            {!selectedPlace && !selectedReport && !selectedShortcut && <InstallBanner />}
+            {!selectedPlace && !selectedReport && !selectedShortcut && !transitTrip && <InstallBanner />}
           </div>
         )}
       </div>
@@ -159,7 +164,15 @@ export function MapPage() {
 
       {/* Bottom area (above nav on mobile) */}
       <div className="absolute inset-x-0 bottom-[calc(4rem+env(safe-area-inset-bottom))] z-10 space-y-3 p-3 md:bottom-0 md:p-4">
-        {!planning && (
+        {!planning && transitTrip && !cardOpen && (
+          <div className="space-y-3 md:max-w-[420px]">
+            <div className="flex justify-end">
+              <LocateButton />
+            </div>
+            <TransitTripPanel />
+          </div>
+        )}
+        {!planning && (!transitTrip || cardOpen) && (
           <div className={cn('flex items-end justify-between gap-3', cardOpen && '[@media(max-width:767px)_and_(max-height:760px)]:hidden')}>
             <SpeedIndicator />
             {/* With a card open the tall stack would climb into the top controls:

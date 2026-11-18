@@ -1,13 +1,16 @@
-import { Car, ChevronDown, ChevronUp, ExternalLink, Footprints, Loader2, Navigation, PiggyBank, TrainFront, Users } from 'lucide-react';
+import { Car, ChevronDown, ChevronUp, ExternalLink, Footprints, Loader2, Navigation, PiggyBank, Play, TrainFront, Users } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { useLocation } from '@/contexts/LocationContext';
 import { useRouting } from '@/contexts/RoutingContext';
+import { useMapContext } from '@/contexts/MapContext';
 import { cn } from '@/lib/cn';
 import { useT } from '@/lib/i18n';
 import { useMyVehicle } from '@/lib/vehicle';
 import { twelveGoTrainUrl } from '@/lib/partners';
 import { setTrainView } from '@/lib/trainView';
+import { arm } from '@/lib/arrivalAlarm';
+import { startTransitTrip } from '@/lib/transitTrip';
 import { loadFuel } from '@/services/fuelService';
 import { fetchTransitOptions, KTMB_BOOKING_URL, rides, type AccessLeg, type Station, type TransitLeg, type TransitMode, type TransitOption } from '@/services/transitService';
 import type { Place } from '@/types';
@@ -44,7 +47,8 @@ function onColor(hex: string): string {
 export function TransitOptions() {
   const [t, lang] = useT();
   const { fix } = useLocation();
-  const { destination, routes, selectedIndex, planRoute } = useRouting();
+  const { destination, routes, selectedIndex, planRoute, clearRoute } = useRouting();
+  const { clearSelection } = useMapContext();
   const [vehicle] = useMyVehicle();
   const [options, setOptions] = useState<TransitOption[] | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -93,6 +97,16 @@ export function TransitOptions() {
   const goToStation = (s: Station, walking: boolean) => {
     const place: Place = { id: `station:${s.id}`, name: t(`Stesen ${s.name}`, `${s.name} station`), address: '', coordinates: { lat: s.lat, lng: s.lng }, kind: 'poi', source: 'osm' };
     planRoute(place, { walking });
+  };
+
+  // Follow this option step by step, with a "get off at the next stop" alarm.
+  // arm() runs inside the tap: browsers only allow sound after one.
+  const follow = (o: TransitOption) => {
+    if (!from || !to || !destination) return;
+    void arm();
+    startTransitTrip({ option: o, from, to, destinationName: destination.name });
+    clearRoute();
+    clearSelection(); // the destination card would cover the trip panel
   };
 
   return (
@@ -206,6 +220,9 @@ export function TransitOptions() {
                     ),
                   )}
                   <Step leg={o.egress} label={t(`ke ${destination?.name ?? 'destinasi'}`, `to ${destination?.name ?? 'the destination'}`)} />
+                  <Button className="w-full py-2.5" onClick={() => follow(o)}>
+                    <Play className="size-4" /> {t('Mula ikut perjalanan', 'Start this trip')}
+                  </Button>
                   <div className="flex flex-wrap gap-2 pt-1">
                     {rides(o).some((l) => l.ticket) && (
                       <a href={KTMB_BOOKING_URL} target="_blank" rel="noopener noreferrer" className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-jade-500 px-3 py-2.5 text-sm font-bold text-ink-950">
@@ -247,7 +264,7 @@ export function TransitOptions() {
   );
 }
 
-function LineBadge({ leg }: { leg: TransitLeg }) {
+export function LineBadge({ leg }: { leg: TransitLeg }) {
   const [, lang] = useT();
   const rapid = ['lrt', 'mrt', 'monorail', 'brt'].includes(leg.mode);
   return (

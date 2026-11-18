@@ -4,6 +4,7 @@ import { useEffect, useMemo } from 'react';
 import { useMapContext } from '@/contexts/MapContext';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { useTrainView, type TrainView } from '@/lib/trainView';
+import { useTransitTrip } from '@/lib/transitTrip';
 
 const SOURCE = 'jg-train';
 const LAYERS = { access: 'jg-train-access', casing: 'jg-train-casing', line: 'jg-train-line', stations: 'jg-train-stations', labels: 'jg-train-labels' } as const;
@@ -64,7 +65,11 @@ function ensureLayers(map: MapboxMap, data: FeatureCollection) {
 /** Draws the train option picked in the route panel's "Tren" tab, and frames it. */
 export function TrainLayer() {
   const { map } = useMapContext();
-  const view = useTrainView();
+  const shown = useTrainView();
+  const trip = useTransitTrip();
+  // The Awam tab's option while choosing; otherwise the trip being followed
+  const tripView = useMemo(() => (trip ? { option: trip.option, from: trip.from, to: trip.to } : null), [trip?.startedAt]); // eslint-disable-line react-hooks/exhaustive-deps
+  const view = shown ?? tripView;
   const isDesktop = useMediaQuery('(min-width: 768px)');
   const data = useMemo(() => (view ? trainFeatures(view) : EMPTY), [view]);
 
