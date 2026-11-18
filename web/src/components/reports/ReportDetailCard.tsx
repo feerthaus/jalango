@@ -58,7 +58,7 @@ export function ReportDetailCard({ report, onClose }: { report: TrafficReport; o
             {lang === 'en' ? meta.label : meta.labelMs} <span className="text-sm font-normal text-ink-400">· {lang === 'en' ? meta.labelMs : meta.label}</span>
           </h2>
           <p className="mt-0.5 text-xs text-ink-500 dark:text-ink-400">
-            {t('Dilaporkan', 'Reported')} {formatRelativeTime(report.created_at)}
+            {t('Dilaporkan', 'Reported')} {formatRelativeTime(report.created_at, lang)}
             {distance !== null && ` · ${formatDistance(distance)} ${t('dari sini', 'away')}`}
           </p>
           {report.description && <p className="mt-2 text-sm">{report.description}</p>}

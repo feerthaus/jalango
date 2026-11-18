@@ -14,7 +14,7 @@ import { formatRelativeTime } from '@/utils/format';
 import { useT } from '@/lib/i18n';
 
 export function SavedPage() {
-  const [t] = useT();
+  const [t, lang] = useT();
   const [tr] = useT();
   const { favourites, recents, removeFavourite, removeRecent, clearRecents } = useSavedPlaces();
   const showOnMap = useShowOnMap();
@@ -81,7 +81,7 @@ export function SavedPage() {
             {recents.map((p) => (
               <PlaceRow
                 key={p.id}
-                place={{ ...p, address: `${formatRelativeTime(p.savedAt)} · ${p.address}` }}
+                place={{ ...p, address: `${formatRelativeTime(p.savedAt, lang)} · ${p.address}` }}
                 onSelect={() => showOnMap(p)}
                 leadingIcon={<Clock className="size-5" />}
                 trailing={<RemoveButton label={t(`Buang ${p.name} dari terkini`, `Remove ${p.name} from recent`)} onClick={() => removeRecent(p.id)} />}
