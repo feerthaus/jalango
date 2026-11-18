@@ -20,13 +20,15 @@ interface SearchPanelProps {
   onSelect: (place: Place) => void;
   /** "Tak jumpa?": tell JalanGo this search went wrong */
   onReport: (query: string) => void;
+  /** Open the trip assistant (AI), with this text to start from; absent when it's off */
+  onAsk?: (text: string) => void;
 }
 
 export function optionId(index: number) {
   return `search-option-${index}`;
 }
 
-export function SearchPanel({ query, search, activeIndex, onSelect, onReport }: SearchPanelProps) {
+export function SearchPanel({ query, search, activeIndex, onSelect, onReport, onAsk }: SearchPanelProps) {
   const [t] = useT();
   const { recents, favourites, removeRecent, clearRecents } = useSavedPlaces();
   const typing = query.trim().length >= 2;
@@ -37,9 +39,24 @@ export function SearchPanel({ query, search, activeIndex, onSelect, onReport }: 
       className="pointer-events-auto mt-2 max-h-[calc(100dvh-10rem)] overflow-y-auto overscroll-contain rounded-2xl bg-white p-2 shadow-float ring-1 ring-ink-900/5 md:max-h-[70vh] dark:bg-ink-900 dark:ring-white/10"
     >
       {typing ? (
-        <Results search={search} activeIndex={activeIndex} onSelect={onSelect} onReport={onReport} pending={search.query !== query.trim()} />
+        <Results search={search} activeIndex={activeIndex} onSelect={onSelect} onReport={onReport} onAsk={onAsk} pending={search.query !== query.trim()} />
       ) : (
         <>
+          {onAsk && (
+            <button
+              type="button"
+              onClick={() => onAsk('')}
+              className="mb-2 flex w-full items-center gap-3 rounded-xl bg-violet-500/10 p-3 text-left hover:bg-violet-500/15"
+            >
+              <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-violet-500 text-white">
+                <Sparkles className="size-5" />
+              </span>
+              <span className="min-w-0">
+                <span className="block font-semibold">{t('Rancang perjalanan dengan AI', 'Plan a trip with AI')}</span>
+                <span className="block text-xs text-ink-500 dark:text-ink-400">{t('“Esok 7 pagi ke KLIA, paling murah?”', '“Tomorrow 7am to KLIA, cheapest?”')}</span>
+              </span>
+            </button>
+          )}
           <Section title={t('Bandar', 'Cities')}>
             <div className="flex flex-wrap gap-2 px-2 pb-2">
               {QUICK_CITIES.map((c) => (
@@ -106,7 +123,7 @@ export function SearchPanel({ query, search, activeIndex, onSelect, onReport }: 
   );
 }
 
-function Results({ search, activeIndex, onSelect, onReport, pending }: { search: PlaceSearchState; activeIndex: number; onSelect: (p: Place) => void; onReport: (q: string) => void; pending: boolean }) {
+function Results({ search, activeIndex, onSelect, onReport, onAsk, pending }: { search: PlaceSearchState; activeIndex: number; onSelect: (p: Place) => void; onReport: (q: string) => void; onAsk?: (text: string) => void; pending: boolean }) {
   const [t] = useT();
   if (search.error) {
     return (
@@ -159,6 +176,11 @@ function Results({ search, activeIndex, onSelect, onReport, pending }: { search:
         {search.mode === 'demo' && <p className="text-xs">{t('Data contoh luar talian hanya meliputi bandar dan mercu tanda utama Malaysia.', 'Offline sample data only covers major Malaysian cities and landmarks.')}</p>}
         {!link && search.mode !== 'demo' && (
           <>
+            {onAsk && (
+              <button type="button" onClick={() => onAsk(search.query)} className="flex items-center gap-1.5 rounded-full bg-violet-500/10 px-3 py-1.5 text-sm font-semibold text-violet-700 dark:text-violet-300">
+                <Sparkles className="size-4" /> {t('Tanya pembantu AI', 'Ask the AI assistant')}
+              </button>
+            )}
             <ReportButton onClick={() => onReport(search.query)} />
             <GoogleMapsHelp query={search.query} />
           </>

@@ -9,6 +9,8 @@ import { SearchBar } from './SearchBar';
 import { optionId, SearchPanel } from './SearchPanel';
 import { SearchMissSheet } from './SearchMissSheet';
 import { reportSearchMiss } from '@/services/geocodingService';
+import { AssistantSheet } from '@/components/assistant/AssistantSheet';
+import { useServiceStatus } from '@/contexts/ServiceStatusContext';
 
 /** Search bar + autocomplete panel. Selecting a result shows it on the map. */
 export function DestinationSearch({ onOpenChange }: { onOpenChange?: (open: boolean) => void }) {
@@ -21,6 +23,10 @@ export function DestinationSearch({ onOpenChange }: { onOpenChange?: (open: bool
   const { selectPlace } = useMapContext();
   const { addRecent } = useSavedPlaces();
   const [reportFor, setReportFor] = useState<string | null>(null);
+  // Trip assistant (AI), opened from the panel; only when the server has it switched on
+  const [askFor, setAskFor] = useState<string | null>(null);
+  const { server } = useServiceStatus();
+  const aiOn = Boolean(server?.ai);
   // Results were shown for this text; cleared once one is tapped or the search is reported
   const shown = useRef<string | null>(null);
   useEffect(() => {
@@ -34,12 +40,12 @@ export function DestinationSearch({ onOpenChange }: { onOpenChange?: (open: bool
   useEffect(() => {
     if (!open) return;
     const onPointer = (e: PointerEvent) => {
-      if (reportFor !== null) return; // the "Tak jumpa?" sheet sits above, outside this box
+      if (reportFor !== null || askFor !== null) return; // the "Tak jumpa?" / assistant sheet sits above, outside this box
       if (rootRef.current && !rootRef.current.contains(e.target as Node)) setOpen(false);
     };
     document.addEventListener('pointerdown', onPointer);
     return () => document.removeEventListener('pointerdown', onPointer);
-  }, [open, reportFor]);
+  }, [open, reportFor, askFor]);
 
   // Closed without tapping any result: count it (text only) so admins can see which searches miss
   useEffect(() => {
@@ -113,6 +119,17 @@ export function DestinationSearch({ onOpenChange }: { onOpenChange?: (open: bool
           onReport={(q) => {
             shown.current = null;
             setReportFor(q);
+          }}
+          onAsk={aiOn ? (q) => setAskFor(q) : undefined}
+        />
+      )}
+      {askFor !== null && (
+        <AssistantSheet
+          initial={askFor}
+          onClose={() => setAskFor(null)}
+          onRoute={() => {
+            setQuery('');
+            close();
           }}
         />
       )}
