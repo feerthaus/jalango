@@ -8,6 +8,7 @@ import type { PlaceSearchState } from '@/hooks/usePlaceSearch';
 import type { Place } from '@/types';
 import { useT } from '@/lib/i18n';
 import { LINK_UNREADABLE, looksLikeLinkOrCoords } from '@/services/geocodingService';
+import { looksLikeQuestion } from '@/utils/questionLike';
 
 const QUICK_CITIES = ['demo:kl', 'demo:johor-bahru', 'demo:george-town', 'demo:ipoh', 'demo:melaka', 'demo:kota-kinabalu', 'demo:kuching']
   .map((id) => DEMO_PLACES.find((p) => p.id === id))
@@ -38,6 +39,21 @@ export function SearchPanel({ query, search, activeIndex, onSelect, onReport, on
       id="search-results"
       className="pointer-events-auto mt-2 max-h-[calc(100dvh-10rem)] overflow-y-auto overscroll-contain rounded-2xl bg-white p-2 shadow-float ring-1 ring-ink-900/5 md:max-h-[70vh] dark:bg-ink-900 dark:ring-white/10"
     >
+      {typing && onAsk && looksLikeQuestion(query) && (
+        <button
+          type="button"
+          onClick={() => onAsk(query.trim())}
+          className="mb-2 flex w-full items-center gap-3 rounded-xl bg-violet-500/10 p-3 text-left hover:bg-violet-500/15"
+        >
+          <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-violet-500 text-white">
+            <Sparkles className="size-5" />
+          </span>
+          <span className="min-w-0">
+            <span className="block font-semibold">{t('Tanya pembantu AI', 'Ask the AI assistant')}</span>
+            <span className="block truncate text-xs text-ink-500 dark:text-ink-400">“{query.trim()}”</span>
+          </span>
+        </button>
+      )}
       {typing ? (
         <Results search={search} activeIndex={activeIndex} onSelect={onSelect} onReport={onReport} onAsk={onAsk} pending={search.query !== query.trim()} />
       ) : (
