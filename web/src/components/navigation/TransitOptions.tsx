@@ -149,10 +149,10 @@ export function TransitOptions() {
       {error ? (
         <p role="alert" className="rounded-2xl bg-white p-3 text-sm text-ink-500 dark:bg-ink-800">{t('Jadual tren tak dapat dimuat sekarang. Cuba lagi sebentar.', 'Couldn’t load train times right now. Try again shortly.')}</p>
       ) : !options ? (
-        <p className="flex items-center justify-center gap-2 py-4 text-sm text-ink-500"><Loader2 className="size-4 animate-spin" /> {t('Mencari tren & LRT…', 'Finding trains & LRT…')}</p>
+        <p className="flex items-center justify-center gap-2 py-4 text-sm text-ink-500"><Loader2 className="size-4 animate-spin" /> {t('Mencari tren, LRT & bas…', 'Finding trains, LRT & buses…')}</p>
       ) : options.length === 0 ? (
         <p className="rounded-2xl bg-white p-3 text-sm text-ink-500 dark:bg-ink-800">
-          {t('Tiada tren, LRT atau MRT yang sesuai dalam 24 jam, atau tiada stesen berhampiran sini atau destinasi. Bas akan datang.', 'No suitable train, LRT or MRT in the next 24 hours, or no station near here or the destination. Buses are coming.')}
+          {t('Tiada tren, LRT, MRT atau bas yang sesuai dalam 24 jam, atau tiada stesen/perhentian berhampiran sini atau destinasi.', 'No suitable train, LRT, MRT or bus in the next 24 hours, or no station or stop near here or the destination.')}
         </p>
       ) : (
         <ul className="space-y-2">
@@ -197,7 +197,9 @@ export function TransitOptions() {
                           <span className="block text-xs text-ink-500">
                             {l.routeName} · {l.km} km · {t(`${l.stops} hentian`, `${l.stops} stops`)} ·{' '}
                             {l.fareShared ? t('tambang sama (Rapid KL)', 'same fare (Rapid KL)') : t(`~${rm(l.fareMin)}–${l.fareMax}`, `~${rm(l.fareMin)}–${l.fareMax}`)}
-                            {!l.ticket && ` · ${t("tap kad Touch 'n Go atau kad bank", "tap a Touch 'n Go or bank card")}`}
+                            {l.mode === 'bus'
+                              ? ` · ${t('bayar dalam bas (tunai atau kad, ikut operator)', 'pay on the bus (cash or card, depends on the operator)')}`
+                              : !l.ticket && ` · ${t("tap kad Touch 'n Go atau kad bank", "tap a Touch 'n Go or bank card")}`}
                           </span>
                         </span>
                       </div>
@@ -240,7 +242,7 @@ export function TransitOptions() {
           ))}
         </ul>
       )}
-      <p className="text-center text-[11px] text-ink-400">{t('Jadual: KTMB dan Prasarana (Rapid KL) melalui data.gov.my.', 'Timetables: KTMB and Prasarana (Rapid KL) via data.gov.my.')}</p>
+      <p className="text-center text-[11px] text-ink-400">{t('Jadual: KTMB, Prasarana (Rapid KL, Rapid Penang) dan myBAS JB melalui data.gov.my.', 'Timetables: KTMB, Prasarana (Rapid KL, Rapid Penang) and myBAS JB via data.gov.my.')}</p>
     </div>
   );
 }
@@ -251,7 +253,7 @@ function LineBadge({ leg }: { leg: TransitLeg }) {
   return (
     <span className="inline-block rounded px-1.5 py-0.5 text-[11px] font-bold leading-none" style={{ background: leg.color, color: onColor(leg.color) }}>
       {modeLabel(leg.mode, lang)}
-      {rapid && leg.shortName ? ` ${leg.shortName}` : ''}
+      {(rapid || leg.mode === 'bus') && leg.shortName ? ` ${leg.shortName}` : ''}
     </span>
   );
 }

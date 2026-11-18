@@ -255,6 +255,14 @@ Pelan penuh ada dalam `docs/MARKETPLACE.md`. Fasa 0 hanya pendaftaran dan penges
 - **Laluan komuniti:** laluan jauh alternatif untuk elak jem, contohnya ke Kelantan melalui Gua Musang. Termasuk laluan yang masuk semula ke jalan utama di tengah perjalanan, seperti Kuala Pilah → exit Gambang (`web/src/components/communityRoutes/`).
 - **Tempat disyorkan komuniti.**
 
+## Bas (Fasa 2b)
+
+- **Bas dalam tab Awam:** Rapid KL (bas bandar), bas pengantara MRT (T-xxx), **Rapid Penang** dan **myBAS Johor Bahru**, digabung dengan tren/LRT/MRT. Perancang boleh guna bas sebagai batu pertama/terakhir ke stesen (cth. Kota Damansara: bas 780 → MRT → LRT ke KLCC) atau bas sahaja (Komtar → Batu Ferringhi: bas 101; JB Sentral → Skudai: bas J31).
+- **Data harian:** fungsi berjadual Netlify `transit-build` (2:00 pagi waktu Malaysia) muat turun 6 jadual GTFS dari data.gov.my, bina rangkaian dan simpan **snapshot ringkas** (~0.7 MB gzip, dari ~50 MB) dalam Supabase Storage (bucket peribadi `transit`). API muat snapshot dalam ~0.2 s. Jika snapshot tiada atau > 36 jam, API guna tren + LRT/MRT sahaja (dimuat terus).
+- **Paparan:** lencana "Bas 780", "Bas T117" (warna laluan atau hijau gelap), nota "bayar dalam bas (tunai atau kad, ikut operator)", tambang anggaran.
+- Nama perhentian dibersihkan daripada kod ("KL1117 LRT Bangsar" → "LRT Bangsar"; "SS15 …" kekal).
+- Rapid Kuantan tiada di data.gov.my (404).
+
 ## Pengangkutan awam: LRT, MRT, Monorel, BRT + KTMB (Fasa 2a)
 
 - **Tab Memandu | Awam** dalam panel laluan untuk destinasi ≥ 2 km (dahulu "Tren", ≥ 30 km).

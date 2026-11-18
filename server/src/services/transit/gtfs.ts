@@ -56,7 +56,12 @@ const secs = (t: string) => {
 
 /** Station names as people say them: "KL SENTRAL - REDONE" → "KL Sentral". */
 export function stationName(raw: string): string {
-  const cleaned = raw.trim().replace(/\s+-\s+(redone)$/i, '').replace(/\s+/g, ' ');
+  const cleaned = raw
+    .trim()
+    .replace(/\s+-\s+(redone)$/i, '')
+    // bus stop codes in front of the name: "KL1117 LRT Bangsar", "PJ790 SRA SEKSYEN 5"
+    .replace(/^[A-Z]{1,4}\d{3,6}[A-Z]?\s+(?=\S)/i, '')
+    .replace(/\s+/g, ' ');
   return titleCase(cleaned);
 }
 
@@ -71,9 +76,10 @@ export function parseFeed(name: string, files: Record<string, string>, modeOf: (
   }
   const routes: FeedRoute[] = parseCsv(files['routes.txt']).map((r) => ({
     id: p(r.route_id),
-    shortName: r.route_short_name,
+    // MRT feeder buses have the route number only in the long name ("T117")
+    shortName: r.route_short_name || (/^[A-Z]{0,3}\d{1,4}[A-Z]?$/i.test(r.route_long_name) ? r.route_long_name : ''),
     longName: r.route_long_name,
-    color: r.route_color ? `#${r.route_color.replace('#', '')}` : '#3c5a9f',
+    color: r.route_color ? `#${r.route_color.replace('#', '')}` : modeOf(r) === 'bus' ? '#0f766e' : '#3c5a9f',
     mode: modeOf(r),
   }));
   const tripMeta = new Map(parseCsv(files['trips.txt']).map((r) => [r.trip_id, { routeId: p(r.route_id), serviceId: r.service_id }]));
@@ -130,3 +136,6 @@ export const railMode = (r: Record<string, string>): Mode => {
   const c = (r.category ?? '').toUpperCase();
   return c === 'MRT' ? 'mrt' : c === 'MRL' ? 'monorail' : c === 'BRT' ? 'brt' : 'lrt';
 };
+
+/** Buses. */
+export const busMode = (): Mode => 'bus';
