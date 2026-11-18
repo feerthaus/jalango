@@ -1,4 +1,5 @@
 import { supabaseAdmin } from '../lib/supabaseAdmin.js';
+import { rewriteQuery } from './aiSearch.js';
 import type { Coordinates, Place } from '../types.js';
 import { compactName, mergePlaces, nameHasAllTokens, searchPlaces } from './mapbox.js';
 
@@ -116,14 +117,28 @@ async function followRedirect(r: Redirect, near: Coordinates | undefined): Promi
   return found.find((p) => compactName(p.name) === want) ?? found.find((p) => nameHasAllTokens(p.name, r.targetName)) ?? null;
 }
 
-/** Our search plus the admin's rules: pinned results and JalanGo places first, admin synonyms tried; nothing found is counted. */
-export async function smartSearch(q: string, near: Coordinates | undefined, limit = 8): Promise<Place[]> {
+/**
+ * Our search plus the admin's rules: pinned results and JalanGo places first, admin synonyms tried; nothing found is counted.
+ * With `ai`, a search that finds nothing is rewritten by a small model (typos, short forms) and searched again.
+ */
+export async function smartSearch(q: string, near: Coordinates | undefined, limit = 8, opts: { ai?: boolean } = {}): Promise<{ places: Place[]; rewrittenTo?: string }> {
   const learned = await loadLearned();
   const places = matchLearnedPlaces(learned.places, q).map((p) => (near ? { ...p, distanceMeters: Math.round(distance(near, p.coordinates)) } : p));
   const redirects = learned.redirects.filter((r) => coversKeyword(r.keywords, q)).slice(0, 2);
   const [results, ...followed] = await Promise.all([searchPlaces(q, near, limit, learned.synonyms), ...redirects.map((r) => followRedirect(r, near))]);
   const pinned = followed.filter((p): p is Place => p !== null).map((p) => ({ ...p, pinned: true }));
   const merged = mergePlaces([...pinned, ...places], results, limit);
-  if (merged.length === 0) void logMiss(q, 'no_results');
-  return merged;
+  if (merged.length > 0) return { places: merged };
+  if (opts.ai) {
+    for (const alt of await rewriteQuery(q)) {
+      const found = await searchPlaces(alt, near, limit, learned.synonyms).catch(() => [] as Place[]);
+      if (found.length) {
+        // still counted, with the fix as a note, so the admin can turn it into a synonym
+        void logMiss(q, 'no_results', { note: `AI: ${alt}` });
+        return { places: found, rewrittenTo: alt };
+      }
+    }
+  }
+  void logMiss(q, 'no_results');
+  return { places: [] };
 }

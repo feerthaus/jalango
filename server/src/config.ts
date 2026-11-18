@@ -11,9 +11,12 @@ export const config = {
   mapboxToken: process.env.MAPBOX_ACCESS_TOKEN?.trim() || null,
   supabaseUrl: process.env.SUPABASE_URL?.trim() || null,
   supabaseServiceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY?.trim() || null,
+  /** Claude API (smart search, trip assistant); features stay off without it */
+  anthropicKey: process.env.ANTHROPIC_API_KEY?.trim() || null,
 } as const;
 
 export const integrations = {
   mapbox: Boolean(config.mapboxToken),
   supabase: Boolean(config.supabaseUrl && config.supabaseServiceRoleKey),
+  ai: Boolean(config.anthropicKey),
 };

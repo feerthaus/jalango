@@ -14,6 +14,8 @@ const searchQuery = z.object({
   lng: lng.optional(),
   lat: lat.optional(),
   limit: z.coerce.number().int().min(1).max(10).optional(),
+  /** "1": if nothing is found, let the AI rewrite the text and try again (sent after the user stops typing) */
+  ai: z.enum(['0', '1']).optional(),
 });
 
 const reverseQuery = z.object({ lng, lat });
@@ -45,9 +47,10 @@ export const alongQuery = z.object({
 export const geocodingRouter = Router();
 
 geocodingRouter.get('/search', async (req, res) => {
-  const { q, lng, lat, limit } = searchQuery.parse(req.query);
+  const { q, lng, lat, limit, ai } = searchQuery.parse(req.query);
   const near = lng !== undefined && lat !== undefined ? { lng, lat } : undefined;
-  res.json({ results: await smartSearch(q, near, limit) });
+  const { places, rewrittenTo } = await smartSearch(q, near, limit, { ai: ai === '1' });
+  res.json({ results: places, rewrittenTo });
 });
 
 /**

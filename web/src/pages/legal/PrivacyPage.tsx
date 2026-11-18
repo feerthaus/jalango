@@ -67,6 +67,7 @@ const ms: LegalSection[] = [
           <li><strong>Supabase</strong>: pangkalan data dan log masuk (akaun, kandungan komuniti, sejarah perjalanan).</li>
           <li><strong>Mapbox</strong>: peta, carian tempat dan laluan. Menerima pertanyaan carian dan koordinat yang diperlukan.</li>
           <li><strong>OpenStreetMap (Photon, oleh Komoot)</strong>: carian tambahan untuk jalan, homestay dan kereta sewa apabila Mapbox kurang hasil. Menerima pertanyaan carian dan koordinat anggaran kawasan carian, melalui pelayan JalanGo (bukan terus dari telefon anda).</li>
+          <li><strong>Anthropic (Claude)</strong>: carian pintar. Bila carian tidak menemui apa-apa, teks carian itu sahaja (tanpa lokasi atau akaun) dihantar untuk dibetulkan (ejaan, singkatan), kemudian dicari semula di Mapbox/OpenStreetMap. Anthropic tidak menggunakan data API untuk melatih model.</li>
           <li><strong>Netlify</strong>: pengehosan aplikasi dan pelayan API.</li>
           <li><strong>Sentry</strong>: laporan ralat (crash) aplikasi — jenis ralat, peranti/pelayar dan halaman, tanpa nama, email, alamat IP atau koordinat lokasi.</li>
           <li><strong>Google / Facebook</strong>: hanya jika anda memilih log masuk dengan mereka.</li>
@@ -195,6 +196,7 @@ const en: LegalSection[] = [
           <li><strong>Supabase</strong> — database and sign-in (accounts, community content, trip history).</li>
           <li><strong>Mapbox</strong> — maps, place search and routing; receives search queries and the coordinates needed.</li>
           <li><strong>OpenStreetMap (Photon, by Komoot)</strong> — extra search for streets, homestays and car rentals when Mapbox finds few; receives the search text and approximate search coordinates, via the JalanGo server (not directly from your phone).</li>
+          <li><strong>Anthropic (Claude)</strong> — smart search. When a search finds nothing, only that search text (no location or account) is sent to be corrected (spelling, short forms), then searched again on Mapbox/OpenStreetMap. Anthropic does not use API data to train its models.</li>
           <li><strong>Netlify</strong> — hosting of the app and API server.</li>
           <li><strong>Sentry</strong> — app crash reports: the error, device/browser and page, without your name, email, IP address or location coordinates.</li>
           <li><strong>Google / Facebook</strong> — only if you choose to sign in with them.</li>

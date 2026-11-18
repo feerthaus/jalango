@@ -1,4 +1,4 @@
-import { AlertTriangle, Clock, ExternalLink, Flag, Link2, SearchX, Star, Trash2, X } from 'lucide-react';
+import { AlertTriangle, Clock, ExternalLink, Flag, Link2, SearchX, Star, Trash2, X, Sparkles } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { PlaceRow } from '@/components/places/PlaceRow';
 import { DemoBadge } from '@/components/ui/DemoBadge';
@@ -136,6 +136,14 @@ function Results({ search, activeIndex, onSelect, onReport, pending }: { search:
     );
   }
 
+  if (search.results.length === 0 && search.aiTrying) {
+    return (
+      <p role="status" className="flex items-center justify-center gap-2 px-4 py-6 text-sm text-ink-500 dark:text-ink-300">
+        <Sparkles className="size-4 animate-pulse text-violet-500" /> {t('Tiada padanan tepat. Mencuba carian pintar…', 'No exact match. Trying smart search…')}
+      </p>
+    );
+  }
+
   if (search.results.length === 0) {
     const link = looksLikeLinkOrCoords(search.query);
     return (
@@ -166,6 +174,14 @@ function Results({ search, activeIndex, onSelect, onReport, pending }: { search:
           <DemoBadge label="Demo" className="shrink-0" />
           <span>{search.notice ?? t('Carian langsung tidak tersedia — hasil daripada sampel kecil tempat di Malaysia.', 'Live search not configured — results come from a small offline sample of Malaysian places.')}</span>
         </div>
+      )}
+      {search.rewrittenTo && (
+        <p className="mx-1 mb-1 flex items-start gap-2 rounded-xl bg-violet-500/10 px-3 py-2 text-xs text-violet-800 dark:text-violet-200">
+          <Sparkles className="mt-0.5 size-3.5 shrink-0" />
+          <span>
+            {t('Tiada hasil untuk', 'Nothing found for')} “{search.query}”. {t('Carian pintar menunjukkan hasil untuk', 'Smart search is showing results for')} <strong>“{search.rewrittenTo}”</strong>.
+          </span>
+        </p>
       )}
       <ul role="listbox" aria-label={t('Hasil carian', 'Search results')}>
         {search.results.map((p, i) => (

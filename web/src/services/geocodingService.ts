@@ -40,7 +40,7 @@ const DEMO_NOTICE_UNREACHABLE = 'Live search is unavailable right now — showin
 
 export async function searchPlaces(
   query: string,
-  opts: { near?: Coordinates | null; signal?: AbortSignal; live: boolean },
+  opts: { near?: Coordinates | null; signal?: AbortSignal; live: boolean; ai?: boolean },
 ): Promise<SearchResponse> {
   if (!opts.live) {
     return { results: searchDemoPlaces(query, opts.near), mode: 'demo' };
@@ -50,15 +50,15 @@ export async function searchPlaces(
     return { results: result ? [result] : [], mode: 'live', notice: result ? undefined : LINK_UNREADABLE };
   }
   try {
-    const { results } = await apiGet<{ results: Place[] }>(
+    const { results, rewrittenTo } = await apiGet<{ results: Place[]; rewrittenTo?: string }>(
       '/geo/search',
-      { q: query, lng: opts.near?.lng, lat: opts.near?.lat },
+      { q: query, lng: opts.near?.lng, lat: opts.near?.lat, ai: opts.ai ? 1 : undefined },
       opts.signal,
     );
     const withDistance = opts.near
       ? results.map((p) => ({ ...p, distanceMeters: p.distanceMeters ?? haversineMeters(opts.near!, p.coordinates) }))
       : results;
-    return { results: withDistance, mode: 'live' };
+    return { results: withDistance, mode: 'live', rewrittenTo };
   } catch (err) {
     if (err instanceof DOMException && err.name === 'AbortError') throw err;
     if (isServiceUnavailable(err)) {
