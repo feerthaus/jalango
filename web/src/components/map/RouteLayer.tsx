@@ -6,6 +6,7 @@ import { useRouting } from '@/contexts/RoutingContext';
 import { useTheme, type ResolvedTheme } from '@/contexts/ThemeContext';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { buildRouteIndex, sliceRoute } from '@/utils/routeProgress';
+import { useTrainView } from '@/lib/trainView';
 import type { Congestion, Route } from '@/types';
 
 const SOURCE = 'jg-routes';
@@ -180,6 +181,19 @@ export function RouteLayer() {
   useEffect(() => {
     if (map) applyTheme(map, theme);
   }, [map, theme]);
+
+  // While a train option is on the map, hide the car routes
+  const trainShown = Boolean(useTrainView());
+  useEffect(() => {
+    if (!map) return;
+    for (const id of Object.values(LAYERS)) {
+      try {
+        if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', trainShown ? 'none' : 'visible');
+      } catch {
+        /* style reloading */
+      }
+    }
+  }, [map, trainShown, data]);
 
   // Click an alternative to select it
   useEffect(() => {

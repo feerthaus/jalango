@@ -180,6 +180,31 @@ function nearestStations(tt: Timetable, at: Coordinates): { stop: GtfsStop; km: 
     .slice(0, NEAREST_STATIONS);
 }
 
+const runningCache = new WeakMap<Timetable, Map<number, GtfsTrip[]>>();
+/** Trips that run on the service day starting at `dayStart` (cached per timetable). */
+function runningTrips(tt: Timetable, dayStart: number): GtfsTrip[] {
+  let byDay = runningCache.get(tt);
+  if (!byDay) runningCache.set(tt, (byDay = new Map()));
+  let list = byDay.get(dayStart);
+  if (!list) byDay.set(dayStart, (list = tt.trips.filter((trip) => serviceRuns(tt, trip.serviceId, dayStart))));
+  return list;
+}
+
+const stopIndexCache = new WeakMap<Timetable, Map<string, { trip: GtfsTrip; idx: number }[]>>();
+/** stop → every trip calling there, with its position (built once per timetable). */
+function stopIndex(tt: Timetable): Map<string, { trip: GtfsTrip; idx: number }[]> {
+  let index = stopIndexCache.get(tt);
+  if (index) return index;
+  index = new Map();
+  for (const trip of tt.trips) trip.stops.forEach((x, idx) => {
+    const list = index!.get(x.stop) ?? [];
+    list.push({ trip, idx });
+    index!.set(x.stop, list);
+  });
+  stopIndexCache.set(tt, index);
+  return index;
+}
+
 interface Ride {
   trip: GtfsTrip;
   dayStart: number;
@@ -239,34 +264,91 @@ export function planTrainTrips(tt: Timetable, from: Coordinates, to: Coordinates
   const days = [today - 86_400_000, today, today + 86_400_000]; // yesterday's late trips run past midnight
   const horizon = nowMs + 26 * 3600_000;
   const active: { trip: GtfsTrip; dayStart: number }[] = [];
-  for (const dayStart of days) for (const trip of tt.trips) if (serviceRuns(tt, trip.serviceId, dayStart)) active.push({ trip, dayStart });
+  for (const dayStart of days) for (const trip of runningTrips(tt, dayStart)) active.push({ trip, dayStart });
 
-  // stop → trips calling there (for changes)
-  const byStop = new Map<string, { trip: GtfsTrip; dayStart: number; idx: number }[]>();
-  for (const a of active) a.trip.stops.forEach((st, idx) => {
-    const list = byStop.get(st.stop) ?? [];
-    list.push({ ...a, idx });
-    byStop.set(st.stop, list);
-  });
+  // Last index of a destination station in each trip: trips that never reach one are skipped fast
+  const lastDest = new Map<GtfsTrip, number>();
+  for (const trip of tt.trips) {
+    let last = -1;
+    trip.stops.forEach((x, idx) => destEgress.has(x.stop) && (last = idx));
+    lastDest.set(trip, last);
+  }
+  const byStop = stopIndex(tt);
+  const runsOn = new Map<string, boolean>();
+  const runs = (trip: GtfsTrip, dayStart: number) => {
+    const key = `${trip.serviceId}|${dayStart}`;
+    let v = runsOn.get(key);
+    if (v === undefined) runsOn.set(key, (v = serviceRuns(tt, trip.serviceId, dayStart)));
+    return v;
+  };
 
-  const options: TrainOption[] = [];
-  const build = (rides: Ride[]): TrainOption | null => {
+  // Light candidates first (times and cost only); full legs only for the ones we keep
+  interface Candidate {
+    rides: Ride[];
+    leaveMs: number;
+    arriveMs: number;
+    costMax: number;
+    minutes: number;
+  }
+  const candidates: Candidate[] = [];
+  const consider = (rides: Ride[]) => {
     const first = rides[0];
     const last = rides[rides.length - 1];
     const access = originAccess.get(first.trip.stops[first.i].stop)!;
     const egress = destEgress.get(last.trip.stops[last.j].stop)!;
     const departMs = first.dayStart + first.trip.stops[first.i].dep * 1000;
     const leaveMs = departMs - (access.minutes + BOARD_BUFFER_MIN) * 60_000;
-    if (leaveMs < nowMs || departMs > horizon) return null;
+    if (leaveMs < nowMs || departMs > horizon) return;
     const arriveMs = last.dayStart + last.trip.stops[last.j].arr * 1000 + egress.minutes * 60_000;
-    const legs = rides.map((r) => leg(tt, r));
-    const fareMin = Math.round(legs.reduce((s, l) => s + l.fareMin, 0) * 10) / 10;
-    const fareMax = Math.round(legs.reduce((s, l) => s + l.fareMax, 0) * 10) / 10;
+    const fare = rides.reduce((sum, r) => sum + estimateFare(trainKind(r.trip.routeId), Math.round(Math.max(0, r.trip.stops[r.j].km - r.trip.stops[r.i].km))).max, 0);
+    candidates.push({ rides, leaveMs, arriveMs, costMax: fare + access.costMax + egress.costMax, minutes: Math.round((arriveMs - leaveMs) / 60_000) });
+  };
+
+  for (const a of active) {
+    const st = a.trip.stops;
+    for (let i = 0; i < st.length - 1; i++) {
+      if (!originAccess.has(st[i].stop)) continue;
+      const departA = a.dayStart + st[i].dep * 1000;
+      if (departA > horizon || departA < nowMs) continue;
+      // direct
+      for (let j = i + 1; j <= (lastDest.get(a.trip) ?? -1); j++) {
+        if (destEgress.has(st[j].stop)) consider([{ trip: a.trip, dayStart: a.dayStart, i, j }]);
+      }
+      // one change
+      for (let k = i + 1; k < st.length; k++) {
+        if (destEgress.has(st[k].stop)) continue;
+        const readyMs = a.dayStart + st[k].arr * 1000 + TRANSFER_MIN * 60_000;
+        for (const b of byStop.get(st[k].stop) ?? []) {
+          if (b.trip === a.trip || (lastDest.get(b.trip) ?? -1) <= b.idx) continue;
+          for (const dayStart of days) {
+            const departB = dayStart + b.trip.stops[b.idx].dep * 1000;
+            if (departB < readyMs || departB > readyMs + MAX_TRANSFER_WAIT_MIN * 60_000 || !runs(b.trip, dayStart)) continue;
+            for (let j = b.idx + 1; j <= lastDest.get(b.trip)!; j++) {
+              if (!destEgress.has(b.trip.stops[j].stop)) continue;
+              consider([
+                { trip: a.trip, dayStart: a.dayStart, i, j: k },
+                { trip: b.trip, dayStart, i: b.idx, j },
+              ]);
+            }
+          }
+        }
+      }
+    }
+  }
+
+  const build = (c: Candidate): TrainOption => {
+    const first = c.rides[0];
+    const last = c.rides[c.rides.length - 1];
+    const access = originAccess.get(first.trip.stops[first.i].stop)!;
+    const egress = destEgress.get(last.trip.stops[last.j].stop)!;
+    const legs = c.rides.map((r) => leg(tt, r));
+    const fareMin = Math.round(legs.reduce((sum, l) => sum + l.fareMin, 0) * 10) / 10;
+    const fareMax = Math.round(legs.reduce((sum, l) => sum + l.fareMax, 0) * 10) / 10;
     return {
-      leave: iso(leaveMs),
-      arrive: iso(arriveMs),
-      minutes: Math.round((arriveMs - leaveMs) / 60_000),
-      transfers: rides.length - 1,
+      leave: iso(c.leaveMs),
+      arrive: iso(c.arriveMs),
+      minutes: c.minutes,
+      transfers: c.rides.length - 1,
       access,
       legs,
       egress,
@@ -277,54 +359,26 @@ export function planTrainTrips(tt: Timetable, from: Coordinates, to: Coordinates
     };
   };
 
-  for (const a of active) {
-    const st = a.trip.stops;
-    for (let i = 0; i < st.length - 1; i++) {
-      if (!originAccess.has(st[i].stop)) continue;
-      // direct
-      for (let j = i + 1; j < st.length; j++) {
-        if (!destEgress.has(st[j].stop)) continue;
-        const o = build([{ trip: a.trip, dayStart: a.dayStart, i, j }]);
-        if (o) options.push(o);
-      }
-      // one change
-      for (let k = i + 1; k < st.length; k++) {
-        if (destEgress.has(st[k].stop)) continue;
-        const readyMs = a.dayStart + st[k].arr * 1000 + TRANSFER_MIN * 60_000;
-        for (const b of byStop.get(st[k].stop) ?? []) {
-          if (b.trip === a.trip) continue;
-          const departB = b.dayStart + b.trip.stops[b.idx].dep * 1000;
-          if (departB < readyMs || departB > readyMs + MAX_TRANSFER_WAIT_MIN * 60_000) continue;
-          for (let j = b.idx + 1; j < b.trip.stops.length; j++) {
-            if (!destEgress.has(b.trip.stops[j].stop)) continue;
-            const o = build([
-              { trip: a.trip, dayStart: a.dayStart, i, j: k },
-              { trip: b.trip, dayStart: b.dayStart, i: b.idx, j },
-            ]);
-            if (o) options.push(o);
-          }
-        }
-      }
-    }
-  }
-
   // Best per departure train: earliest arrival, then fewer changes, then latest leave
-  const ranked = options.sort((x, y) => x.arrive.localeCompare(y.arrive) || x.transfers - y.transfers || y.leave.localeCompare(x.leave));
-  const out: TrainOption[] = [];
+  const ranked = candidates.sort((x, y) => x.arriveMs - y.arriveMs || x.rides.length - y.rides.length || y.leaveMs - x.leaveMs);
+  const kept: Candidate[] = [];
   const seenFirst = new Set<string>();
-  for (const o of ranked) {
-    const key = `${o.legs[0].tripId}|${o.legs[0].depart}`;
+  for (const c of ranked) {
+    const key = `${c.rides[0].trip.id}|${c.rides[0].dayStart}`;
     if (seenFirst.has(key)) continue;
     // drop options that leave earlier but don't arrive earlier than one we kept
-    if (out.some((k) => k.leave >= o.leave && k.arrive <= o.arrive)) continue;
+    if (kept.some((k) => k.leaveMs >= c.leaveMs && k.arriveMs <= c.arriveMs)) continue;
     seenFirst.add(key);
-    out.push(o);
-    if (out.length >= 3) break;
+    kept.push(c);
+    if (kept.length >= 3) break;
   }
   // Also the cheapest way in the next 6 hours (e.g. Komuter instead of ETS), if it isn't there yet
-  const quickest = Math.min(...out.map((o) => o.minutes));
-  const soon = ranked.filter((o) => Date.parse(o.leave) - nowMs <= 6 * 3600_000 && o.minutes <= quickest * 1.6 + 30);
-  const cheapest = soon.sort((x, y) => x.costMax - y.costMax || x.arrive.localeCompare(y.arrive))[0];
-  if (cheapest && out.length && cheapest.costMax < Math.min(...out.map((o) => o.costMax)) - 2 && !out.includes(cheapest)) out.push(cheapest);
-  return out.sort((x, y) => x.leave.localeCompare(y.leave));
+  if (kept.length) {
+    const quickest = Math.min(...kept.map((c) => c.minutes));
+    const cheapest = ranked
+      .filter((c) => c.leaveMs - nowMs <= 6 * 3600_000 && c.minutes <= quickest * 1.6 + 30)
+      .sort((x, y) => x.costMax - y.costMax || x.arriveMs - y.arriveMs)[0];
+    if (cheapest && !kept.includes(cheapest) && cheapest.costMax < Math.min(...kept.map((c) => c.costMax)) - 2) kept.push(cheapest);
+  }
+  return kept.sort((x, y) => x.leaveMs - y.leaveMs).map(build);
 }

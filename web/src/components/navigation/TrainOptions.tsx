@@ -7,6 +7,7 @@ import { cn } from '@/lib/cn';
 import { useT } from '@/lib/i18n';
 import { useMyVehicle } from '@/lib/vehicle';
 import { twelveGoTrainUrl } from '@/lib/partners';
+import { setTrainView } from '@/lib/trainView';
 import { loadFuel } from '@/services/fuelService';
 import { fetchTrainOptions, KTMB_BOOKING_URL, type AccessLeg, type TrainOption } from '@/services/transitService';
 import type { Place } from '@/types';
@@ -42,15 +43,25 @@ export function TrainOptions() {
   const fromKey = from ? `${from.lat.toFixed(2)},${from.lng.toFixed(2)}` : '';
   useEffect(() => {
     if (!from || !to) return;
-    const ctrl = new AbortController();
+    let alive = true;
     setOptions(null);
     setError(null);
-    fetchTrainOptions(from, to, ctrl.signal)
-      .then((o) => !ctrl.signal.aborted && setOptions(o))
-      .catch((e) => !ctrl.signal.aborted && setError(e instanceof Error ? e.message : 'error'));
-    return () => ctrl.abort();
+    fetchTrainOptions(from, to)
+      .then((o) => alive && setOptions(o))
+      .catch((e) => alive && setError(e instanceof Error ? e.message : 'error'));
+    return () => {
+      alive = false;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fromKey, to?.lat, to?.lng]);
+  // Show the opened option (or the first) on the map; clear when leaving the tab
+  const shown = options?.[open ?? 0] ?? null;
+  useEffect(() => {
+    setTrainView(shown && from && to ? { option: shown, from, to } : null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [shown, fromKey, to?.lat, to?.lng]);
+  useEffect(() => () => setTrainView(null), []);
+
   useEffect(() => {
     loadFuel().then((f) => setFuel(pickFuelPrice(f.prices)), () => setFuel(null));
   }, []);

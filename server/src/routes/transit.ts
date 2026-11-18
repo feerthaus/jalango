@@ -21,12 +21,23 @@ export const trainQuery = z.object({
 
 export const transitRouter = Router();
 
+/** Same trip asked again within a few minutes (e.g. tab switches, two people nearby): answer from memory. */
+const RESULT_TTL_MS = 3 * 60_000;
+const results = new Map<string, { at: number; value: unknown }>();
+const key = (p: { lat: number; lng: number }) => `${p.lat.toFixed(3)},${p.lng.toFixed(3)}`;
+
 /** Train options (KTMB: ETS, Intercity, Komuter) between two points, with estimated fares. */
 transitRouter.get('/train', async (req, res) => {
   const { from, to, at } = trainQuery.parse(req.query);
   const now = Date.now();
   const leaveAfter = at && at > now && at < now + 7 * 86_400_000 ? at : now;
-  const tt = await getKtmbTimetable();
+  const k = `${key(from)}|${key(to)}|${Math.floor(leaveAfter / RESULT_TTL_MS)}`;
+  const hit = results.get(k);
   res.setHeader('Cache-Control', 'public, max-age=120');
-  res.json({ options: planTrainTrips(tt, from, to, leaveAfter), source: 'KTMB GTFS (data.gov.my)', faresEstimated: true });
+  if (hit && Date.now() - hit.at < RESULT_TTL_MS) return void res.json(hit.value);
+  const tt = await getKtmbTimetable();
+  const value = { options: planTrainTrips(tt, from, to, leaveAfter), source: 'KTMB GTFS (data.gov.my)', faresEstimated: true };
+  if (results.size > 500) results.clear();
+  results.set(k, { at: Date.now(), value });
+  res.json(value);
 });
