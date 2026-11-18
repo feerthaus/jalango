@@ -1,4 +1,4 @@
-import { ChevronDown, ChevronUp, Flag, ListOrdered, Loader2, Volume2, VolumeX, X } from 'lucide-react';
+import { ChevronDown, ChevronUp, Flag, ListOrdered, Loader2, SunDim, Volume2, VolumeX, X } from 'lucide-react';
 import { useRouteAlerts } from '@/hooks/useRouteAlerts';
 import { useAccidentAlerts } from '@/hooks/useAccidentAlerts';
 import { useTollAlerts } from '@/hooks/useTollAlerts';
@@ -55,7 +55,7 @@ export function NavigationHud() {
   const alerts = useRouteAlerts();
   const accidentAlert = useAccidentAlerts();
   const tollAlert = useTollAlerts();
-  useWakeLock(status === 'navigating');
+  const wake = useWakeLock(status === 'navigating');
   useVoiceGuidance();
   const oncoming = useOncomingAlerts();
   const [voiceOn, setVoiceOn] = useVoiceAlerts();
@@ -164,6 +164,7 @@ export function NavigationHud() {
         </div>
         {oncoming && <OncomingBanner threat={oncoming} />}
         {!showSteps && <OfflineBanner />}
+        {!showSteps && wake === 'blocked' && <ScreenOffBanner />}
         {!showSteps && <LiveShareBanner />}
         {!showSteps && <ConvoyBanner />}
         {!showSteps && <StopBanner />}
@@ -204,5 +205,26 @@ export function NavigationHud() {
       {shareOpen && <ShareLiveSheet onClose={() => setShareOpen(false)} />}
       {alongOpen && <AlongRouteSheet onClose={() => setAlongOpen(false)} />}
     </>
+  );
+}
+
+/** The phone refused to keep the screen on (usually Low Power Mode): say how to fix it. */
+function ScreenOffBanner() {
+  const [t] = useT();
+  const [hidden, setHidden] = useState(false);
+  if (hidden) return null;
+  return (
+    <div role="status" className="pointer-events-auto flex items-start gap-2 rounded-2xl bg-ink-900/95 px-3 py-2 text-xs text-white shadow-float">
+      <SunDim className="mt-0.5 size-4 shrink-0 text-amber-400" />
+      <span className="min-w-0 flex-1">
+        {t(
+          'Telefon tidak benarkan skrin kekal hidup, jadi skrin mungkin malap. Matikan Mod Kuasa Rendah, atau set Tetapan → Paparan → Kunci Auto: Jangan.',
+          'Your phone won’t keep the screen on, so it may dim. Turn off Low Power Mode, or set Settings → Display → Auto-Lock: Never.',
+        )}
+      </span>
+      <button type="button" onClick={() => setHidden(true)} aria-label={t('Tutup', 'Close')} className="-m-1 grid size-6 shrink-0 place-items-center rounded-full text-ink-300">
+        <X className="size-3.5" />
+      </button>
+    </div>
   );
 }
