@@ -1,4 +1,5 @@
 import cors from 'cors';
+import { assistantRouter } from './routes/assistant.js';
 import express from 'express';
 import helmet from 'helmet';
 import { config, integrations } from './config.js';
@@ -42,6 +43,7 @@ export function createApp() {
   app.use('/api/probes', rateLimit({ name: 'probes', windowMs: 60_000, max: 12 }), probesRouter);
   app.use('/api/account', rateLimit({ name: 'account', windowMs: 10 * 60_000, max: 5 }), accountRouter);
   app.use('/api/feedback', rateLimit({ name: 'feedback', windowMs: 10 * 60_000, max: 5 }), feedbackRouter);
+  app.use('/api/assistant', rateLimit({ name: 'assistant', windowMs: 60_000, max: 6 }), assistantRouter);
   // Phase 3: app.use('/api/reports', reportsRouter)
 
   app.use(notFound);
