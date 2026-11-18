@@ -1,4 +1,4 @@
-import { AlertTriangle, ArrowLeft, BadgeCheck, Car, Coins, Megaphone, Gauge, LocateFixed, Navigation, RefreshCw, Route as RouteIcon, ShieldCheck, TrainFront, Utensils } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, BadgeCheck, Car, Coins, Footprints, Megaphone, Gauge, LocateFixed, Navigation, RefreshCw, Route as RouteIcon, ShieldCheck, TrainFront, Utensils } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { DemoBadge } from '@/components/ui/DemoBadge';
 import { useReports } from '@/contexts/ReportsContext';
@@ -34,18 +34,18 @@ export function RoutePanel() {
   const [alongOpen, setAlongOpen] = useState(false);
   const verifiedFood = useVerifiedFoodOnRoute();
   const { setCategory: setAlongCategory } = useAlong();
-  const { status, destination, routes, selectedIndex, selectRoute, mode, notice, error, avoidTolls, setAvoidTolls, startNavigation, clearRoute, retry } = useRouting();
+  const { status, destination, routes, selectedIndex, selectRoute, mode, notice, error, avoidTolls, walking, setAvoidTolls, startNavigation, clearRoute, retry } = useRouting();
   const { fix } = useLocation();
   const [travel, setTravel] = useState<'car' | 'train'>('car');
   // Ask for trains as soon as a long trip is planned, so the "Tren" tab opens instantly
-  const far = Boolean(fix && destination && mode !== 'demo' && haversineMeters(fix.coordinates, destination.coordinates) >= TRAIN_FROM_M);
+  const far = Boolean(!walking && fix && destination && mode !== 'demo' && haversineMeters(fix.coordinates, destination.coordinates) >= TRAIN_FROM_M);
   const prefetchKey = far && fix && destination ? `${fix.coordinates.lat.toFixed(2)},${fix.coordinates.lng.toFixed(2)}|${destination.coordinates.lat},${destination.coordinates.lng}` : '';
   useEffect(() => {
     if (prefetchKey && fix && destination) void fetchTransitOptions(fix.coordinates, destination.coordinates).catch(() => undefined);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [prefetchKey]);
   if (!destination) return null;
-  const longTrip = Boolean(fix && mode !== 'demo' && haversineMeters(fix.coordinates, destination.coordinates) >= TRAIN_FROM_M);
+  const longTrip = Boolean(!walking && fix && mode !== 'demo' && haversineMeters(fix.coordinates, destination.coordinates) >= TRAIN_FROM_M);
   const showTrain = longTrip && travel === 'train';
 
   const { reports } = useReports();
@@ -66,19 +66,25 @@ export function RoutePanel() {
           <ArrowLeft className="size-5" />
         </button>
         <div className="min-w-0 flex-1">
-          <p className="text-xs text-ink-500 dark:text-ink-400">{t('Dari lokasi anda ke', 'From your location to')}</p>
+          <p className="text-xs text-ink-500 dark:text-ink-400">{walking ? t('Jalan kaki dari lokasi anda ke', 'Walk from your location to') : t('Dari lokasi anda ke', 'From your location to')}</p>
           <h2 className="truncate font-bold">{destination.name}</h2>
         </div>
-        <label className="flex cursor-pointer items-center gap-2 rounded-xl px-2 py-1.5 text-xs font-semibold hover:bg-ink-100 dark:hover:bg-ink-800">
-          <input
-            type="checkbox"
-            checked={avoidTolls}
-            onChange={(e) => setAvoidTolls(e.target.checked)}
-            disabled={status === 'loading' || mode === 'demo'}
-            className="size-4 accent-jade-500"
-          />
-          {t('Elak tol', 'Avoid tolls')}
-        </label>
+        {walking ? (
+          <span className="flex items-center gap-1.5 rounded-xl bg-jade-500/10 px-2 py-1.5 text-xs font-semibold text-jade-700 dark:text-jade-300">
+            <Footprints className="size-4" /> {t('Jalan kaki', 'Walking')}
+          </span>
+        ) : (
+          <label className="flex cursor-pointer items-center gap-2 rounded-xl px-2 py-1.5 text-xs font-semibold hover:bg-ink-100 dark:hover:bg-ink-800">
+            <input
+              type="checkbox"
+              checked={avoidTolls}
+              onChange={(e) => setAvoidTolls(e.target.checked)}
+              disabled={status === 'loading' || mode === 'demo'}
+              className="size-4 accent-jade-500"
+            />
+            {t('Elak tol', 'Avoid tolls')}
+          </label>
+        )}
       </header>
 
       {longTrip && (
@@ -127,11 +133,17 @@ export function RoutePanel() {
             {mode === 'demo' && (
               <div className="mb-2 flex items-start gap-2 rounded-xl bg-amber-400/10 px-3 py-2 text-xs text-amber-800 dark:text-amber-200">
                 <DemoBadge label="Demo" className="shrink-0" />
-                <span>{notice ?? t('Laluan jalan tidak tersedia, jadi ini garis lurus, bukan jalan sebenar. Masa ialah anggaran kasar pada 50 km/j.', 'Routing isn’t connected, so this is a straight line, not a road route. The time is a rough estimate at 50 km/h.')}</span>
+                <span>
+                  {notice ??
+                    (walking
+                      ? t('Laluan jalan tidak tersedia, jadi ini garis lurus, bukan laluan sebenar. Masa ialah anggaran kasar pada 4.5 km/j.', 'Routing isn’t connected, so this is a straight line, not a real path. The time is a rough estimate at 4.5 km/h.')
+                      : t('Laluan jalan tidak tersedia, jadi ini garis lurus, bukan jalan sebenar. Masa ialah anggaran kasar pada 50 km/j.', 'Routing isn’t connected, so this is a straight line, not a road route. The time is a rough estimate at 50 km/h.'))}
+                </span>
               </div>
             )}
-            <ShortcutSuggestions />
-            <CommunityRouteSuggestions />
+            {/* driver shortcuts don't apply on foot */}
+            {!walking && <ShortcutSuggestions />}
+            {!walking && <CommunityRouteSuggestions />}
             <ul role="radiogroup" aria-label={t('Laluan', 'Routes')} className="space-y-2 pb-2">
               {routes.map((r, i) => (
                 <RouteOption key={r.id} route={r} reportCount={reportCounts[i] ?? 0} selected={i === selectedIndex} fastest={routes.length > 1 && i === fastest} onSelect={() => selectRoute(i)} />
@@ -143,7 +155,7 @@ export function RoutePanel() {
 
       {!showTrain && status === 'ready' && (
         <footer className="space-y-2 p-3 pt-1">
-          <ProbeConsentPrompt />
+          {!walking && <ProbeConsentPrompt />}
           {verifiedFood.length > 0 && (
             <button
               type="button"

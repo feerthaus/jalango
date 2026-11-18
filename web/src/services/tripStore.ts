@@ -8,6 +8,8 @@ import type { Coordinates, Place, Route } from '@/types';
 export interface SavedTrip {
   destination: Place;
   avoidTolls: boolean;
+  /** on foot (e.g. walking to a station) */
+  walking?: boolean;
   /** true = was in turn-by-turn mode, false = was choosing a route */
   navigating: boolean;
   /** route was going through a community shortcut */

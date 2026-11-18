@@ -89,9 +89,10 @@ export function TransitOptions() {
 
   if (!from) return <p className="py-6 text-center text-sm text-ink-500">{t('Menunggu lokasi anda…', 'Waiting for your location…')}</p>;
 
-  const goToStation = (s: Station) => {
+  // Walk there when the option says to walk; otherwise drive (or ride) there
+  const goToStation = (s: Station, walking: boolean) => {
     const place: Place = { id: `station:${s.id}`, name: t(`Stesen ${s.name}`, `${s.name} station`), address: '', coordinates: { lat: s.lat, lng: s.lng }, kind: 'poi', source: 'osm' };
-    planRoute(place);
+    planRoute(place, { walking });
   };
 
   return (
@@ -220,9 +221,15 @@ export function TransitOptions() {
                         </a>
                       ) : null;
                     })()}
-                    <Button variant="secondary" className="flex-1 py-2.5" onClick={() => goToStation(rides(o)[0].from)}>
-                      <Navigation className="size-4" /> {t('Arah ke stesen', 'Directions to station')}
-                    </Button>
+                    {o.access.type === 'walk' ? (
+                      <Button variant="secondary" className="flex-1 py-2.5" onClick={() => goToStation(rides(o)[0].from, true)}>
+                        <Footprints className="size-4" /> {t('Jalan kaki ke stesen', 'Walk to station')}
+                      </Button>
+                    ) : (
+                      <Button variant="secondary" className="flex-1 py-2.5" onClick={() => goToStation(rides(o)[0].from, false)}>
+                        <Navigation className="size-4" /> {t('Arah ke stesen', 'Directions to station')}
+                      </Button>
+                    )}
                   </div>
                   {rides(o).some((l) => l.ticket && twelveGoTrainUrl(l.from.name, l.to.name)) && (
                     <p className="text-[11px] leading-snug text-ink-400">

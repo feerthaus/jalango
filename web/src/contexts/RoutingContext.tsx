@@ -27,12 +27,14 @@ interface RoutingValue {
   notice: string | null;
   error: string | null;
   avoidTolls: boolean;
+  /** On foot (e.g. to a train station): walking routes, no tolls or traffic */
+  walking: boolean;
   progress: RouteProgress | null;
   rerouting: boolean;
   /** Destination name when a trip was restored after the app reopened */
   resumedTo: string | null;
   dismissResumed: () => void;
-  planRoute: (destination: Place) => void;
+  planRoute: (destination: Place, opts?: { walking?: boolean }) => void;
   /** Plan a route to `place` and start turn-by-turn as soon as it's ready (e.g. next itinerary stop) */
   navigateTo: (place: Place) => void;
   retry: () => void;
@@ -81,6 +83,9 @@ export function RoutingProvider({ children }: { children: ReactNode }) {
   const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [avoidTolls, setAvoidTollsState] = useState(false);
+  const [walking, setWalking] = useState(false);
+  const walkingRef = useRef(false);
+  walkingRef.current = walking;
   const [progress, setProgress] = useState<RouteProgress | null>(null);
   const progressRef = useRef<RouteProgress | null>(null);
   progressRef.current = progress;
@@ -133,6 +138,7 @@ export function RoutingProvider({ children }: { children: ReactNode }) {
       // fetchRoutes falls back to the straight-line preview if it really is down.
       live: searchMode !== 'demo',
       avoidTolls,
+      walking: walkingRef.current,
       destinationName: destination.name,
       via: viaRef.current,
       heading: headingRef.current,
@@ -194,7 +200,9 @@ export function RoutingProvider({ children }: { children: ReactNode }) {
   }, [requestLocation]);
 
   const planRoute = useCallback(
-    (place: Place) => {
+    (place: Place, opts?: { walking?: boolean }) => {
+      walkingRef.current = Boolean(opts?.walking);
+      setWalking(walkingRef.current);
       viaRef.current = [];
       setShortcut(null);
       setShortcutTitle(null);
@@ -326,7 +334,8 @@ export function RoutingProvider({ children }: { children: ReactNode }) {
     // keep only the chosen route
     setRoutes([selectedRoute]);
     setSelectedIndex(0);
-    if (consent === 'granted' && originRef.current) {
+    // Road traffic data comes from cars only: a walker's speed would read as a jam
+    if (consent === 'granted' && originRef.current && !walkingRef.current) {
       collector.current = new ProbeCollector(originRef.current, destination.coordinates);
     }
   }, [selectedRoute, destination, consent]);
@@ -353,6 +362,8 @@ export function RoutingProvider({ children }: { children: ReactNode }) {
     }
     setDestination(trip.destination);
     setAvoidTollsState(trip.avoidTolls);
+    walkingRef.current = Boolean(trip.walking);
+    setWalking(walkingRef.current);
     setResumedTo(trip.destination.name);
     queueMicrotask(request);
     // run once on mount
@@ -381,12 +392,13 @@ export function RoutingProvider({ children }: { children: ReactNode }) {
     saveTrip({
       destination,
       avoidTolls,
+      walking: walking || undefined,
       navigating: status === 'navigating' || resumeRef.current === 'navigate',
       via: viaRef.current.length ? viaRef.current : undefined,
       shortcutTitle: shortcutTitle ?? undefined,
       stop: stop ?? undefined,
     });
-  }, [destination, status, avoidTolls, shortcutTitle, stop]);
+  }, [destination, status, avoidTolls, walking, shortcutTitle, stop]);
 
   useEffect(() => {
     if (!resumedTo) return;
@@ -435,6 +447,8 @@ export function RoutingProvider({ children }: { children: ReactNode }) {
 
   const navigateTo = useCallback(
     (place: Place) => {
+      walkingRef.current = false;
+      setWalking(false);
       reset(); // the previous leg was already recorded on arrival
       setDestination(place);
       resumeRef.current = 'navigate'; // auto-start once the route is ready
@@ -548,6 +562,7 @@ export function RoutingProvider({ children }: { children: ReactNode }) {
       notice,
       error,
       avoidTolls,
+      walking,
       progress,
       rerouting,
       resumedTo,
@@ -571,7 +586,7 @@ export function RoutingProvider({ children }: { children: ReactNode }) {
       clearShortcut,
       finishedTripId,
     }),
-    [status, destination, routes, selectedIndex, selectedRoute, mode, notice, error, avoidTolls, progress, rerouting, resumedTo, planRoute, navigateTo, request, setAvoidTolls, startNavigation, endNavigation, clearRoute, shortcut, shortcutTitle, applyShortcut, applyCommunityRoute, followPath, clearShortcut, stop, addStop, clearStop, finishedTripId],
+    [status, destination, routes, selectedIndex, selectedRoute, mode, notice, error, avoidTolls, walking, progress, rerouting, resumedTo, planRoute, navigateTo, request, setAvoidTolls, startNavigation, endNavigation, clearRoute, shortcut, shortcutTitle, applyShortcut, applyCommunityRoute, followPath, clearShortcut, stop, addStop, clearStop, finishedTripId],
   );
 
   return <RoutingContext.Provider value={value}>{children}</RoutingContext.Provider>;

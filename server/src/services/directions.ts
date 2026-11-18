@@ -6,6 +6,7 @@ import type { Congestion, Coordinates, Route, RouteStep, TollPoint } from '../ty
 const DIRECTIONS_TRAFFIC = 'https://api.mapbox.com/directions/v5/mapbox/driving-traffic';
 // driving-traffic accepts at most 3 coordinates; routes through a shortcut need more
 const DIRECTIONS_PLAIN = 'https://api.mapbox.com/directions/v5/mapbox/driving';
+const DIRECTIONS_WALKING = 'https://api.mapbox.com/directions/v5/mapbox/walking';
 export const MAX_VIA = 20;
 const TIMEOUT_MS = 8000;
 
@@ -120,9 +121,22 @@ export function normalizeRoute(r: MbRoute, index: number): Route {
   };
 }
 
-export function buildDirectionsUrl(from: Coordinates, to: Coordinates, opts: { avoidTolls?: boolean; via?: Coordinates[]; heading?: number } = {}): URL {
+type DirectionsOpts = { avoidTolls?: boolean; via?: Coordinates[]; heading?: number; walking?: boolean };
+
+export function buildDirectionsUrl(from: Coordinates, to: Coordinates, opts: DirectionsOpts = {}): URL {
   const via = (opts.via ?? []).slice(0, MAX_VIA);
   const points = [from, ...via, to];
+  if (opts.walking) {
+    // On foot: footpaths, crossings and pedestrian bridges; no traffic, tolls or heading
+    const url = new URL(`${DIRECTIONS_WALKING}/${points.map((p) => `${p.lng},${p.lat}`).join(';')}`);
+    url.searchParams.set('alternatives', via.length === 0 ? 'true' : 'false');
+    url.searchParams.set('geometries', 'geojson');
+    url.searchParams.set('overview', 'full');
+    url.searchParams.set('steps', 'true');
+    url.searchParams.set('language', 'en');
+    if (via.length > 0) url.searchParams.set('waypoints', `0;${points.length - 1}`);
+    return url;
+  }
   const useTraffic = via.length <= 1;
   const url = new URL(`${useTraffic ? DIRECTIONS_TRAFFIC : DIRECTIONS_PLAIN}/${points.map((p) => `${p.lng},${p.lat}`).join(';')}`);
   // Alternatives only make sense (and are only allowed) between two points
@@ -145,12 +159,12 @@ export function buildDirectionsUrl(from: Coordinates, to: Coordinates, opts: { a
 export async function getDirections(
   from: Coordinates,
   to: Coordinates,
-  opts: { avoidTolls?: boolean; via?: Coordinates[]; heading?: number } = {},
+  opts: DirectionsOpts = {},
 ): Promise<Route[]> {
   if (!config.mapboxToken) {
     throw new HttpError(503, 'mapbox_not_configured', 'Mapbox is not configured on the server');
   }
-  if (opts.heading !== undefined) {
+  if (opts.heading !== undefined && !opts.walking) {
     try {
       return await fetchDirections(from, to, opts);
     } catch (err) {
@@ -165,7 +179,7 @@ export async function getDirections(
 async function fetchDirections(
   from: Coordinates,
   to: Coordinates,
-  opts: { avoidTolls?: boolean; via?: Coordinates[]; heading?: number },
+  opts: DirectionsOpts,
 ): Promise<Route[]> {
   const url = buildDirectionsUrl(from, to, opts);
   await guardUsage('directions'); // each attempt, including the retry without a heading
@@ -183,7 +197,7 @@ async function fetchDirections(
 
   const body = (await res.json().catch(() => null)) as { code?: string; message?: string; routes?: MbRoute[] } | null;
   if (body?.code === 'NoRoute' || body?.code === 'NoSegment') {
-    throw new HttpError(422, 'no_route', 'No driving route found between these points');
+    throw new HttpError(422, 'no_route', opts.walking ? 'No walking route found between these points' : 'No driving route found between these points');
   }
   if (!res.ok || !body || body.code !== 'Ok') {
     throw new HttpError(502, 'upstream_error', body?.message ?? `Routing service error (${res.status})`);

@@ -143,4 +143,13 @@ describe('buildDirectionsUrl', () => {
     expect(u.searchParams.get('exclude')).toBe('toll');
     expect(u.searchParams.get('annotations')).toBe('maxspeed');
   });
+
+  it('walks to a station on the walking profile, without tolls, traffic or heading', () => {
+    const u = buildDirectionsUrl({ lat: 3.15, lng: 101.71 }, { lat: 3.158, lng: 101.713 }, { walking: true, avoidTolls: true, heading: 90 });
+    expect(u.pathname).toContain('/mapbox/walking/');
+    expect(u.searchParams.get('exclude')).toBeNull();
+    expect(u.searchParams.get('annotations')).toBeNull();
+    expect(u.searchParams.get('bearings')).toBeNull();
+    expect(u.searchParams.get('steps')).toBe('true');
+  });
 });

@@ -26,6 +26,8 @@ const query = z.object({
   via: viaList.optional(),
   /** Driver's current heading (degrees). Stops the router snapping us onto the opposite carriageway. */
   heading: z.coerce.number().min(0).max(360).optional(),
+  /** walking: footpaths and crossings (e.g. to a station); default driving */
+  profile: z.enum(['driving', 'walking']).optional(),
   avoidTolls: z
     .enum(['0', '1', 'true', 'false'])
     .optional()
@@ -35,6 +37,6 @@ const query = z.object({
 export const directionsRouter = Router();
 
 directionsRouter.get('/', async (req, res) => {
-  const { from, to, avoidTolls, via, heading } = query.parse(req.query);
-  res.json({ routes: await getDirections(from, to, { avoidTolls, via, heading }) });
+  const { from, to, avoidTolls, via, heading, profile } = query.parse(req.query);
+  res.json({ routes: await getDirections(from, to, { avoidTolls, via, heading, walking: profile === 'walking' }) });
 });

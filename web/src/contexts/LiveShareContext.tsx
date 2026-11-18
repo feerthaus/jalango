@@ -40,7 +40,7 @@ function readUntilArrival(): string[] {
 export function LiveShareProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const { fix } = useLocation();
-  const { status, destination, progress, avoidTolls } = useRouting();
+  const { status, destination, progress, avoidTolls, walking } = useRouting();
   const itinerary = useItinerary();
   // Driver mode: the stop being driven to (or the next unvisited one) and how many are left
   const nextStopIdx = itinerary.activeIndex !== -1 ? itinerary.activeIndex : itinerary.nextIndex;
@@ -52,6 +52,8 @@ export function LiveShareProvider({ children }: { children: ReactNode }) {
   const last = useRef<{ t: number; lat: number; lng: number } | null>(null);
   const available = features.supabase && Boolean(user);
   const navigating = status === 'navigating';
+  // Traffic only matters in a car: a walker is always "under 15 km/h"
+  const driving = navigating && !walking;
 
   // Traffic for the people watching: "in traffic since" and how late we'll be
   const slow = useRef<SlowState>(NOT_SLOW);
@@ -71,7 +73,7 @@ export function LiveShareProvider({ children }: { children: ReactNode }) {
   const fixRef = useRef(fix);
   fixRef.current = fix;
   useEffect(() => {
-    if (!sharing || !navigating || !destination) return;
+    if (!sharing || !driving || !destination) return;
     let alive = true;
     const check = () => {
       const f = fixRef.current;
@@ -91,7 +93,7 @@ export function LiveShareProvider({ children }: { children: ReactNode }) {
       clearInterval(id);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sharing, navigating, destKey, avoidTolls]);
+  }, [sharing, driving, destKey, avoidTolls]);
 
   useEffect(() => {
     if (!available) {
@@ -157,8 +159,8 @@ export function LiveShareProvider({ children }: { children: ReactNode }) {
     const driverShare = shares.some((s) => s.driver_plate);
     const stopChanged = driverShare && lastStopKey.current !== nextStopKey;
     // Traffic: update the slow state on every fix, publish when it changes
-    slow.current = navigating ? nextSlowState(slow.current, fix.speed !== null ? fix.speed * 3.6 : moved < 5 ? 0 : 99, now) : NOT_SLOW;
-    const slowSince = navigating ? publishedSlowSince(slow.current, now, progress?.remainingMeters ?? null) : null;
+    slow.current = driving ? nextSlowState(slow.current, fix.speed !== null ? fix.speed * 3.6 : moved < 5 ? 0 : 99, now) : NOT_SLOW;
+    const slowSince = driving ? publishedSlowSince(slow.current, now, progress?.remainingMeters ?? null) : null;
     const eta = navigating && progress ? honestEta(now, progress.remainingSeconds, progress.remainingMeters, liveEta.current) : null;
     if (eta !== null && baselineEta.current === null) baselineEta.current = eta;
     const delay = eta !== null ? delaySeconds(eta, baselineEta.current) : 0;
@@ -173,7 +175,7 @@ export function LiveShareProvider({ children }: { children: ReactNode }) {
       fix,
       {
         etaAt,
-        traffic: { slowSince: slowSince !== null ? new Date(slowSince).toISOString() : null, delaySeconds: navigating ? delay : null },
+        traffic: { slowSince: slowSince !== null ? new Date(slowSince).toISOString() : null, delaySeconds: driving ? delay : null },
         destination: navigating && destination ? { name: destination.name, coordinates: destination.coordinates } : undefined,
         nextStop: stopChanged ? (nextStopName ? { name: nextStopName, left: stopsLeft } : null) : undefined,
       },
@@ -185,7 +187,7 @@ export function LiveShareProvider({ children }: { children: ReactNode }) {
       .catch(() => {
         last.current = prev; // retry on next fix
       });
-  }, [fix, shares, navigating, progress, destination, nextStopKey, nextStopName, stopsLeft]);
+  }, [fix, shares, navigating, driving, progress, destination, nextStopKey, nextStopName, stopsLeft]);
 
   // "Until I arrive" shares stop when the trip ends
   const prevStatus = useRef(status);
