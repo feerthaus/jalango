@@ -127,17 +127,17 @@ export function computeProgress(route: Route, index: RouteIndex, p: Coordinates,
 }
 
 /** Straight-line preview used when no routing service is configured (labelled as demo). */
-export function straightLineRoute(from: Coordinates, to: Coordinates, destinationName: string): Route {
+export function straightLineRoute(from: Coordinates, to: Coordinates, destinationName: string, kmh = 50): Route {
   const distance = haversineMeters(from, to);
   return {
     id: 'demo-straight',
     geometry: { type: 'LineString', coordinates: [[from.lng, from.lat], [to.lng, to.lat]] },
     distanceMeters: distance,
-    // rough estimate only, at an average 50 km/h — clearly labelled in the UI
-    durationSeconds: distance / (50 / 3.6),
+    // rough estimate only, at an average 50 km/h (4.5 on foot) — clearly labelled in the UI
+    durationSeconds: distance / (kmh / 3.6),
     summary: 'Straight-line preview',
     steps: [
-      { instruction: `Head towards ${destinationName}`, distanceMeters: distance, durationSeconds: distance / (50 / 3.6), maneuver: { type: 'depart', location: from } },
+      { instruction: `Head towards ${destinationName}`, distanceMeters: distance, durationSeconds: distance / (kmh / 3.6), maneuver: { type: 'depart', location: from } },
       { instruction: `Arrive at ${destinationName}`, distanceMeters: 0, durationSeconds: 0, maneuver: { type: 'arrive', location: to } },
     ],
     hasTolls: false,

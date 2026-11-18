@@ -16,9 +16,9 @@ export interface RoutesResponse {
 export async function fetchRoutes(
   from: Coordinates,
   to: Coordinates,
-  opts: { live: boolean; avoidTolls: boolean; destinationName: string; via?: Coordinates[]; heading?: number | null; signal?: AbortSignal },
+  opts: { live: boolean; avoidTolls: boolean; destinationName: string; via?: Coordinates[]; heading?: number | null; walking?: boolean; signal?: AbortSignal },
 ): Promise<RoutesResponse> {
-  const demo = (notice?: string): RoutesResponse => ({ routes: [straightLineRoute(from, to, opts.destinationName)], mode: 'demo', notice });
+  const demo = (notice?: string): RoutesResponse => ({ routes: [straightLineRoute(from, to, opts.destinationName, opts.walking ? 4.5 : 50)], mode: 'demo', notice });
 
   if (!opts.live) return demo();
   try {
@@ -27,13 +27,14 @@ export async function fetchRoutes(
       {
         from: `${from.lng},${from.lat}`,
         to: `${to.lng},${to.lat}`,
-        avoidTolls: opts.avoidTolls ? 1 : undefined,
-        heading: opts.heading != null ? Math.round(opts.heading) % 360 : undefined,
+        profile: opts.walking ? 'walking' : undefined,
+        avoidTolls: opts.avoidTolls && !opts.walking ? 1 : undefined,
+        heading: opts.heading != null && !opts.walking ? Math.round(opts.heading) % 360 : undefined,
         via: opts.via?.length ? opts.via.map((p) => `${p.lng.toFixed(5)},${p.lat.toFixed(5)}`).join(';') : undefined,
       },
       opts.signal,
     );
-    if (routes.length === 0) throw new ApiError(422, 'no_route', 'No driving route found');
+    if (routes.length === 0) throw new ApiError(422, 'no_route', opts.walking ? 'No walking route found' : 'No driving route found');
     return { routes, mode: 'live' };
   } catch (err) {
     if (err instanceof DOMException && err.name === 'AbortError') throw err;
