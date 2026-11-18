@@ -13,15 +13,19 @@ type Props = { kind: 'access' | 'train' | 'station'; color?: string; name?: stri
 /** Lines for each train leg (in its line colour), dashed walk/ride to and from the stations, and the stations. */
 export function trainFeatures(v: TrainView): FeatureCollection<LineString | Point, Props> {
   const o = v.option;
-  const first = o.legs[0].from;
-  const last = o.legs[o.legs.length - 1].to;
+  const rides = o.legs.filter((l) => l.type === 'transit');
+  const first = rides[0].from;
+  const last = rides[rides.length - 1].to;
   const features: Feature<LineString | Point, Props>[] = [
     { type: 'Feature', geometry: { type: 'LineString', coordinates: [[v.from.lng, v.from.lat], [first.lng, first.lat]] }, properties: { kind: 'access' } },
     { type: 'Feature', geometry: { type: 'LineString', coordinates: [[last.lng, last.lat], [v.to.lng, v.to.lat]] }, properties: { kind: 'access' } },
   ];
-  for (const l of o.legs) features.push({ type: 'Feature', geometry: { type: 'LineString', coordinates: l.path }, properties: { kind: 'train', color: l.color } });
+  for (const l of o.legs) {
+    if (l.type === 'transit') features.push({ type: 'Feature', geometry: { type: 'LineString', coordinates: l.path }, properties: { kind: 'train', color: l.color } });
+    else features.push({ type: 'Feature', geometry: { type: 'LineString', coordinates: [[l.from.lng, l.from.lat], [l.to.lng, l.to.lat]] }, properties: { kind: 'access' } });
+  }
   const stations = new Map<string, { lng: number; lat: number; name: string }>();
-  for (const l of o.legs) for (const s of [l.from, l.to]) stations.set(s.id, { lng: s.lng, lat: s.lat, name: s.name });
+  for (const l of rides) for (const s of [l.from, l.to]) stations.set(s.id, { lng: s.lng, lat: s.lat, name: s.name });
   for (const s of stations.values()) features.push({ type: 'Feature', geometry: { type: 'Point', coordinates: [s.lng, s.lat] }, properties: { kind: 'station', name: s.name } });
   return { type: 'FeatureCollection', features };
 }
@@ -82,7 +86,7 @@ export function TrainLayer() {
 
   useEffect(() => {
     if (!map || !view) return;
-    const pts: [number, number][] = [[view.from.lng, view.from.lat], [view.to.lng, view.to.lat], ...view.option.legs.flatMap((l) => l.path)];
+    const pts: [number, number][] = [[view.from.lng, view.from.lat], [view.to.lng, view.to.lat], ...view.option.legs.flatMap((l): [number, number][] => (l.type === 'transit' ? l.path : [[l.from.lng, l.from.lat], [l.to.lng, l.to.lat]]))];
     const lngs = pts.map((p) => p[0]);
     const lats = pts.map((p) => p[1]);
     const h = map.getContainer().clientHeight;

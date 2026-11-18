@@ -254,6 +254,16 @@ Pelan penuh ada dalam `docs/MARKETPLACE.md`. Fasa 0 hanya pendaftaran dan penges
 - **Laluan komuniti:** laluan jauh alternatif untuk elak jem, contohnya ke Kelantan melalui Gua Musang. Termasuk laluan yang masuk semula ke jalan utama di tengah perjalanan, seperti Kuala Pilah → exit Gambang (`web/src/components/communityRoutes/`).
 - **Tempat disyorkan komuniti.**
 
+## Pengangkutan awam: LRT, MRT, Monorel, BRT + KTMB (Fasa 2a)
+
+- **Tab Memandu | Awam** dalam panel laluan untuk destinasi ≥ 2 km (dahulu "Tren", ≥ 30 km).
+- **Rangkaian:** jadual rasmi GTFS dari data.gov.my: KTMB (ETS, Intercity, Komuter, Shuttle) + **Rapid KL rel** (LRT Ampang, Sri Petaling, Kelana Jaya, Shah Alam; MRT Kajang, Putrajaya; Monorel; BRT Sunway). Jadual "setiap X minit" (frequencies) dikembangkan ke setiap perjalanan. Dimuat dan disimpan 6 jam di server; jika satu sumber gagal, yang lain tetap berfungsi.
+- **Perancang (RAPTOR):** sehingga 4 kenderaan (3 kali tukar). **Tukar laluan dengan berjalan kaki** antara stesen dalam 450 m (cth. KL Sentral KTM ↔ LRT ↔ Monorel, Pasar Seni LRT ↔ MRT), sekurang-kurangnya 2 minit. Ke stesen: jalan kaki jika ada stesen dalam 1.2 km; jika tiada, Grab/teksi ke 6 stesen terdekat. ETS/Intercity: 10 minit di platform. Pilihan: yang paling awal sampai, yang kurang tukar, dan tren utama seterusnya (bukan sekadar LRT lain ke ETS yang sama), keluar selewat mungkin (tiada tunggu sejam di stesen), + yang paling murah.
+- **Tambang anggaran:** Rapid KL rel dikira **sekali** merentas laluan (ikut jarak); ETS/Intercity/Komuter ikut jarak. Dilabel anggaran.
+- **Paparan:** lencana warna laluan (LRT KJL, MRT PYL, ETS…), langkah demi langkah termasuk "Jalan kaki ke … untuk tukar laluan", "tap kad Touch 'n Go atau kad bank" untuk Rapid/Komuter, butang tiket KTMB/12Go hanya untuk ETS/Intercity. Peta melukis setiap laluan ikut warna dan jalan kaki bertukar sebagai garis putus-putus.
+- **API:** `GET /api/transit/plan?from=&to=` (lama `/api/transit/train` kekal).
+- Belum: bas Rapid KL, bas pengantara MRT, Rapid Penang, myBAS JB (Fasa 2b; data besar). Rapid Kuantan tiada di data.gov.my.
+
 ## Tren antara bandar (Fasa 1)
 
 - **Tab Memandu | Tren** dalam panel laluan, untuk destinasi ≥ 30 km (garis lurus).

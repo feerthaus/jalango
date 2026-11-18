@@ -92,7 +92,7 @@ export function buildTimetable(files: Record<string, string>): Timetable {
 
 /** "KL SENTRAL" → "KL Sentral", "PULAU SEBANG/TAMPIN" → "Pulau Sebang/Tampin". */
 export function titleCase(name: string): string {
-  const keep = new Set(['KL', 'JB', 'KTM', 'ETS', 'UKM', 'UPM', 'KLIA', 'KTMB']);
+  const keep = new Set(['KL', 'JB', 'KTM', 'ETS', 'UKM', 'UPM', 'KLIA', 'KLIA2', 'KTMB', 'KLCC', 'IOI', 'USJ', 'TRX', 'LRT', 'MRT', 'BRT', 'UTM', 'PPR', 'SS']);
   return name
     .toLowerCase()
     .replace(/[a-z]+/g, (w) => (keep.has(w.toUpperCase()) ? w.toUpperCase() : w[0].toUpperCase() + w.slice(1)))

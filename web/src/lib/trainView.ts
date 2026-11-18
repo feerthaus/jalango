@@ -1,14 +1,14 @@
 import { useSyncExternalStore } from 'react';
-import type { TrainOption } from '@/services/transitService';
+import type { TransitOption } from '@/services/transitService';
 import type { Coordinates } from '@/types';
 
 /**
- * The train option shown on the map while the route panel's "Tren" tab is
- * open (TrainOptions sets it, TrainLayer draws it, RouteLayer hides the car
+ * The train option shown on the map while the route panel's "Awam" tab is
+ * open (TransitOptions sets it, TrainLayer draws it, RouteLayer hides the car
  * routes meanwhile).
  */
 export interface TrainView {
-  option: TrainOption;
+  option: TransitOption;
   from: Coordinates;
   to: Coordinates;
 }

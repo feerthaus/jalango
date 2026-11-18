@@ -16,53 +16,72 @@ export interface Station {
   lng: number;
 }
 
-export interface TrainLeg {
-  type: 'train';
-  kind: 'ets' | 'intercity' | 'komuter' | 'shuttle';
-  routeId: string;
+export type TransitMode = 'ets' | 'intercity' | 'komuter' | 'shuttle' | 'lrt' | 'mrt' | 'monorail' | 'brt' | 'bus';
+
+export interface TransitLeg {
+  type: 'transit';
+  mode: TransitMode;
   routeName: string;
+  shortName: string;
   color: string;
   tripId: string;
+  tripKey: string;
   from: Station;
   to: Station;
   depart: string;
   arrive: string;
-  km: number;
   stops: number;
+  km: number;
   fareMin: number;
   fareMax: number;
+  /** fare already counted on an earlier leg (one Rapid KL fare across lines) */
+  fareShared: boolean;
+  /** needs a ticket bought in advance (ETS, Intercity, Shuttle Tebrau) */
   ticket: boolean;
   path: [number, number][];
 }
 
-export interface TrainOption {
+/** Walking between two stations to change lines. */
+export interface WalkLeg {
+  type: 'walk';
+  from: Station;
+  to: Station;
+  minutes: number;
+  km: number;
+}
+
+export interface TransitOption {
   leave: string;
   arrive: string;
   minutes: number;
   transfers: number;
   access: AccessLeg;
-  legs: TrainLeg[];
+  legs: (TransitLeg | WalkLeg)[];
   egress: AccessLeg;
   fareMin: number;
   fareMax: number;
   costMin: number;
   costMax: number;
+  modes: TransitMode[];
 }
 
+export const rides = (o: TransitOption): TransitLeg[] => o.legs.filter((l): l is TransitLeg => l.type === 'transit');
+
 const CACHE_MS = 3 * 60_000;
-const cache = new Map<string, { at: number; value: Promise<TrainOption[]> }>();
+const cache = new Map<string, { at: number; value: Promise<TransitOption[]> }>();
 const key = (p: Coordinates) => `${p.lng.toFixed(3)},${p.lat.toFixed(3)}`;
 
 /**
- * KTMB trains (ETS, Intercity, Komuter) from here to there, leaving now. Fares
- * are estimates. Remembered for 3 minutes, so the route panel can ask early
- * (prefetch) and the "Tren" tab opens instantly.
+ * Public transport from here to there, leaving now: KTMB (ETS, Intercity,
+ * Komuter) and Rapid KL rail (LRT, MRT, Monorail, BRT). Fares are estimates.
+ * Remembered for 3 minutes, so the route panel can ask early (prefetch) and the
+ * "Awam" tab opens instantly.
  */
-export function fetchTrainOptions(from: Coordinates, to: Coordinates): Promise<TrainOption[]> {
+export function fetchTransitOptions(from: Coordinates, to: Coordinates): Promise<TransitOption[]> {
   const k = `${key(from)}|${key(to)}`;
   const hit = cache.get(k);
   if (hit && Date.now() - hit.at < CACHE_MS) return hit.value;
-  const value = apiGet<{ options: TrainOption[] }>('/transit/train', { from: `${from.lng.toFixed(5)},${from.lat.toFixed(5)}`, to: `${to.lng.toFixed(5)},${to.lat.toFixed(5)}` }).then((r) => r.options);
+  const value = apiGet<{ options: TransitOption[] }>('/transit/plan', { from: `${from.lng.toFixed(5)},${from.lat.toFixed(5)}`, to: `${to.lng.toFixed(5)},${to.lat.toFixed(5)}` }).then((r) => r.options);
   value.catch(() => cache.delete(k)); // failures are not remembered
   cache.set(k, { at: Date.now(), value });
   return value;
