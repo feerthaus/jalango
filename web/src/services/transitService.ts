@@ -16,7 +16,7 @@ export interface Station {
   lng: number;
 }
 
-export type TransitMode = 'ets' | 'intercity' | 'komuter' | 'shuttle' | 'lrt' | 'mrt' | 'monorail' | 'brt' | 'bus';
+export type TransitMode = 'ets' | 'intercity' | 'komuter' | 'shuttle' | 'lrt' | 'mrt' | 'monorail' | 'brt' | 'bus' | 'erl';
 
 export interface TransitLeg {
   type: 'transit';

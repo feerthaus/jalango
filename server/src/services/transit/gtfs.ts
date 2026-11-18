@@ -7,7 +7,7 @@ import { parseCsv, titleCase } from '../ktmb.js';
  * departure. Ids are prefixed with the feed name so feeds can be combined.
  */
 
-export type Mode = 'ets' | 'intercity' | 'komuter' | 'shuttle' | 'lrt' | 'mrt' | 'monorail' | 'brt' | 'bus';
+export type Mode = 'ets' | 'intercity' | 'komuter' | 'shuttle' | 'lrt' | 'mrt' | 'monorail' | 'brt' | 'bus' | 'erl';
 
 export interface FeedStop {
   id: string;
