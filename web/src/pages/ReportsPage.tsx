@@ -15,7 +15,7 @@ import { formatDistance, haversineMeters } from '@/utils/geo';
 import { useT } from '@/lib/i18n';
 
 export function ReportsPage() {
-  const [t] = useT();
+  const [t, lang] = useT();
   const { available, reports, loading, error, live, refresh, selectReport } = useReports();
   const { fix } = useLocation();
   const navigate = useNavigate();
@@ -108,12 +108,12 @@ export function ReportsPage() {
                         </span>
                         <span className="min-w-0 flex-1">
                           <span className="block font-medium">{t(meta.labelMs, meta.label)}</span>
-                          <span className="block truncate text-sm text-ink-500 dark:text-ink-300">{r.description || formatRelativeTime(r.created_at)}</span>
+                          <span className="block truncate text-sm text-ink-500 dark:text-ink-300">{r.description || formatRelativeTime(r.created_at, lang)}</span>
                         </span>
                         <span className="shrink-0 text-right text-xs text-ink-500 dark:text-ink-400">
                           {d !== null && <span className="block font-medium tabular-nums">{formatDistance(d)}</span>}
                           <span className="block">
-                            {r.description ? formatRelativeTime(r.created_at) : ''}
+                            {r.description ? formatRelativeTime(r.created_at, lang) : ''}
                             {r.confirm_count > 0 && (
                               <>
                                 {' '}

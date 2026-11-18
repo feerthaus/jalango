@@ -149,7 +149,7 @@ function FlagQueue() {
                 <span className="rounded-full bg-ink-100 px-2 py-0.5 text-[11px] font-semibold uppercase dark:bg-ink-800">{it.content_type}</span>
                 {hidden && <span className="rounded-full bg-amber-400/20 px-2 py-0.5 text-[11px] font-semibold text-amber-700">hidden</span>}
                 {it.owner_banned && <span className="rounded-full bg-red-500/15 px-2 py-0.5 text-[11px] font-semibold text-red-600">owner banned</span>}
-                <span className="ml-auto text-xs text-ink-400">{formatRelativeTime(it.last_flagged)}</span>
+                <span className="ml-auto text-xs text-ink-400">{formatRelativeTime(it.last_flagged, 'en')}</span>
               </div>
               <p className="mt-2 font-semibold">{title ?? '(deleted content)'}</p>
               {it.detail && <p className="mt-0.5 text-sm text-ink-600 dark:text-ink-300">{it.detail}</p>}
@@ -203,7 +203,7 @@ function FeedbackInbox() {
           <div className="flex items-center gap-2 text-xs">
             <span className="rounded-full bg-ink-100 px-2 py-0.5 font-semibold uppercase dark:bg-ink-800">{f.category.replace('_', ' ')}</span>
             {f.status === 'new' && <span className="rounded-full bg-jade-500/15 px-2 py-0.5 font-semibold text-jade-700">new</span>}
-            <span className="ml-auto text-ink-400">{formatRelativeTime(f.created_at)}</span>
+            <span className="ml-auto text-ink-400">{formatRelativeTime(f.created_at, 'en')}</span>
           </div>
           <p className="mt-2 whitespace-pre-wrap text-sm">{f.message}</p>
           <p className="mt-1 text-xs text-ink-400">

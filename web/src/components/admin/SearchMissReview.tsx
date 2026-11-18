@@ -95,7 +95,7 @@ function MissItem({ miss, onDone }: { miss: SearchMissRow; onDone: () => void })
     <li className={cn('rounded-2xl bg-white p-4 shadow-sm ring-1 dark:bg-ink-900', urgent ? 'ring-red-300 dark:ring-red-900' : 'ring-ink-200 dark:ring-ink-800')}>
       <div className="flex items-start gap-2">
         <p className="min-w-0 flex-1 text-base font-bold">“{miss.sample}”</p>
-        <span className="shrink-0 text-xs text-ink-400">{formatRelativeTime(miss.last_at)}</span>
+        <span className="shrink-0 text-xs text-ink-400">{formatRelativeTime(miss.last_at, 'en')}</span>
       </div>
       <div className="mt-1 flex flex-wrap gap-1.5 text-[11px] font-semibold">
         {miss.reports > 0 && <Chip tone="red"><Flag className="size-3" /> Dilaporkan {miss.reports}×</Chip>}

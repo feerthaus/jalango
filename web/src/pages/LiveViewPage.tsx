@@ -21,7 +21,7 @@ const POLL_MS = 5_000;
 
 /** Public page behind a share link: someone's live position, smoothly animated. No sign-in needed. */
 export function LiveViewPage() {
-  const [t] = useT();
+  const [t, lang] = useT();
   const { token = '' } = useParams();
   const { theme } = useTheme();
   const containerRef = useRef<HTMLDivElement>(null);
@@ -152,7 +152,7 @@ export function LiveViewPage() {
                 <p className="text-lg font-bold">{share.display_name}</p>
               )}
               <p className="text-sm text-ink-500 dark:text-ink-300">
-                {share.latitude === null ? t('Menunggu lokasi…', 'Waiting for location…') : stale ? t(`Kali terakhir dilihat ${formatRelativeTime(share.position_at!)}`, `Last seen ${formatRelativeTime(share.position_at!)}`) : t(`Dikemas kini ${Math.max(0, Math.round((Date.now() - Date.parse(share.position_at!)) / 1000))} saat lalu`, `Updated ${Math.max(0, Math.round((Date.now() - Date.parse(share.position_at!)) / 1000))} s ago`)}
+                {share.latitude === null ? t('Menunggu lokasi…', 'Waiting for location…') : stale ? t(`Kali terakhir dilihat ${formatRelativeTime(share.position_at!, lang)}`, `Last seen ${formatRelativeTime(share.position_at!, lang)}`) : t(`Dikemas kini ${Math.max(0, Math.round((Date.now() - Date.parse(share.position_at!)) / 1000))} saat lalu`, `Updated ${Math.max(0, Math.round((Date.now() - Date.parse(share.position_at!)) / 1000))} s ago`)}
                 {share.speed_mps !== null && share.speed_mps > 1 && !stale && ` · ${toKmh(share.speed_mps)} km/h`}
               </p>
               {share.destination_name && (

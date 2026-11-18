@@ -12,7 +12,7 @@ import { formatDistance } from '@/utils/geo';
 import { useT } from '@/lib/i18n';
 
 export function ShortcutCard({ shortcut, onClose }: { shortcut: Shortcut; onClose: () => void }) {
-  const [t] = useT();
+  const [t, lang] = useT();
   const { user } = useAuth();
   const { vote, remove, myVotes } = useShortcuts();
   const { applyShortcut, destination } = useRouting();
@@ -44,7 +44,7 @@ export function ShortcutCard({ shortcut, onClose }: { shortcut: Shortcut; onClos
           <h2 className="text-lg font-bold leading-tight">{shortcut.title}</h2>
           <p className="mt-0.5 text-xs text-ink-500 dark:text-ink-400">
             {formatDistance(shortcut.distance_m)}
-            {shortcut.avoids && ` · avoids ${shortcut.avoids}`} {t('· dikongsi', '· shared')} {formatRelativeTime(shortcut.created_at)}
+            {shortcut.avoids && t(` · elak ${shortcut.avoids}`, ` · avoids ${shortcut.avoids}`)} {t('· dikongsi', '· shared')} {formatRelativeTime(shortcut.created_at, lang)}
           </p>
           {shortcut.description && <p className="mt-2 text-sm">{shortcut.description}</p>}
         </div>

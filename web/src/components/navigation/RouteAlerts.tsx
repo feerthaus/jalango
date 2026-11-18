@@ -11,7 +11,7 @@ import { useT } from '@/lib/i18n';
 
 /** Hazard ahead + "still there?" prompt, shown under the maneuver banner. */
 export function RouteAlerts({ alerts }: { alerts: RouteAlertsState }) {
-  const [t] = useT();
+  const [t, lang] = useT();
   const { next, aheadCount, ask, dismissAsk } = alerts;
   if (ask) return <AskCard alerts={alerts} key={ask.id} onDone={dismissAsk} />;
   if (!next) return null;
@@ -35,7 +35,7 @@ export function RouteAlerts({ alerts }: { alerts: RouteAlertsState }) {
           {t(`${meta.labelMs} di depan`, `${meta.label} ahead`)} · {formatDistance(next.distance)}
         </p>
         <p className={cn('truncate text-xs', close ? 'text-ink-800' : 'text-ink-500 dark:text-ink-300')}>
-          {next.report.description || `${t('Dilaporkan', 'Reported')} ${formatRelativeTime(next.report.created_at)}`}
+          {next.report.description || `${t('Dilaporkan', 'Reported')} ${formatRelativeTime(next.report.created_at, lang)}`}
           {next.report.confirm_count > 0 && ` · ${next.report.confirm_count} ${t('pengesahan', 'confirmed')}`}
         </p>
       </div>

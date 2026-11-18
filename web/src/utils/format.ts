@@ -1,3 +1,5 @@
+import type { Lang } from '@/lib/i18n';
+
 export function formatDuration(seconds: number): string {
   if (!Number.isFinite(seconds)) return '–';
   const mins = Math.round(seconds / 60);
@@ -7,12 +9,14 @@ export function formatDuration(seconds: number): string {
   return m === 0 ? `${h} h` : `${h} h ${m} min`;
 }
 
-export function formatRelativeTime(iso: string, now = Date.now()): string {
+/** "5 min lalu" / "5 min ago" in the app language; older than a day → "18 Nov". */
+export function formatRelativeTime(iso: string, lang: Lang, now = Date.now()): string {
   const diff = Math.round((now - new Date(iso).getTime()) / 1000);
-  if (diff < 45) return 'just now';
-  if (diff < 3600) return `${Math.round(diff / 60)} min ago`;
-  if (diff < 86_400) return `${Math.round(diff / 3600)} h ago`;
-  return new Date(iso).toLocaleDateString('en-MY', { day: 'numeric', month: 'short' });
+  const ms = lang === 'ms';
+  if (diff < 45) return ms ? 'baru tadi' : 'just now';
+  if (diff < 3600) return ms ? `${Math.round(diff / 60)} min lalu` : `${Math.round(diff / 60)} min ago`;
+  if (diff < 86_400) return ms ? `${Math.round(diff / 3600)} jam lalu` : `${Math.round(diff / 3600)} h ago`;
+  return new Date(iso).toLocaleDateString(ms ? 'ms-MY' : 'en-MY', { day: 'numeric', month: 'short' });
 }
 
 /** Lower-case, strip accents & punctuation for fuzzy matching. */
