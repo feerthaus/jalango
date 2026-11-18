@@ -1,4 +1,5 @@
 import type { Coordinates } from '../../types.js';
+import { erlFare } from './erl.js';
 import type { Calendar, Feed, FeedRoute, Mode } from './gtfs.js';
 
 /**
@@ -434,6 +435,11 @@ function reconstruct(net: Network, r: { k: number; stop: number; labels: Label[]
       l.fareMin = f.min;
       l.fareMax = f.max;
       for (let x = i + 1; x < j; x++) rides[x].fareShared = true;
+    } else if (l.mode === 'erl') {
+      // KLIA Ekspres / Transit: ERL's fare table by station pair
+      const f = erlFare(l.from.id, l.to.id, Date.parse(l.depart));
+      l.fareMin = f.min;
+      l.fareMax = f.max;
     } else {
       const f = estimateFare(l.mode, l.km);
       l.fareMin = f.min;

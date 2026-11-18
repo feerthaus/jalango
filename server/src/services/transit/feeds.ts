@@ -2,6 +2,7 @@ import { strFromU8, unzipSync } from 'fflate';
 import { HttpError } from '../../lib/errors.js';
 import { supabaseAdmin } from '../../lib/supabaseAdmin.js';
 import { busMode, ktmbMode, parseFeed, railMode, type Feed, type Mode } from './gtfs.js';
+import { erlFeed } from './erl.js';
 import { buildNetwork, type Network } from './raptor.js';
 import { deserializeNetwork, serializeNetwork, SNAPSHOT_VERSION } from './snapshot.js';
 
@@ -83,7 +84,7 @@ export async function getTransitNetwork(): Promise<Network> {
     // No snapshot: trains and city rail are quick enough to load now
     const feeds = await fetchFeeds(CORE);
     if (!feeds.length) throw new Error('no feed');
-    return buildNetwork(feeds);
+    return buildNetwork([...feeds, erlFeed()]);
   })()
     .then((value) => {
       cache = { at: Date.now(), value };
@@ -102,7 +103,7 @@ export async function getTransitNetwork(): Promise<Network> {
 /** Scheduled (daily): fetch every feed, build the network, store the snapshot. */
 export async function rebuildSnapshot(): Promise<{ feeds: string[]; stops: number; patterns: number; bytes: number }> {
   if (!supabaseAdmin) throw new Error('Supabase is not configured');
-  const feeds = await fetchFeeds([...CORE, ...BUSES]);
+  const feeds = [...(await fetchFeeds([...CORE, ...BUSES])), erlFeed()];
   if (!feeds.some((f) => f.name === 'ktmb' || f.name === 'rail')) throw new Error('core feeds missing');
   const net = buildNetwork(feeds);
   const bytes = serializeNetwork(net, feeds.map((f) => f.name));

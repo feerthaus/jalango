@@ -23,11 +23,14 @@ const dayDiff = (iso: string) => {
   return Math.round(d / 86_400_000);
 };
 const rm = (n: number) => `RM${Number.isInteger(n) ? n : n.toFixed(2)}`;
+/** "RM18.30" for a fixed fare, "RM3.60–4.8" for a range. */
+const fare = (min: number, max: number) => (min === max ? rm(min) : `${rm(min)}–${max}`);
 
 /** "LRT", "ETS", … for a line badge. */
 export function modeLabel(m: TransitMode, lang: string): string {
   if (m === 'monorail') return lang === 'ms' ? 'Monorel' : 'Monorail';
   if (m === 'bus') return lang === 'ms' ? 'Bas' : 'Bus';
+  if (m === 'erl') return 'KLIA'; // + "Ekspres" / "Transit"
   return { ets: 'ETS', intercity: 'Intercity', komuter: 'Komuter', shuttle: 'Shuttle', lrt: 'LRT', mrt: 'MRT', brt: 'BRT' }[m];
 }
 
@@ -136,7 +139,7 @@ export function TransitOptions() {
           </div>
           <div className="rounded-xl bg-ink-50 p-2.5 dark:bg-ink-900">
             <p className="flex items-center gap-1 text-xs font-semibold text-ink-500"><TrainFront className="size-3.5" /> {t('Pengangkutan awam', 'Public transport')}</p>
-            <p className="text-xl font-black tabular-nums">{train ? `~${rm(train.min)}–${train.max}` : options ? '—' : '…'}</p>
+            <p className="text-xl font-black tabular-nums">{train ? `~${fare(train.min, train.max)}` : options ? '—' : '…'}</p>
             {best && <p className="text-[11px] leading-snug text-ink-500">{t(`tambang × ${people} + ke/dari stesen`, `fares × ${people} + to/from station`)}</p>}
             {best && <p className="text-[11px] text-ink-400">{formatDuration(best.minutes * 60)}</p>}
           </div>
@@ -191,7 +194,7 @@ export function TransitOptions() {
                 </div>
                 <p className="mt-1 flex items-center justify-between text-xs text-ink-500">
                   <span>{o.transfers === 0 ? t('Terus', 'Direct') : t(`${o.transfers} kali tukar`, `${o.transfers} change${o.transfers > 1 ? 's' : ''}`)} · {t(`keluar ${clock(o.leave)}`, `leave ${clock(o.leave)}`)}</span>
-                  <span className="flex items-center gap-1 font-semibold">{t(`tambang ~${rm(o.fareMin)}–${o.fareMax}`, `fare ~${rm(o.fareMin)}–${o.fareMax}`)} {open === i ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}</span>
+                  <span className="flex items-center gap-1 font-semibold">{t(`tambang ~${fare(o.fareMin, o.fareMax)}`, `fare ~${fare(o.fareMin, o.fareMax)}`)} {open === i ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}</span>
                 </p>
               </button>
               {open === i && (
@@ -210,7 +213,7 @@ export function TransitOptions() {
                           <LineBadge leg={l} /> <strong>{clock(l.depart)}</strong> {l.from.name} → <strong>{clock(l.arrive)}</strong> {l.to.name}
                           <span className="block text-xs text-ink-500">
                             {l.routeName} · {l.km} km · {t(`${l.stops} hentian`, `${l.stops} stops`)} ·{' '}
-                            {l.fareShared ? t('tambang sama (Rapid KL)', 'same fare (Rapid KL)') : t(`~${rm(l.fareMin)}–${l.fareMax}`, `~${rm(l.fareMin)}–${l.fareMax}`)}
+                            {l.fareShared ? t('tambang sama (Rapid KL)', 'same fare (Rapid KL)') : t(`~${fare(l.fareMin, l.fareMax)}`, `~${fare(l.fareMin, l.fareMax)}`)}
                             {l.mode === 'bus'
                               ? ` · ${t('bayar dalam bas (tunai atau kad, ikut operator)', 'pay on the bus (cash or card, depends on the operator)')}`
                               : !l.ticket && ` · ${t("tap kad Touch 'n Go atau kad bank", "tap a Touch 'n Go or bank card")}`}
@@ -259,7 +262,7 @@ export function TransitOptions() {
           ))}
         </ul>
       )}
-      <p className="text-center text-[11px] text-ink-400">{t('Jadual: KTMB, Prasarana (Rapid KL, Rapid Penang) dan myBAS JB melalui data.gov.my.', 'Timetables: KTMB, Prasarana (Rapid KL, Rapid Penang) and myBAS JB via data.gov.my.')}</p>
+      <p className="text-center text-[11px] text-ink-400">{t('Jadual: KTMB, Prasarana (Rapid KL, Rapid Penang) dan myBAS JB melalui data.gov.my. KLIA Ekspres & Transit: anggaran ikut corak perkhidmatan ERL (setiap 15–30 min), bukan jadual rasmi.', 'Timetables: KTMB, Prasarana (Rapid KL, Rapid Penang) and myBAS JB via data.gov.my. KLIA Ekspres & Transit: estimated from ERL’s service pattern (every 15–30 min), not an official timetable.')}</p>
     </div>
   );
 }
@@ -270,7 +273,7 @@ export function LineBadge({ leg }: { leg: TransitLeg }) {
   return (
     <span className="inline-block rounded px-1.5 py-0.5 text-[11px] font-bold leading-none" style={{ background: leg.color, color: onColor(leg.color) }}>
       {modeLabel(leg.mode, lang)}
-      {(rapid || leg.mode === 'bus') && leg.shortName ? ` ${leg.shortName}` : ''}
+      {(rapid || leg.mode === 'bus' || leg.mode === 'erl') && leg.shortName ? ` ${leg.shortName}` : ''}
     </span>
   );
 }
