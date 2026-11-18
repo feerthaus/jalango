@@ -10,6 +10,7 @@ import { useT } from '@/lib/i18n';
 import { ApiError } from '@/services/apiClient';
 import { askAssistant, type AssistantPlace, type ChatTurn } from '@/services/assistantService';
 import type { Place } from '@/types';
+import { looksLikeQuestion } from '@/utils/questionLike';
 
 interface Msg extends ChatTurn {
   places?: AssistantPlace[];
@@ -46,6 +47,8 @@ export function AssistantSheet({ initial = '', onClose, onRoute }: { initial?: s
   const [error, setError] = useState<string | null>(null);
   const [remaining, setRemaining] = useState<number | null>(null);
   const end = useRef<HTMLDivElement | null>(null);
+  // Opened from a question typed in the search bar: ask it straight away (once signed in)
+  const autoAsked = useRef(false);
 
   useEffect(() => {
     end.current?.scrollIntoView({ block: 'end', behavior: 'smooth' });
@@ -79,6 +82,13 @@ export function AssistantSheet({ initial = '', onClose, onRoute }: { initial?: s
       setBusy(false);
     }
   };
+
+  useEffect(() => {
+    if (autoAsked.current || !user || !looksLikeQuestion(initial)) return;
+    autoAsked.current = true;
+    void send(initial);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
 
   const title = t('Pembantu perjalanan (AI)', 'Trip assistant (AI)');
   if (!user) {
