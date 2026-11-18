@@ -16,14 +16,14 @@ export interface Stop {
   lng: number;
 }
 
-interface Trip {
+export interface Trip {
   id: string;
   serviceKey: string; // `${feed}|${serviceId}`
   arr: number[];
   dep: number[];
 }
 
-interface Pattern {
+export interface Pattern {
   route: FeedRoute;
   stops: number[];
   trips: Trip[];
@@ -87,6 +87,18 @@ export function buildNetwork(feeds: Feed[]): Network {
   }
   const patterns = [...byKey.values()];
   for (const p of patterns) p.trips.sort((a, b) => a.dep[0] - b.dep[0]);
+  const calendars = new Map<string, Calendar>();
+  const exceptions = new Map<string, 1 | 2>();
+  for (const f of feeds) {
+    for (const [k, v] of f.calendar) calendars.set(`${f.name}|${k}`, v);
+    for (const [k, v] of f.exceptions) exceptions.set(`${f.name}|${k}`, v);
+  }
+  return assembleNetwork(stops, patterns, calendars, exceptions);
+}
+
+/** Indexes the planner needs (which patterns call at each stop, walking changes), from stops and patterns. */
+export function assembleNetwork(stops: Stop[], patterns: Pattern[], calendars: Map<string, Calendar>, exceptions: Map<string, 1 | 2>): Network {
+  const stopIndex = new Map(stops.map((s, i) => [s.id, i]));
   const stopPatterns: { p: number; pos: number }[][] = stops.map(() => []);
   patterns.forEach((p, pi) => p.stops.forEach((s, pos) => stopPatterns[s].push({ p: pi, pos })));
   // Walking changes: a coarse grid keeps this fast
@@ -103,12 +115,6 @@ export function buildNetwork(feeds: Feed[]): Network {
     }
     return out;
   });
-  const calendars = new Map<string, Calendar>();
-  const exceptions = new Map<string, 1 | 2>();
-  for (const f of feeds) {
-    for (const [k, v] of f.calendar) calendars.set(`${f.name}|${k}`, v);
-    for (const [k, v] of f.exceptions) exceptions.set(`${f.name}|${k}`, v);
-  }
   const feedDate = [...calendars.values()].map((c) => c.start).sort().pop() ?? '';
   return { stops, stopIndex, patterns, stopPatterns, footpaths, calendars, exceptions, feedDate };
 }
@@ -437,7 +443,8 @@ function reconstruct(net: Network, r: { k: number; stop: number; labels: Label[]
   const first = rides[0];
   const last = rides[rides.length - 1];
   const access = origins.get(net.stopIndex.get(first.from.id)!)!;
-  const egress = dests.get(net.stopIndex.get(last.to.id)!)!;
+  // the trip can end with a walk between stops: egress is from the stop it ends at
+  const egress = dests.get(r.stop)!;
   // same rule as the search: a minute to the platform, plus 10 for an intercity train
   const leaveMs = Date.parse(first.depart) - (access.minutes + 1 + (first.ticket ? INTERCITY_BUFFER_S / 60 : 0)) * 60_000;
   const arriveMs = Date.parse(last.arrive) + egress.minutes * 60_000;
