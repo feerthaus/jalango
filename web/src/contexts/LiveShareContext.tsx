@@ -3,6 +3,8 @@ import { features } from '@/lib/config';
 import { createShare, fetchMyActiveShares, pushPosition, stopShare, type DriverInfo, type LiveShare } from '@/services/liveShareService';
 import { useItinerary } from './ItineraryContext';
 import { haversineMeters } from '@/utils/geo';
+import { delaySeconds, honestEta, nextSlowState, NOT_SLOW, publishedSlowSince, type LiveEta, type SlowState } from '@/utils/liveTraffic';
+import { fetchRoutes } from '@/services/routingService';
 import { useAuth } from './AuthContext';
 import { useLocation } from './LocationContext';
 import { useRouting } from './RoutingContext';
@@ -20,6 +22,8 @@ const UNTIL_ARRIVAL_KEY = 'jalango:share-until-arrival';
 const MIN_INTERVAL_MS = 5_000;
 const HEARTBEAT_MS = 20_000;
 const MIN_MOVE_M = 15;
+/** While sharing a trip, check live traffic to the destination this often. */
+const TRAFFIC_REFRESH_MS = 5 * 60_000;
 
 function readUntilArrival(): string[] {
   try {
@@ -36,7 +40,7 @@ function readUntilArrival(): string[] {
 export function LiveShareProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const { fix } = useLocation();
-  const { status, destination, progress } = useRouting();
+  const { status, destination, progress, avoidTolls } = useRouting();
   const itinerary = useItinerary();
   // Driver mode: the stop being driven to (or the next unvisited one) and how many are left
   const nextStopIdx = itinerary.activeIndex !== -1 ? itinerary.activeIndex : itinerary.nextIndex;
@@ -47,6 +51,47 @@ export function LiveShareProvider({ children }: { children: ReactNode }) {
   const [shares, setShares] = useState<LiveShare[]>([]);
   const last = useRef<{ t: number; lat: number; lng: number } | null>(null);
   const available = features.supabase && Boolean(user);
+  const navigating = status === 'navigating';
+
+  // Traffic for the people watching: "in traffic since" and how late we'll be
+  const slow = useRef<SlowState>(NOT_SLOW);
+  const baselineEta = useRef<number | null>(null);
+  const liveEta = useRef<LiveEta | null>(null);
+  const lastSlowKey = useRef<string>('');
+  const destKey = destination ? `${destination.coordinates.lat},${destination.coordinates.lng}` : '';
+  useEffect(() => {
+    // new trip (or trip over): start over
+    slow.current = NOT_SLOW;
+    baselineEta.current = null;
+    liveEta.current = null;
+  }, [destKey, navigating]);
+
+  // Every 5 minutes while a shared trip is under way: ask for the route again with live traffic
+  const sharing = shares.length > 0;
+  const fixRef = useRef(fix);
+  fixRef.current = fix;
+  useEffect(() => {
+    if (!sharing || !navigating || !destination) return;
+    let alive = true;
+    const check = () => {
+      const f = fixRef.current;
+      if (!f) return;
+      fetchRoutes(f.coordinates, destination.coordinates, { live: true, avoidTolls, destinationName: destination.name, heading: f.heading })
+        .then(({ routes, mode }) => {
+          const r = routes[0];
+          if (alive && r && mode === 'live') liveEta.current = { at: Date.now(), seconds: r.durationSeconds, meters: r.distanceMeters };
+        })
+        .catch(() => undefined);
+    };
+    const first = setTimeout(check, 60_000); // the planned route is fresh at the start
+    const id = setInterval(check, TRAFFIC_REFRESH_MS);
+    return () => {
+      alive = false;
+      clearTimeout(first);
+      clearInterval(id);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sharing, navigating, destKey, avoidTolls]);
 
   useEffect(() => {
     if (!available) {
@@ -111,26 +156,36 @@ export function LiveShareProvider({ children }: { children: ReactNode }) {
     // Only driver-mode links show the itinerary's next stop; personal links never do
     const driverShare = shares.some((s) => s.driver_plate);
     const stopChanged = driverShare && lastStopKey.current !== nextStopKey;
-    if (prev && !stopChanged && (now - prev.t < MIN_INTERVAL_MS || (moved < MIN_MOVE_M && now - prev.t < HEARTBEAT_MS))) return;
+    // Traffic: update the slow state on every fix, publish when it changes
+    slow.current = navigating ? nextSlowState(slow.current, fix.speed !== null ? fix.speed * 3.6 : moved < 5 ? 0 : 99, now) : NOT_SLOW;
+    const slowSince = navigating ? publishedSlowSince(slow.current, now, progress?.remainingMeters ?? null) : null;
+    const eta = navigating && progress ? honestEta(now, progress.remainingSeconds, progress.remainingMeters, liveEta.current) : null;
+    if (eta !== null && baselineEta.current === null) baselineEta.current = eta;
+    const delay = eta !== null ? delaySeconds(eta, baselineEta.current) : 0;
+    const slowKey = `${slowSince ?? ''}|${Math.round(delay / 120)}`; // re-publish when slow changes or delay moves by 2 min
+    const slowChanged = slowKey !== lastSlowKey.current;
+    if (prev && !stopChanged && !slowChanged && (now - prev.t < MIN_INTERVAL_MS || (moved < MIN_MOVE_M && now - prev.t < HEARTBEAT_MS))) return;
+    if (prev && now - prev.t < 2_000) return; // never faster than every 2 s
     last.current = { t: now, lat: fix.coordinates.lat, lng: fix.coordinates.lng };
-    const navigating = status === 'navigating';
-    const etaAt = navigating && progress ? new Date(now + progress.remainingSeconds * 1000).toISOString() : null;
+    const etaAt = eta !== null ? new Date(eta).toISOString() : null;
     pushPosition(
       shares.map((s) => s.id),
       fix,
       {
         etaAt,
+        traffic: { slowSince: slowSince !== null ? new Date(slowSince).toISOString() : null, delaySeconds: navigating ? delay : null },
         destination: navigating && destination ? { name: destination.name, coordinates: destination.coordinates } : undefined,
         nextStop: stopChanged ? (nextStopName ? { name: nextStopName, left: stopsLeft } : null) : undefined,
       },
     )
       .then(() => {
         lastStopKey.current = nextStopKey;
+        lastSlowKey.current = slowKey;
       })
       .catch(() => {
         last.current = prev; // retry on next fix
       });
-  }, [fix, shares, status, progress, destination, nextStopKey, nextStopName, stopsLeft]);
+  }, [fix, shares, navigating, progress, destination, nextStopKey, nextStopName, stopsLeft]);
 
   // "Until I arrive" shares stop when the trip ends
   const prevStatus = useRef(status);

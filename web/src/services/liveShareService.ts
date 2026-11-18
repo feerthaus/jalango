@@ -21,6 +21,10 @@ export interface PublicLiveShare {
   dest_latitude: number | null;
   dest_longitude: number | null;
   eta_at: string | null;
+  /** in traffic since (driver's app: 2 min under 15 km/h while navigating) */
+  slow_since?: string | null;
+  /** seconds later than the ETA at the start of the trip */
+  eta_delay_s?: number | null;
   latitude: number | null;
   longitude: number | null;
   heading: number | null;
@@ -100,7 +104,12 @@ export async function fetchMyActiveShares(): Promise<LiveShare[]> {
 export async function pushPosition(
   ids: string[],
   fix: GeoFix,
-  extra: { etaAt?: string | null; destination?: { name: string; coordinates: Coordinates } | null; nextStop?: { name: string; left: number } | null },
+  extra: {
+    etaAt?: string | null;
+    traffic?: { slowSince: string | null; delaySeconds: number | null };
+    destination?: { name: string; coordinates: Coordinates } | null;
+    nextStop?: { name: string; left: number } | null;
+  },
 ) {
   if (ids.length === 0) return;
   const patch: Record<string, unknown> = {
@@ -112,6 +121,10 @@ export async function pushPosition(
     position_at: new Date(fix.timestamp).toISOString(),
   };
   if (extra.etaAt !== undefined) patch.eta_at = extra.etaAt;
+  if (extra.traffic && trafficColumns) {
+    patch.slow_since = extra.traffic.slowSince;
+    patch.eta_delay_s = extra.traffic.delaySeconds;
+  }
   if (extra.destination) {
     patch.destination_name = extra.destination.name.slice(0, 160);
     patch.dest_latitude = extra.destination.coordinates.lat;
@@ -122,8 +135,18 @@ export async function pushPosition(
     patch.stops_left = extra.nextStop ? Math.min(30, extra.nextStop.left) : null;
   }
   const { error } = await client().from('location_shares').update(patch).in('id', ids);
+  // Database without the traffic columns yet: drop them and keep sharing the position
+  if (error && trafficColumns && /slow_since|eta_delay_s/.test(error.message)) {
+    trafficColumns = false;
+    delete patch.slow_since;
+    delete patch.eta_delay_s;
+    const retry = await client().from('location_shares').update(patch).in('id', ids);
+    if (retry.error) throw toReportError(retry.error);
+    return;
+  }
   if (error) throw toReportError(error);
 }
+let trafficColumns = true;
 
 export async function stopShare(id: string): Promise<void> {
   const { error } = await client().from('location_shares').update({ stopped_at: new Date().toISOString() }).eq('id', id);
@@ -131,11 +154,11 @@ export async function stopShare(id: string): Promise<void> {
 }
 
 export async function getPublicShare(token: string): Promise<PublicLiveShare | null> {
-  // v2 adds driver details; fall back to v1 if the database hasn't got it yet
-  let { data, error } = await client().rpc('get_live_share_v2', { p_token: token });
-  if (error && /get_live_share_v2|PGRST202|function/i.test(`${error.code} ${error.message}`)) {
-    ({ data, error } = await client().rpc('get_live_share', { p_token: token }));
-  }
+  // v3 adds traffic, v2 driver details; fall back if the database hasn't got them yet
+  const missing = (e: { code?: string; message: string } | null) => Boolean(e && /get_live_share|PGRST202|function/i.test(`${e.code} ${e.message}`));
+  let { data, error } = await client().rpc('get_live_share_v3', { p_token: token });
+  if (missing(error)) ({ data, error } = await client().rpc('get_live_share_v2', { p_token: token }));
+  if (missing(error)) ({ data, error } = await client().rpc('get_live_share', { p_token: token }));
   if (error) throw new Error(error.message);
   const row = Array.isArray(data) ? data[0] : data;
   return (row ?? null) as PublicLiveShare | null;

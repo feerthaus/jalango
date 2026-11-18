@@ -1,8 +1,8 @@
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
-import { Bell, BellOff, CheckCircle2, Clock, Flag, ListOrdered, Loader2, LocateFixed, MapPinOff, MessageCircle, Navigation, Phone, Radio, VolumeX, X } from 'lucide-react';
+import { Bell, BellOff, CheckCircle2, Clock, Flag, TrafficCone, ListOrdered, Loader2, LocateFixed, MapPinOff, MessageCircle, Navigation, Phone, Radio, VolumeX, X } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { arm, disarm, ring, stopRinging } from '@/lib/arrivalAlarm';
+import { arm, chime, disarm, ring, stopRinging } from '@/lib/arrivalAlarm';
 import { hasArrived } from '@/utils/arrival';
 import type { Coordinates } from '@/types';
 import { Link, useParams } from 'react-router';
@@ -35,6 +35,7 @@ export function LiveViewPage() {
   const [follow, setFollow] = useState(true);
   const [, tick] = useState(0);
   const alert = useArrivalAlert(share);
+  const traffic = useTrafficAlert(share, alert.armed, alert.arrived);
 
   // Poll the share
   useEffect(() => {
@@ -113,6 +114,7 @@ export function LiveViewPage() {
 
   const live = share?.status === 'live';
   const etaMin = share?.eta_at ? Math.max(0, Math.round((Date.parse(share.eta_at) - Date.now()) / 60_000)) : null;
+  const lateMin = share?.eta_delay_s ? Math.round(share.eta_delay_s / 60) : 0;
   const stale = share?.position_at ? Date.now() - Date.parse(share.position_at) > 2 * 60_000 : false;
 
   return (
@@ -139,9 +141,9 @@ export function LiveViewPage() {
           {share === undefined ? (
             <Loader2 className="mx-auto size-6 animate-spin text-ink-400" />
           ) : share === null ? (
-            <Ended icon={MapPinOff} title={t('Pautan tidak dijumpai', 'Link not found')} text="This live location link doesn’t exist or was removed." />
+            <Ended icon={MapPinOff} title={t('Pautan tidak dijumpai', 'Link not found')} text={t('Pautan lokasi live ini tidak wujud atau telah dibuang.', 'This live location link doesn’t exist or was removed.')} />
           ) : !live ? (
-            <Ended icon={MapPinOff} title={t(`${share.display_name} berhenti berkongsi`, `${share.display_name} stopped sharing`)} text="Their location is no longer available." />
+            <Ended icon={MapPinOff} title={t(`${share.display_name} berhenti berkongsi`, `${share.display_name} stopped sharing`)} text={t('Lokasi mereka tidak lagi tersedia.', 'Their location is no longer available.')} />
           ) : (
             <>
               {share.driver_plate || share.driver_vehicle ? (
@@ -158,10 +160,19 @@ export function LiveViewPage() {
                   <Flag className="size-4 shrink-0 text-red-500" />
                   <span className="truncate">
                     {t('Menuju ke', 'Heading to')} <strong>{share.destination_name}</strong>
-                    {etaMin !== null && ` · arriving in ~${etaMin} min`}
                   </span>
                 </p>
               )}
+              {share.eta_at && etaMin !== null && !stale && (
+                <p className="mt-1 flex flex-wrap items-center gap-x-2 text-sm">
+                  <Clock className="size-4 shrink-0 text-ink-400" />
+                  <span>
+                    {t('Anggaran sampai', 'Expected at')} <strong>{clockOf(share.eta_at)}</strong> <span className="text-ink-500">({t(`~${etaMin} min lagi`, `~${etaMin} min`)})</span>
+                  </span>
+                  {lateMin >= 3 && <span className="rounded-full bg-amber-400/20 px-2 py-0.5 text-xs font-semibold text-amber-800 dark:text-amber-200">{t(`lewat ~${lateMin} min`, `~${lateMin} min late`)}</span>}
+                </p>
+              )}
+              {traffic.slowSince && <TrafficBanner name={share.display_name} since={traffic.slowSince} lateMin={lateMin} />}
               <ArrivalAlertControls share={share} alert={alert} />
               {share.next_stop_name && (
                 <p className="mt-2 flex items-center gap-2 rounded-xl bg-violet-500/10 px-3 py-2 text-sm">
@@ -355,6 +366,47 @@ function useArrivalAlert(share: PublicLiveShare | null | undefined): ArrivalAler
   };
 }
 
+function clockOf(iso: string): string {
+  return new Date(iso).toLocaleTimeString('en-MY', { hour: 'numeric', minute: '2-digit' });
+}
+
+/**
+ * The driver is stuck in traffic (their app says so after 2 minutes under 15 km/h).
+ * One chime when it starts, if the alert is on; the tab title says so too.
+ */
+function useTrafficAlert(share: PublicLiveShare | null | undefined, armed: boolean, arrived: boolean): { slowSince: string | null } {
+  const [t] = useT();
+  const live = share?.status === 'live';
+  const slowSince = live && !arrived ? share?.slow_since ?? null : null;
+  const prev = useRef<string | null>(null);
+  const baseTitle = useRef(document.title);
+  useEffect(() => {
+    const was = prev.current;
+    prev.current = slowSince;
+    if (slowSince && !was) {
+      if (armed) chime();
+      document.title = t(`🟡 ${share?.display_name ?? ''} dalam kesesakan`, `🟡 ${share?.display_name ?? ''} is in traffic`);
+    } else if (!slowSince && was && !arrived) {
+      document.title = baseTitle.current;
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [slowSince, armed, arrived]);
+  return { slowSince };
+}
+
+function TrafficBanner({ name, since, lateMin }: { name: string; since: string; lateMin: number }) {
+  const [t] = useT();
+  return (
+    <div role="status" className="mt-2 flex items-start gap-2 rounded-xl bg-amber-400/15 px-3 py-2 text-sm text-amber-900 dark:text-amber-100">
+      <TrafficCone className="mt-0.5 size-4 shrink-0" />
+      <span>
+        <strong>{t(`${name} dalam kesesakan lalu lintas`, `${name} is in slow traffic`)}</strong> {t(`sejak ${clockOf(since)}`, `since ${clockOf(since)}`)}
+        {lateMin >= 3 ? t(` · mungkin lewat ~${lateMin} min`, ` · may be ~${lateMin} min late`) : t(' · mungkin lewat sedikit', ' · may be a little late')}
+      </span>
+    </div>
+  );
+}
+
 /** The "Beritahu saya bila sampai" button and, once on, what it is measuring to. */
 function ArrivalAlertControls({ share, alert }: { share: PublicLiveShare; alert: ArrivalAlert }) {
   const [t] = useT();
@@ -364,7 +416,7 @@ function ArrivalAlertControls({ share, alert }: { share: PublicLiveShare; alert:
         <button type="button" onClick={() => void alert.start()} className="flex w-full items-center justify-center gap-2 rounded-xl bg-jade-500 py-3 text-sm font-bold text-ink-950">
           <Bell className="size-4" /> {t('Beritahu saya bila sampai', 'Tell me when they arrive')}
         </button>
-        <p className="mt-1 text-center text-[11px] text-ink-500">{t('Bunyi bip bila', 'Beeps when')} {share.display_name} {t('sampai. Biarkan halaman ini terbuka.', 'arrives. Keep this page open.')}</p>
+        <p className="mt-1 text-center text-[11px] text-ink-500">{t('Bunyi bip bila', 'Beeps when')} {share.display_name} {t('sampai, dan bunyi pendek jika tersekat dalam kesesakan. Biarkan halaman ini terbuka.', 'arrives, and a short chime if stuck in traffic. Keep this page open.')}</p>
       </div>
     );
   }

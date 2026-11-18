@@ -28,7 +28,7 @@ const SAME = new Set([
 ]);
 /** Words that never need translating inside longer text. */
 const NEUTRAL = /\b(JalanGo|WhatsApp|RM|km|SSM|APAD|PDPA|EV|R&R|OK|Waze|Google|Mapbox|2D|3D|ETA|GPS|km\/h|PWA)\b/g;
-const ATTRS = new Set(['aria-label', 'title', 'placeholder', 'alt', 'label', 'heading', 'subtitle']);
+const ATTRS = new Set(['aria-label', 'title', 'placeholder', 'alt', 'label', 'heading', 'subtitle', 'text', 'description', 'message', 'hint']);
 
 const hasWords = (s: string) => /[A-Za-z]{2,}/.test(s.replace(/https?:\/\/\S+/g, '').replace(NEUTRAL, ''));
 
