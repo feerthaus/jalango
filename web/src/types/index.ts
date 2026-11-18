@@ -72,6 +72,8 @@ export interface SearchResponse {
   mode: Exclude<ServiceMode, 'checking'>;
   /** Present when the live service failed and we degraded to demo data */
   notice?: string;
+  /** Nothing matched the typed text; these results are for this AI-corrected text instead */
+  rewrittenTo?: string;
 }
 
 export type ExploreCategory = 'petrol' | 'rnr' | 'ev' | 'parking' | 'hospital' | 'food' | 'homestay' | 'car_rental';
