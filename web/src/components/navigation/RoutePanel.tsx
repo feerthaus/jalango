@@ -22,11 +22,11 @@ import { arrivalClock } from '@/utils/time';
 import { useT } from '@/lib/i18n';
 import { useLocation } from '@/contexts/LocationContext';
 import { haversineMeters } from '@/utils/geo';
-import { TrainOptions } from './TrainOptions';
-import { fetchTrainOptions } from '@/services/transitService';
+import { TransitOptions } from './TransitOptions';
+import { fetchTransitOptions } from '@/services/transitService';
 
-/** Trips at least this long (straight line) also offer KTMB trains. */
-const TRAIN_FROM_M = 30_000;
+/** Trips at least this long (straight line) also offer public transport. */
+const TRAIN_FROM_M = 2_000;
 
 /** Route preview: alternatives, ETA, tolls, avoid-tolls and Start. */
 export function RoutePanel() {
@@ -41,7 +41,7 @@ export function RoutePanel() {
   const far = Boolean(fix && destination && mode !== 'demo' && haversineMeters(fix.coordinates, destination.coordinates) >= TRAIN_FROM_M);
   const prefetchKey = far && fix && destination ? `${fix.coordinates.lat.toFixed(2)},${fix.coordinates.lng.toFixed(2)}|${destination.coordinates.lat},${destination.coordinates.lng}` : '';
   useEffect(() => {
-    if (prefetchKey && fix && destination) void fetchTrainOptions(fix.coordinates, destination.coordinates).catch(() => undefined);
+    if (prefetchKey && fix && destination) void fetchTransitOptions(fix.coordinates, destination.coordinates).catch(() => undefined);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [prefetchKey]);
   if (!destination) return null;
@@ -93,14 +93,14 @@ export function RoutePanel() {
               className={cn('flex items-center justify-center gap-1.5 rounded-lg py-1.5 text-sm font-semibold', travel === m ? 'bg-white shadow-sm dark:bg-ink-700' : 'text-ink-500')}
             >
               {m === 'car' ? <Car className="size-4" /> : <TrainFront className="size-4" />}
-              {m === 'car' ? t('Memandu', 'Drive') : t('Tren', 'Train')}
+              {m === 'car' ? t('Memandu', 'Drive') : t('Awam', 'Transit')}
             </button>
           ))}
         </div>
       )}
 
       <div className="min-h-0 flex-1 overflow-y-auto px-3">
-        {showTrain && <TrainOptions />}
+        {showTrain && <TransitOptions />}
         {!showTrain && <ResumeToast className="mb-2" />}
         {!showTrain && status === 'needs-location' && (
           <Message icon={LocateFixed} title={t('Menunggu lokasi anda', 'Waiting for your location')}>

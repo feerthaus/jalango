@@ -2,6 +2,8 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { getKtmbTimetable } from '../services/ktmb.js';
 import { planTrainTrips } from '../services/trainPlanner.js';
+import { getTransitNetwork } from '../services/transit/feeds.js';
+import { planTransit } from '../services/transit/raptor.js';
 
 const point = z.string().transform((s, ctx) => {
   const [lng, lat] = s.split(',').map(Number);
@@ -37,6 +39,26 @@ transitRouter.get('/train', async (req, res) => {
   if (hit && Date.now() - hit.at < RESULT_TTL_MS) return void res.json(hit.value);
   const tt = await getKtmbTimetable();
   const value = { options: planTrainTrips(tt, from, to, leaveAfter), source: 'KTMB GTFS (data.gov.my)', faresEstimated: true };
+  if (results.size > 500) results.clear();
+  results.set(k, { at: Date.now(), value });
+  res.json(value);
+});
+
+/**
+ * Public transport between two points: KTMB (ETS, Intercity, Komuter) and Rapid KL
+ * rail (LRT, MRT, Monorail, BRT), changing lines on foot between stations.
+ * Fares are estimates.
+ */
+transitRouter.get('/plan', async (req, res) => {
+  const { from, to, at } = trainQuery.parse(req.query);
+  const now = Date.now();
+  const leaveAfter = at && at > now && at < now + 7 * 86_400_000 ? at : now;
+  const k = `plan|${key(from)}|${key(to)}|${Math.floor(leaveAfter / RESULT_TTL_MS)}`;
+  const hit = results.get(k);
+  res.setHeader('Cache-Control', 'public, max-age=120');
+  if (hit && Date.now() - hit.at < RESULT_TTL_MS) return void res.json(hit.value);
+  const net = await getTransitNetwork();
+  const value = { options: planTransit(net, from, to, leaveAfter), source: 'KTMB + Prasarana GTFS (data.gov.my)', faresEstimated: true };
   if (results.size > 500) results.clear();
   results.set(k, { at: Date.now(), value });
   res.json(value);

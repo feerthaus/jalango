@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { trainFeatures } from './TrainLayer';
-import type { TrainOption } from '@/services/transitService';
+import type { TransitOption } from '@/services/transitService';
 
 const st = (id: string, lat: number, lng: number) => ({ id, name: id, lat, lng });
 const option = {
@@ -8,18 +8,19 @@ const option = {
   access: { type: 'ride', km: 4, minutes: 12, costMin: 8, costMax: 11 },
   egress: { type: 'walk', km: 1, minutes: 12, costMin: 0, costMax: 0 },
   legs: [
-    { type: 'train', kind: 'komuter', color: '#dc2420', from: st('A', 3.1, 101.7), to: st('B', 3.6, 101.5), path: [[101.7, 3.1], [101.5, 3.6]] },
-    { type: 'train', kind: 'ets', color: '#ffc72c', from: st('B', 3.6, 101.5), to: st('C', 4.6, 101.1), path: [[101.5, 3.6], [101.3, 4.0], [101.1, 4.6]] },
+    { type: 'transit', mode: 'komuter', color: '#dc2420', from: st('A', 3.1, 101.7), to: st('B', 3.6, 101.5), path: [[101.7, 3.1], [101.5, 3.6]] },
+    { type: 'walk', from: st('B', 3.6, 101.5), to: st('B2', 3.601, 101.501), minutes: 3, km: 0.2 },
+    { type: 'transit', mode: 'ets', color: '#ffc72c', from: st('B2', 3.601, 101.501), to: st('C', 4.6, 101.1), path: [[101.501, 3.601], [101.3, 4.0], [101.1, 4.6]] },
   ],
-} as unknown as TrainOption;
+} as unknown as TransitOption;
 
 describe('train on the map', () => {
-  it('draws each leg in its colour, dashed access/egress, and each station once', () => {
+  it('draws each ride in its colour, dashed walks (to, between and from stations), and each station once', () => {
     const fc = trainFeatures({ option, from: { lat: 3.15, lng: 101.71 }, to: { lat: 4.59, lng: 101.08 } });
     const kinds = fc.features.map((f) => f.properties.kind);
-    expect(kinds.filter((k) => k === 'access')).toHaveLength(2);
+    expect(kinds.filter((k) => k === 'access')).toHaveLength(3);
     expect(fc.features.filter((f) => f.properties.kind === 'train').map((f) => f.properties.color)).toEqual(['#dc2420', '#ffc72c']);
-    expect(fc.features.filter((f) => f.properties.kind === 'station').map((f) => f.properties.name)).toEqual(['A', 'B', 'C']);
+    expect(fc.features.filter((f) => f.properties.kind === 'station').map((f) => f.properties.name)).toEqual(['A', 'B', 'B2', 'C']);
     expect(fc.features[0].geometry).toEqual({ type: 'LineString', coordinates: [[101.71, 3.15], [101.7, 3.1]] });
   });
 });

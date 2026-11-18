@@ -9,7 +9,7 @@ import { useMyVehicle } from '@/lib/vehicle';
 import { twelveGoTrainUrl } from '@/lib/partners';
 import { setTrainView } from '@/lib/trainView';
 import { loadFuel } from '@/services/fuelService';
-import { fetchTrainOptions, KTMB_BOOKING_URL, type AccessLeg, type TrainOption } from '@/services/transitService';
+import { fetchTransitOptions, KTMB_BOOKING_URL, rides, type AccessLeg, type Station, type TransitLeg, type TransitMode, type TransitOption } from '@/services/transitService';
 import type { Place } from '@/types';
 import { formatDuration } from '@/utils/format';
 import { carTripCost, parkingPerDay, pickFuelPrice, trainTripCost } from '@/utils/tripCost';
@@ -21,17 +21,32 @@ const dayDiff = (iso: string) => {
 };
 const rm = (n: number) => `RM${Number.isInteger(n) ? n : n.toFixed(2)}`;
 
+/** "LRT", "ETS", … for a line badge. */
+export function modeLabel(m: TransitMode, lang: string): string {
+  if (m === 'monorail') return lang === 'ms' ? 'Monorel' : 'Monorail';
+  if (m === 'bus') return lang === 'ms' ? 'Bas' : 'Bus';
+  return { ets: 'ETS', intercity: 'Intercity', komuter: 'Komuter', shuttle: 'Shuttle', lrt: 'LRT', mrt: 'MRT', brt: 'BRT' }[m];
+}
+
+/** Text colour that reads on a line colour. */
+function onColor(hex: string): string {
+  const n = parseInt(hex.replace('#', ''), 16);
+  const [r, g, b] = [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+  return r * 0.299 + g * 0.587 + b * 0.114 > 160 ? '#000' : '#fff';
+}
+
 /**
- * "Tren" tab in the route panel: KTMB trains to the destination, compared with
- * driving (fuel + toll + parking). All costs are estimates; tickets are bought
- * on KTMB's own site for now.
+ * "Awam" tab in the route panel: public transport to the destination (KTMB
+ * ETS/Intercity/Komuter, LRT, MRT, Monorail, BRT), compared with driving (fuel
+ * + toll + parking). All costs are estimates; tickets for intercity trains are
+ * bought on KTMB's own site (or a partner).
  */
-export function TrainOptions() {
+export function TransitOptions() {
   const [t, lang] = useT();
   const { fix } = useLocation();
   const { destination, routes, selectedIndex, planRoute } = useRouting();
   const [vehicle] = useMyVehicle();
-  const [options, setOptions] = useState<TrainOption[] | null>(null);
+  const [options, setOptions] = useState<TransitOption[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [fuel, setFuel] = useState<{ price: number; label: string } | null>(null);
   const [people, setPeople] = useState(1);
@@ -46,7 +61,7 @@ export function TrainOptions() {
     let alive = true;
     setOptions(null);
     setError(null);
-    fetchTrainOptions(from, to)
+    fetchTransitOptions(from, to)
       .then((o) => alive && setOptions(o))
       .catch((e) => alive && setError(e instanceof Error ? e.message : 'error'));
     return () => {
@@ -74,8 +89,8 @@ export function TrainOptions() {
 
   if (!from) return <p className="py-6 text-center text-sm text-ink-500">{t('Menunggu lokasi anda…', 'Waiting for your location…')}</p>;
 
-  const goToStation = (s: TrainOption['legs'][number]['from']) => {
-    const place: Place = { id: `ktmb:${s.id}`, name: t(`Stesen ${s.name}`, `${s.name} station`), address: 'KTMB', coordinates: { lat: s.lat, lng: s.lng }, kind: 'poi', source: 'osm' };
+  const goToStation = (s: Station) => {
+    const place: Place = { id: `station:${s.id}`, name: t(`Stesen ${s.name}`, `${s.name} station`), address: '', coordinates: { lat: s.lat, lng: s.lng }, kind: 'poi', source: 'osm' };
     planRoute(place);
   };
 
@@ -105,7 +120,7 @@ export function TrainOptions() {
             {route && <p className="text-[11px] text-ink-400">{formatDuration(route.durationSeconds)}</p>}
           </div>
           <div className="rounded-xl bg-ink-50 p-2.5 dark:bg-ink-900">
-            <p className="flex items-center gap-1 text-xs font-semibold text-ink-500"><TrainFront className="size-3.5" /> {t('Tren', 'Train')}</p>
+            <p className="flex items-center gap-1 text-xs font-semibold text-ink-500"><TrainFront className="size-3.5" /> {t('Pengangkutan awam', 'Public transport')}</p>
             <p className="text-xl font-black tabular-nums">{train ? `~${rm(train.min)}–${train.max}` : options ? '—' : '…'}</p>
             {best && <p className="text-[11px] leading-snug text-ink-500">{t(`tambang × ${people} + ke/dari stesen`, `fares × ${people} + to/from station`)}</p>}
             {best && <p className="text-[11px] text-ink-400">{formatDuration(best.minutes * 60)}</p>}
@@ -115,7 +130,7 @@ export function TrainOptions() {
           <p className={cn('mt-2 flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-bold', car.total - train.max > 0 ? 'bg-jade-500/15 text-jade-800 dark:text-jade-200' : 'bg-ink-100 text-ink-700 dark:bg-ink-900 dark:text-ink-200')}>
             <PiggyBank className="size-4 shrink-0" />
             {car.total - train.max > 0
-              ? t(`Naik tren jimat sekurang-kurangnya ${rm(car.total - train.max)}`, `The train saves at least ${rm(car.total - train.max)}`)
+              ? t(`Naik pengangkutan awam jimat sekurang-kurangnya ${rm(car.total - train.max)}`, `Public transport saves at least ${rm(car.total - train.max)}`)
               : car.total - train.min > 0
                 ? t('Kos lebih kurang sama', 'About the same cost')
                 : t(`Untuk ${people} orang, memandu lebih murah`, `For ${people} people, driving is cheaper`)}
@@ -123,8 +138,8 @@ export function TrainOptions() {
         )}
         <p className="mt-2 text-[11px] leading-snug text-ink-400">
           {t(
-            `Anggaran sehala. Minyak ${fuel ? `${fuel.label} ${rm(fuel.price)}/L` : ''}, ${vehicle === 'car' ? '7' : '3'} L/100 km; tol ~RM0.10/km; parking ${parking.zone ? `${parking.zone} ~${rm(parking.perDay)}/hari` : 'biasanya percuma di kawasan ini'}. Tambang tren ialah anggaran: harga sebenar ikut Tambang Fleksi KTMB.`,
-            `One way, estimates. Fuel ${fuel ? `${fuel.label} ${rm(fuel.price)}/L` : ''}, ${vehicle === 'car' ? '7' : '3'} L/100 km; toll ~RM0.10/km; parking ${parking.zone ? `${parking.zone} ~${rm(parking.perDay)}/day` : 'usually free here'}. Train fares are estimates: KTMB prices vary (Flexi Fare).`,
+            `Anggaran sehala. Minyak ${fuel ? `${fuel.label} ${rm(fuel.price)}/L` : ''}, ${vehicle === 'car' ? '7' : '3'} L/100 km; tol ~RM0.10/km; parking ${parking.zone ? `${parking.zone} ~${rm(parking.perDay)}/hari` : 'biasanya percuma di kawasan ini'}. Tambang ialah anggaran (ETS/Intercity ikut Tambang Fleksi KTMB).`,
+            `One way, estimates. Fuel ${fuel ? `${fuel.label} ${rm(fuel.price)}/L` : ''}, ${vehicle === 'car' ? '7' : '3'} L/100 km; toll ~RM0.10/km; parking ${parking.zone ? `${parking.zone} ~${rm(parking.perDay)}/day` : 'usually free here'}. Fares are estimates (ETS/Intercity prices vary: KTMB Flexi Fare).`,
           )}
         </p>
       </section>
@@ -133,61 +148,69 @@ export function TrainOptions() {
       {error ? (
         <p role="alert" className="rounded-2xl bg-white p-3 text-sm text-ink-500 dark:bg-ink-800">{t('Jadual tren tak dapat dimuat sekarang. Cuba lagi sebentar.', 'Couldn’t load train times right now. Try again shortly.')}</p>
       ) : !options ? (
-        <p className="flex items-center justify-center gap-2 py-4 text-sm text-ink-500"><Loader2 className="size-4 animate-spin" /> {t('Mencari tren…', 'Finding trains…')}</p>
+        <p className="flex items-center justify-center gap-2 py-4 text-sm text-ink-500"><Loader2 className="size-4 animate-spin" /> {t('Mencari tren & LRT…', 'Finding trains & LRT…')}</p>
       ) : options.length === 0 ? (
         <p className="rounded-2xl bg-white p-3 text-sm text-ink-500 dark:bg-ink-800">
-          {t('Tiada tren KTMB yang sesuai dalam 24 jam, atau tiada stesen dalam 40 km dari sini atau destinasi.', 'No suitable KTMB train in the next 24 hours, or no station within 40 km of here or the destination.')}
+          {t('Tiada tren, LRT atau MRT yang sesuai dalam 24 jam, atau tiada stesen berhampiran sini atau destinasi. Bas akan datang.', 'No suitable train, LRT or MRT in the next 24 hours, or no station near here or the destination. Buses are coming.')}
         </p>
       ) : (
         <ul className="space-y-2">
           {options.map((o, i) => (
-            <li key={`${o.legs[0].tripId}-${o.leave}`} className={cn('rounded-2xl bg-white ring-2 dark:bg-ink-800', open === i ? 'ring-jade-500' : 'ring-transparent')}>
+            <li key={`${rides(o)[0].tripKey}-${o.leave}`} className={cn('rounded-2xl bg-white ring-2 dark:bg-ink-800', open === i ? 'ring-jade-500' : 'ring-transparent')}>
               <button type="button" onClick={() => setOpen(open === i ? null : i)} aria-expanded={open === i} className="w-full p-3 text-left">
                 <div className="flex items-baseline justify-between gap-2">
                   <span className="text-lg font-black tabular-nums">
-                    {clock(o.legs[0].depart)} → {clock(o.legs[o.legs.length - 1].arrive)}
-                    {dayDiff(o.legs[0].depart) > 0 && <span className="ml-1 text-xs font-semibold text-amber-600">{t('esok', 'tomorrow')}</span>}
+                    {clock(rides(o)[0].depart)} → {clock(rides(o)[rides(o).length - 1].arrive)}
+                    {dayDiff(rides(o)[0].depart) > 0 && <span className="ml-1 text-xs font-semibold text-amber-600">{t('esok', 'tomorrow')}</span>}
                   </span>
                   <span className="text-sm text-ink-500">{formatDuration(o.minutes * 60)}</span>
                 </div>
                 <div className="mt-1 flex flex-wrap items-center gap-1 text-xs">
-                  {o.legs.map((l, k) => (
+                  {rides(o).map((l, k) => (
                     <span key={k} className="flex items-center gap-1">
                       {k > 0 && <span className="text-ink-400">›</span>}
-                      <span className="rounded px-1.5 py-0.5 font-bold" style={{ background: l.color, color: l.kind === 'ets' ? '#000' : '#fff' }}>{l.kind === 'ets' ? 'ETS' : l.kind === 'komuter' ? 'Komuter' : l.kind === 'shuttle' ? 'Shuttle' : 'Intercity'}</span>
+                      <LineBadge leg={l} />
                       <span className="text-ink-600 dark:text-ink-300">{l.from.name} → {l.to.name}</span>
                     </span>
                   ))}
                 </div>
                 <p className="mt-1 flex items-center justify-between text-xs text-ink-500">
-                  <span>{o.transfers === 0 ? t('Terus', 'Direct') : t(`${o.transfers} tukar tren`, `${o.transfers} change`)} · {t(`keluar ${clock(o.leave)}`, `leave ${clock(o.leave)}`)}</span>
+                  <span>{o.transfers === 0 ? t('Terus', 'Direct') : t(`${o.transfers} kali tukar`, `${o.transfers} change${o.transfers > 1 ? 's' : ''}`)} · {t(`keluar ${clock(o.leave)}`, `leave ${clock(o.leave)}`)}</span>
                   <span className="flex items-center gap-1 font-semibold">{t(`tambang ~${rm(o.fareMin)}–${o.fareMax}`, `fare ~${rm(o.fareMin)}–${o.fareMax}`)} {open === i ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}</span>
                 </p>
               </button>
               {open === i && (
                 <div className="space-y-2 border-t border-ink-100 p-3 pt-2 text-sm dark:border-ink-700">
-                  <Step leg={o.access} label={t(`ke Stesen ${o.legs[0].from.name}`, `to ${o.legs[0].from.name} station`)} />
-                  {o.legs.map((l, k) => (
-                    <div key={k} className="flex items-start gap-2">
-                      <TrainFront className="mt-0.5 size-4 shrink-0" style={{ color: l.color }} />
-                      <span className="min-w-0 flex-1">
-                        <strong>{clock(l.depart)}</strong> {l.from.name} → <strong>{clock(l.arrive)}</strong> {l.to.name}
-                        <span className="block text-xs text-ink-500">
-                          {l.routeName} · {l.km} km · {t(`${l.stops} hentian`, `${l.stops} stops`)} · {t(`~${rm(l.fareMin)}–${l.fareMax}`, `~${rm(l.fareMin)}–${l.fareMax}`)}
-                          {!l.ticket && ` · ${t("tap kad Touch 'n Go", "tap a Touch 'n Go card")}`}
+                  <Step leg={o.access} label={t(`ke Stesen ${rides(o)[0].from.name}`, `to ${rides(o)[0].from.name} station`)} />
+                  {o.legs.map((l, k) =>
+                    l.type === 'walk' ? (
+                      <div key={k} className="flex items-start gap-2 text-ink-600 dark:text-ink-300">
+                        <Footprints className="mt-0.5 size-4 shrink-0" />
+                        <span>{t(`Jalan kaki ke ${l.to.name} untuk tukar laluan (~${l.minutes} min)`, `Walk to ${l.to.name} to change lines (~${l.minutes} min)`)}</span>
+                      </div>
+                    ) : (
+                      <div key={k} className="flex items-start gap-2">
+                        <TrainFront className="mt-0.5 size-4 shrink-0" style={{ color: l.color }} />
+                        <span className="min-w-0 flex-1">
+                          <LineBadge leg={l} /> <strong>{clock(l.depart)}</strong> {l.from.name} → <strong>{clock(l.arrive)}</strong> {l.to.name}
+                          <span className="block text-xs text-ink-500">
+                            {l.routeName} · {l.km} km · {t(`${l.stops} hentian`, `${l.stops} stops`)} ·{' '}
+                            {l.fareShared ? t('tambang sama (Rapid KL)', 'same fare (Rapid KL)') : t(`~${rm(l.fareMin)}–${l.fareMax}`, `~${rm(l.fareMin)}–${l.fareMax}`)}
+                            {!l.ticket && ` · ${t("tap kad Touch 'n Go atau kad bank", "tap a Touch 'n Go or bank card")}`}
+                          </span>
                         </span>
-                      </span>
-                    </div>
-                  ))}
+                      </div>
+                    ),
+                  )}
                   <Step leg={o.egress} label={t(`ke ${destination?.name ?? 'destinasi'}`, `to ${destination?.name ?? 'the destination'}`)} />
                   <div className="flex flex-wrap gap-2 pt-1">
-                    {o.legs.some((l) => l.ticket) && (
+                    {rides(o).some((l) => l.ticket) && (
                       <a href={KTMB_BOOKING_URL} target="_blank" rel="noopener noreferrer" className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-jade-500 px-3 py-2.5 text-sm font-bold text-ink-950">
                         <ExternalLink className="size-4" /> {t('Beli tiket di KTMB', 'Buy tickets at KTMB')}
                       </a>
                     )}
                     {(() => {
-                      const ticketLeg = o.legs.find((l) => l.ticket);
+                      const ticketLeg = rides(o).find((l) => l.ticket);
                       const partner = ticketLeg && twelveGoTrainUrl(ticketLeg.from.name, ticketLeg.to.name, lang);
                       return partner ? (
                         <a href={partner} target="_blank" rel="sponsored noopener noreferrer" className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-ink-100 px-3 py-2.5 text-sm font-bold text-ink-800 dark:bg-ink-900 dark:text-ink-100">
@@ -195,11 +218,11 @@ export function TrainOptions() {
                         </a>
                       ) : null;
                     })()}
-                    <Button variant="secondary" className="flex-1 py-2.5" onClick={() => goToStation(o.legs[0].from)}>
+                    <Button variant="secondary" className="flex-1 py-2.5" onClick={() => goToStation(rides(o)[0].from)}>
                       <Navigation className="size-4" /> {t('Arah ke stesen', 'Directions to station')}
                     </Button>
                   </div>
-                  {o.legs.some((l) => l.ticket && twelveGoTrainUrl(l.from.name, l.to.name)) && (
+                  {rides(o).some((l) => l.ticket && twelveGoTrainUrl(l.from.name, l.to.name)) && (
                     <p className="text-[11px] leading-snug text-ink-400">
                       {t('12Go ialah rakan JalanGo: kami mungkin dapat komisen jika anda beli di sana, tanpa kos tambahan daripada kami. Harga dan caj 12Go mungkin berbeza dari KTMB.', '12Go is a JalanGo partner: we may earn a commission if you buy there, at no extra cost from us. 12Go’s prices and fees may differ from KTMB’s.')}
                     </p>
@@ -210,8 +233,19 @@ export function TrainOptions() {
           ))}
         </ul>
       )}
-      <p className="text-center text-[11px] text-ink-400">{t('Jadual: KTMB melalui data.gov.my, dikemas kini setiap hari.', 'Timetable: KTMB via data.gov.my, updated daily.')}</p>
+      <p className="text-center text-[11px] text-ink-400">{t('Jadual: KTMB dan Prasarana (Rapid KL) melalui data.gov.my.', 'Timetables: KTMB and Prasarana (Rapid KL) via data.gov.my.')}</p>
     </div>
+  );
+}
+
+function LineBadge({ leg }: { leg: TransitLeg }) {
+  const [, lang] = useT();
+  const rapid = ['lrt', 'mrt', 'monorail', 'brt'].includes(leg.mode);
+  return (
+    <span className="inline-block rounded px-1.5 py-0.5 text-[11px] font-bold leading-none" style={{ background: leg.color, color: onColor(leg.color) }}>
+      {modeLabel(leg.mode, lang)}
+      {rapid && leg.shortName ? ` ${leg.shortName}` : ''}
+    </span>
   );
 }
 
