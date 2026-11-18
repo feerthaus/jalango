@@ -105,3 +105,14 @@ export function stopRinging(): void {
 }
 
 export const isRinging = () => ringing !== null;
+
+/** One soft "heads up" (two falling tones + a short buzz): e.g. the driver is stuck in traffic. */
+export function chime(): void {
+  const c = audio();
+  if (c && c.state === 'running') {
+    const t = c.currentTime + 0.05;
+    tone(t, 784, 0.22, 0.25);
+    tone(t + 0.3, 587, 0.35, 0.25);
+  }
+  (navigator as NavigatorExtra).vibrate?.([200, 100, 200]);
+}

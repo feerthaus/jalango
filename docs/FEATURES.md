@@ -278,6 +278,11 @@ Pelan penuh ada dalam `docs/MARKETPLACE.md`. Fasa 0 hanya pendaftaran dan penges
   - **Bila sampai:** bip berulang (3 nada) setiap 2.5 s hingga 30 s + getar (Android; iPhone tak sokong getar web) + banner hijau "… dah sampai!" + tajuk tab "🟢 … dah sampai!". Butang **Hentikan bunyi**; banner yang ditutup tidak muncul lagi.
   - Tanpa menekan butang: banner tetap muncul, tanpa bunyi. Pautan yang sudah tamat sebelum dibuka tidak dikira "sampai".
   - Had: tiada bunyi bila telefon dikunci atau halaman ditutup (notifikasi push = Fasa 2, KIV).
+- **Status trafik untuk yang menunggu (halaman `/live/...`):**
+  - **Kesesakan:** bila pemandu (sedang navigasi) bergerak bawah 15 km/j lebih 2 minit, dan bukan dalam 600 m dari destinasi, penerima nampak banner kuning *"… dalam kesesakan lalu lintas sejak 3:12 ptg · mungkin lewat ~X min"* dan tajuk tab *"🟡 … dalam kesesakan"*. Hilang selepas 30 saat atas 25 km/j (tak berkelip di lampu isyarat).
+  - **Anggaran sampai yang jujur:** *"Anggaran sampai 3:45 ptg (~25 min lagi)"* + label *"lewat ~X min"* (≥ 3 min) berbanding anggaran di awal perjalanan. App pemandu semak semula trafik (laluan Mapbox dengan trafik) setiap 5 minit semasa berkongsi; anggaran tidak pernah lebih awal daripada baki laluan.
+  - **Bunyi:** jika penerima tekan "Beritahu saya bila sampai", satu bunyi pendek + getar bila status bertukar ke kesesakan. Hanya bila halaman terbuka (notifikasi push = Fasa 2).
+  - Data: `slow_since`, `eta_delay_s` dalam perkongsian; dipadam bila perkongsian dihentikan (`get_live_share_v3`).
 - **Kongsi lokasi ini:** pin sekali, bukan live.
 - **Pautan tempat JalanGo:** "Kongsi tempat ini" dan "Kongsi lokasi ini" menghantar pautan JalanGo (`/?tempat=lat,lng&n=nama&a=alamat`), bukan Google Maps. Penerima buka JalanGo dengan tempat itu terpilih di peta, terus boleh tekan Arah. Setiap pautan yang dikongsi membawa orang baru ke JalanGo.
 - **Konvoi:** kereta dan motosikal.
