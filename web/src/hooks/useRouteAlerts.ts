@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useReports } from '@/contexts/ReportsContext';
 import { useRouting } from '@/contexts/RoutingContext';
-import { reportMeta } from '@/lib/reportTypes';
+import { reportTitle } from '@/lib/reportTypes';
 import type { TrafficReport } from '@/types';
 import { justPassed, reportsOnRoute, upcomingAlerts, type UpcomingAlert } from '@/utils/routeAlerts';
 import { buildRouteIndex } from '@/utils/routeProgress';
@@ -56,9 +56,9 @@ export function useRouteAlerts(): RouteAlertsState {
     announced.current.add(next.report.id);
     vibrate([180, 80, 180]);
     if (voiceOn) {
-      const meta = reportMeta(next.report.report_type);
       const d = spokenDistance(next.distance, lang);
-      speak(lang === 'ms' ? `Awas, ${meta.labelMs.toLowerCase()} dilaporkan dalam ${d} di hadapan` : `${meta.label} reported ahead, in ${d}`, lang);
+      const what = reportTitle(next.report, lang).replace(' · ', ', ');
+      speak(lang === 'ms' ? `Awas, ${what.toLowerCase()}, dilaporkan dalam ${d} di hadapan` : `${what} reported ahead, in ${d}`, lang);
     }
   }, [next, voiceOn, lang]);
 

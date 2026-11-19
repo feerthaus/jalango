@@ -2,6 +2,8 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { useProbeConsent } from '@/hooks/useProbeConsent';
 import { ProbeCollector } from '@/services/probeService';
 import { fetchRoutes } from '@/services/routingService';
+import { fetchImpassableFloods } from '@/services/reportsService';
+import { pickAvoidPoints, tripBounds } from '@/utils/floodAvoid';
 import { clearActiveTrace, clearTrip, loadActiveTrace, loadTrip, loadTripRoute, saveActiveTrace, saveTrip, saveTripRoute } from '@/services/tripStore';
 import type { CommunityRoute, Shortcut } from '@/types';
 import { haversineMeters } from '@/utils/geo';
@@ -25,6 +27,8 @@ interface RoutingValue {
   selectedRoute: Route | null;
   mode: 'live' | 'demo' | null;
   notice: string | null;
+  /** impassable floods the current routes go around */
+  avoidedFloods: number;
   error: string | null;
   avoidTolls: boolean;
   /** On foot (e.g. to a train station): walking routes, no tolls or traffic */
@@ -81,6 +85,7 @@ export function RoutingProvider({ children }: { children: ReactNode }) {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [mode, setMode] = useState<'live' | 'demo' | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [avoidedFloods, setAvoidedFloods] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [avoidTolls, setAvoidTollsState] = useState(false);
   const [walking, setWalking] = useState(false);
@@ -133,17 +138,30 @@ export function RoutingProvider({ children }: { children: ReactNode }) {
     else setStatus('loading');
     setError(null);
 
-    fetchRoutes(origin, destination.coordinates, {
-      // Still checking the server (e.g. right after the app reopens)? Try live anyway —
-      // fetchRoutes falls back to the straight-line preview if it really is down.
-      live: searchMode !== 'demo',
-      avoidTolls,
-      walking: walkingRef.current,
-      destinationName: destination.name,
-      via: viaRef.current,
-      heading: headingRef.current,
-      signal: controller.signal,
-    })
+    // Floods reported impassable between here and there: route around them (best effort, ≤1.5 s)
+    const floods: Promise<Coordinates[]> =
+      walkingRef.current || searchMode === 'demo'
+        ? Promise.resolve([])
+        : Promise.race([
+            fetchImpassableFloods(tripBounds(origin, destination.coordinates), controller.signal).then((r) => pickAvoidPoints(r, origin, destination.coordinates)),
+            new Promise<Coordinates[]>((resolve) => setTimeout(() => resolve([]), 1500)),
+          ]).catch(() => []);
+
+    floods
+      .then((avoid) =>
+        fetchRoutes(origin, destination.coordinates, {
+          // Still checking the server (e.g. right after the app reopens)? Try live anyway —
+          // fetchRoutes falls back to the straight-line preview if it really is down.
+          live: searchMode !== 'demo',
+          avoidTolls,
+          walking: walkingRef.current,
+          destinationName: destination.name,
+          via: viaRef.current,
+          heading: headingRef.current,
+          avoid,
+          signal: controller.signal,
+        }),
+      )
       .then((res) => {
         // A reroute that hit a network blip must not swap a real road route for a straight line
         if (isReroute && res.mode === 'demo' && selectedRouteRef.current && selectedRouteRef.current.source !== 'demo') return;
@@ -161,6 +179,7 @@ export function RoutingProvider({ children }: { children: ReactNode }) {
         setSelectedIndex(isReroute ? pickRerouteIndex(res.routes) : 0);
         setMode(res.mode);
         setNotice(res.notice ?? null);
+        setAvoidedFloods(res.avoidedFloods ?? 0);
         segmentHint.current = undefined;
         if (!isReroute) setStatus('ready');
       })
@@ -560,6 +579,7 @@ export function RoutingProvider({ children }: { children: ReactNode }) {
       selectedRoute,
       mode,
       notice,
+      avoidedFloods,
       error,
       avoidTolls,
       walking,
@@ -586,7 +606,7 @@ export function RoutingProvider({ children }: { children: ReactNode }) {
       clearShortcut,
       finishedTripId,
     }),
-    [status, destination, routes, selectedIndex, selectedRoute, mode, notice, error, avoidTolls, walking, progress, rerouting, resumedTo, planRoute, navigateTo, request, setAvoidTolls, startNavigation, endNavigation, clearRoute, shortcut, shortcutTitle, applyShortcut, applyCommunityRoute, followPath, clearShortcut, stop, addStop, clearStop, finishedTripId],
+    [status, destination, routes, selectedIndex, selectedRoute, mode, notice, avoidedFloods, error, avoidTolls, walking, progress, rerouting, resumedTo, planRoute, navigateTo, request, setAvoidTolls, startNavigation, endNavigation, clearRoute, shortcut, shortcutTitle, applyShortcut, applyCommunityRoute, followPath, clearShortcut, stop, addStop, clearStop, finishedTripId],
   );
 
   return <RoutingContext.Provider value={value}>{children}</RoutingContext.Provider>;

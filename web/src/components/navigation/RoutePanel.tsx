@@ -1,4 +1,7 @@
-import { AlertTriangle, ArrowLeft, BadgeCheck, Car, Coins, Footprints, Megaphone, Gauge, LocateFixed, Navigation, RefreshCw, Route as RouteIcon, ShieldCheck, TrainFront, Utensils } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, BadgeCheck, Car, Coins, Footprints, Megaphone, Waves, Gauge, LocateFixed, Navigation, RefreshCw, Route as RouteIcon, ShieldCheck, TrainFront, Utensils } from 'lucide-react';
+import { WeatherWarningBanner } from '@/components/weather/WeatherWarningBanner';
+import { useWeatherWarnings } from '@/hooks/useWeatherWarnings';
+import { stateAt } from '@/utils/malaysiaState';
 import { Button } from '@/components/ui/Button';
 import { DemoBadge } from '@/components/ui/DemoBadge';
 import { useReports } from '@/contexts/ReportsContext';
@@ -34,8 +37,9 @@ export function RoutePanel() {
   const [alongOpen, setAlongOpen] = useState(false);
   const verifiedFood = useVerifiedFoodOnRoute();
   const { setCategory: setAlongCategory } = useAlong();
-  const { status, destination, routes, selectedIndex, selectRoute, mode, notice, error, avoidTolls, walking, setAvoidTolls, startNavigation, clearRoute, retry } = useRouting();
+  const { status, destination, routes, selectedIndex, selectRoute, mode, notice, avoidedFloods, error, avoidTolls, walking, setAvoidTolls, startNavigation, clearRoute, retry } = useRouting();
   const { fix } = useLocation();
+  const weather = useWeatherWarnings();
   const [travel, setTravel] = useState<'car' | 'train'>('car');
   // Ask for trains as soon as a long trip is planned, so the "Tren" tab opens instantly
   const far = Boolean(!walking && fix && destination && mode !== 'demo' && haversineMeters(fix.coordinates, destination.coordinates) >= TRAIN_FROM_M);
@@ -140,6 +144,13 @@ export function RoutePanel() {
                       : t('Laluan jalan tidak tersedia, jadi ini garis lurus, bukan jalan sebenar. Masa ialah anggaran kasar pada 50 km/j.', 'Routing isn’t connected, so this is a straight line, not a road route. The time is a rough estimate at 50 km/h.'))}
                 </span>
               </div>
+            )}
+            <WeatherWarningBanner className="mb-2" warnings={weather} states={[fix ? stateAt(fix.coordinates) : null, stateAt(destination.coordinates)]} />
+            {avoidedFloods > 0 && (
+              <p className="mb-2 flex items-start gap-2 rounded-xl bg-sky-500/10 px-3 py-2 text-xs text-sky-800 dark:text-sky-200">
+                <Waves className="mt-0.5 size-4 shrink-0" />
+                <span>{t(`Laluan mengelak ${avoidedFloods} kawasan banjir yang dilaporkan tak boleh lalu.`, `Routes avoid ${avoidedFloods} flooded spot${avoidedFloods > 1 ? 's' : ''} reported impassable.`)}</span>
+              </p>
             )}
             {/* driver shortcuts don't apply on foot */}
             {!walking && <ShortcutSuggestions />}

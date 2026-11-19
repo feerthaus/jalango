@@ -155,6 +155,8 @@ export interface TrafficReport {
   expires_at: string;
   created_at: string;
   updated_at: string;
+  /** flood reports: can cars still pass? (null = not said) */
+  flood_passable?: boolean | null;
 }
 
 export type ConfirmationType = 'confirm' | 'resolved';
@@ -163,6 +165,8 @@ export interface NewReport {
   type: ReportType;
   description: string;
   coordinates: Coordinates;
+  /** flood only: can cars still pass? */
+  floodPassable?: boolean | null;
 }
 
 /* ─── Trip history ─────────────────────────────────────────────────── */

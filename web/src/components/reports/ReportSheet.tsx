@@ -20,6 +20,8 @@ export function ReportSheet({ onClose }: { onClose: () => void }) {
   const { fix, status: gpsStatus, request } = useLocation();
   const [type, setType] = useState<ReportType | null>(null);
   const [description, setDescription] = useState('');
+  // floods: can cars still pass? (required, it decides whether routes avoid the spot)
+  const [passable, setPassable] = useState<boolean | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
@@ -41,7 +43,7 @@ export function ReportSheet({ onClose }: { onClose: () => void }) {
     setBusy(true);
     setError(null);
     try {
-      await submit({ type, description, coordinates: fix.coordinates });
+      await submit({ type, description, coordinates: fix.coordinates, floodPassable: type === 'flood' ? passable : undefined });
       setDone(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not send the report');
@@ -119,6 +121,30 @@ export function ReportSheet({ onClose }: { onClose: () => void }) {
         </div>
         {poorFix && <p className="text-xs text-amber-600">{t('Ketepatan GPS rendah — ke kawasan terbuka jika boleh.', 'GPS accuracy is low — move to an open area if you can.')}</p>}
         {outside && <p className="text-xs text-red-600">{t('Laporan hanya boleh dibuat di Malaysia.', 'Reports can only be made inside Malaysia.')}</p>}
+        {type === 'flood' && (
+          <fieldset>
+            <legend className="text-sm font-medium">{t('Kereta boleh lalu?', 'Can cars get through?')}</legend>
+            <div className="mt-1 grid grid-cols-2 gap-2">
+              {([true, false] as const).map((v) => (
+                <button
+                  key={String(v)}
+                  type="button"
+                  aria-pressed={passable === v}
+                  onClick={() => setPassable(v)}
+                  className={
+                    passable === v
+                      ? v
+                        ? 'rounded-xl bg-amber-400 px-3 py-2.5 text-sm font-bold text-ink-950'
+                        : 'rounded-xl bg-red-600 px-3 py-2.5 text-sm font-bold text-white'
+                      : 'rounded-xl bg-ink-100 px-3 py-2.5 text-sm font-semibold dark:bg-ink-800'
+                  }
+                >
+                  {v ? t('Boleh lalu, perlahan', 'Yes, slowly') : t('Tak boleh lalu', 'No, impassable')}
+                </button>
+              ))}
+            </div>
+          </fieldset>
+        )}
         <label className="block">
           <span className="text-sm font-medium">{t('Butiran (pilihan)', 'Details (optional)')}</span>
           <textarea
@@ -137,7 +163,7 @@ export function ReportSheet({ onClose }: { onClose: () => void }) {
             {error}
           </p>
         )}
-        <Button className="w-full py-3 text-base" onClick={send} disabled={busy || !fix || Boolean(outside)}>
+        <Button className="w-full py-3 text-base" onClick={send} disabled={busy || !fix || Boolean(outside) || (type === 'flood' && passable === null)}>
           {busy && <Loader2 className="size-4 animate-spin" />} {t('Lapor', 'Report')} {(lang === 'en' ? meta?.label : meta?.labelMs)?.toLowerCase()}
         </Button>
         <p className="text-center text-[11px] text-ink-400">{t('Laporkan hanya apa yang anda lihat. Laporan palsu boleh dibuang.', 'Only report what you can see. False reports may be removed.')}</p>

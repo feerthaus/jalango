@@ -57,6 +57,11 @@ export function ReportDetailCard({ report, onClose }: { report: TrafficReport; o
           <h2 className="text-lg font-bold leading-tight">
             {lang === 'en' ? meta.label : meta.labelMs} <span className="text-sm font-normal text-ink-400">· {lang === 'en' ? meta.labelMs : meta.label}</span>
           </h2>
+          {report.report_type === 'flood' && typeof report.flood_passable === 'boolean' && (
+            <p className={report.flood_passable ? 'mt-1 text-sm font-semibold text-amber-600' : 'mt-1 text-sm font-semibold text-red-600'}>
+              {report.flood_passable ? t('Kereta masih boleh lalu, perlahan', 'Cars can still pass, slowly') : t('Tak boleh lalu: laluan JalanGo elak tempat ini', 'Impassable: JalanGo routes avoid this spot')}
+            </p>
+          )}
           <p className="mt-0.5 text-xs text-ink-500 dark:text-ink-400">
             {t('Dilaporkan', 'Reported')} {formatRelativeTime(report.created_at, lang)}
             {distance !== null && ` · ${formatDistance(distance)} ${t('dari sini', 'away')}`}

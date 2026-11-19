@@ -121,7 +121,10 @@ export function normalizeRoute(r: MbRoute, index: number): Route {
   };
 }
 
-type DirectionsOpts = { avoidTolls?: boolean; via?: Coordinates[]; heading?: number; walking?: boolean };
+type DirectionsOpts = { avoidTolls?: boolean; via?: Coordinates[]; heading?: number; walking?: boolean; avoidPoints?: Coordinates[] };
+
+/** Most points a route may be asked to avoid (e.g. impassable floods). */
+export const MAX_AVOID = 10;
 
 export function buildDirectionsUrl(from: Coordinates, to: Coordinates, opts: DirectionsOpts = {}): URL {
   const via = (opts.via ?? []).slice(0, MAX_VIA);
@@ -148,12 +151,35 @@ export function buildDirectionsUrl(from: Coordinates, to: Coordinates, opts: Dir
   url.searchParams.set('language', 'en');
   // Via points are silent: no "you have arrived" at each one
   if (via.length > 0) url.searchParams.set('waypoints', `0;${points.length - 1}`);
-  if (opts.avoidTolls) url.searchParams.set('exclude', 'toll');
+  // Tolls and spots to keep away from (impassable floods): exclude=toll,point(lng lat),…
+  const exclude = [
+    ...(opts.avoidTolls ? ['toll'] : []),
+    ...(opts.avoidPoints ?? []).slice(0, MAX_AVOID).map((p) => `point(${p.lng.toFixed(5)} ${p.lat.toFixed(5)})`),
+  ];
+  if (exclude.length) url.searchParams.set('exclude', exclude.join(','));
   // Start on the road segment that points the way we're driving (±45°), like Waze/Google do
   if (opts.heading !== undefined && Number.isFinite(opts.heading)) {
     url.searchParams.set('bearings', `${Math.round(opts.heading) % 360},45${';'.repeat(points.length - 1)}`);
   }
   return url;
+}
+
+/**
+ * Routes that keep away from `avoidPoints` when the router can; if it can't
+ * (no route, or the router refuses the points), routes without them.
+ * `avoided` says how many points the returned routes actually avoid.
+ */
+export async function getDirectionsAvoiding(from: Coordinates, to: Coordinates, opts: DirectionsOpts): Promise<{ routes: Route[]; avoided: number }> {
+  const points = (opts.avoidPoints ?? []).slice(0, MAX_AVOID);
+  if (!points.length || opts.walking) return { routes: await getDirections(from, to, { ...opts, avoidPoints: undefined }), avoided: 0 };
+  try {
+    return { routes: await getDirections(from, to, { ...opts, avoidPoints: points }), avoided: points.length };
+  } catch (err) {
+    if (err instanceof HttpError && (err.status === 422 || err.code === 'upstream_error')) {
+      return { routes: await getDirections(from, to, { ...opts, avoidPoints: undefined }), avoided: 0 };
+    }
+    throw err;
+  }
 }
 
 export async function getDirections(

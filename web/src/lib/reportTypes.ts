@@ -1,5 +1,5 @@
 import { Ban, Car, CarFront, Cctv, Construction, ShieldAlert, Siren, TrafficCone, TriangleAlert, Waves, type LucideIcon } from 'lucide-react';
-import type { ReportType } from '@/types';
+import type { ReportType, TrafficReport } from '@/types';
 
 export interface ReportTypeMeta {
   type: ReportType;
@@ -13,6 +13,18 @@ export interface ReportTypeMeta {
 export function reportMeta(type: ReportType): ReportTypeMeta {
   return REPORT_TYPES.find((t) => t.type === type) ?? REPORT_TYPES.find((t) => t.type === 'hazard')!;
 }
+
+/** Report name, with a flood's passability: "Banjir · tak boleh lalu" / "Flood · impassable". */
+export function reportTitle(r: Pick<TrafficReport, 'report_type' | 'flood_passable'>, lang: 'ms' | 'en'): string {
+  const meta = reportMeta(r.report_type);
+  const name = lang === 'ms' ? meta.labelMs : meta.label;
+  if (r.report_type !== 'flood' || typeof r.flood_passable !== 'boolean') return name;
+  if (lang === 'ms') return `${name} · ${r.flood_passable ? 'boleh lalu perlahan' : 'tak boleh lalu'}`;
+  return `${name} · ${r.flood_passable ? 'passable with care' : 'impassable'}`;
+}
+
+/** Floods reported as impassable: routes go around these points. */
+export const isImpassableFlood = (r: Pick<TrafficReport, 'report_type' | 'flood_passable' | 'status'>) => r.report_type === 'flood' && r.flood_passable === false && r.status === 'active';
 
 /** Must stay in sync with the `report_type` CHECK constraint in the SQL migration. */
 export const REPORT_TYPES: ReportTypeMeta[] = [
