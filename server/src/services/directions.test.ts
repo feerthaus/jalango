@@ -152,4 +152,11 @@ describe('buildDirectionsUrl', () => {
     expect(u.searchParams.get('bearings')).toBeNull();
     expect(u.searchParams.get('steps')).toBe('true');
   });
+
+  it('keeps away from impassable floods with exclude=point(lng lat), alongside tolls', () => {
+    const u = buildDirectionsUrl({ lng: 101.6, lat: 3.0 }, { lng: 101.7, lat: 3.1 }, { avoidTolls: true, avoidPoints: [{ lng: 101.65, lat: 3.05 }, { lng: 101.66123456, lat: 3.06 }] });
+    expect(u.searchParams.get('exclude')).toBe('toll,point(101.65000 3.05000),point(101.66123 3.06000)');
+    const many = Array.from({ length: 15 }, (_, i) => ({ lng: 101.6 + i * 0.001, lat: 3.0 }));
+    expect(buildDirectionsUrl({ lng: 101.6, lat: 3.0 }, { lng: 101.7, lat: 3.1 }, { avoidPoints: many }).searchParams.get('exclude')!.split(',')).toHaveLength(10);
+  });
 });

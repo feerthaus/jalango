@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useReports } from '@/contexts/ReportsContext';
 import type { RouteAlertsState } from '@/hooks/useRouteAlerts';
 import { cn } from '@/lib/cn';
-import { reportMeta } from '@/lib/reportTypes';
+import { reportMeta, reportTitle } from '@/lib/reportTypes';
 import type { ConfirmationType } from '@/types';
 import { formatRelativeTime } from '@/utils/format';
 import { formatDistance } from '@/utils/geo';
@@ -32,7 +32,7 @@ export function RouteAlerts({ alerts }: { alerts: RouteAlertsState }) {
       </span>
       <div className="min-w-0 flex-1">
         <p className="font-bold leading-tight">
-          {t(`${meta.labelMs} di depan`, `${meta.label} ahead`)} · {formatDistance(next.distance)}
+          {t(`${reportTitle(next.report, 'ms')} di depan`, `${reportTitle(next.report, 'en')} ahead`)} · {formatDistance(next.distance)}
         </p>
         <p className={cn('truncate text-xs', close ? 'text-ink-800' : 'text-ink-500 dark:text-ink-300')}>
           {next.report.description || `${t('Dilaporkan', 'Reported')} ${formatRelativeTime(next.report.created_at, lang)}`}

@@ -37,9 +37,17 @@ import { useReports } from '@/contexts/ReportsContext';
 import { useIsNavigating, useRouting } from '@/contexts/RoutingContext';
 import { useT } from '@/lib/i18n';
 import { cn } from '@/lib/cn';
+import { useLocation } from '@/contexts/LocationContext';
+import { useWeatherWarnings } from '@/hooks/useWeatherWarnings';
+import { stateAt } from '@/utils/malaysiaState';
+import { WeatherWarningBanner } from '@/components/weather/WeatherWarningBanner';
 
 export function MapPage() {
   const [t] = useT();
+  // MetMalaysia warnings for the state you're in
+  const weather = useWeatherWarnings();
+  const { fix } = useLocation();
+  const hereState = fix ? stateAt(fix.coordinates) : null;
   const { selectedPlace, clearSelection, tileError, following, setFollowing } = useMapContext();
   const { status } = useRouting();
   const { selectedReport, selectReport } = useReports();
@@ -141,6 +149,7 @@ export function MapPage() {
         {!searchOpen && !planning && (
           <div className="space-y-2 max-md:mr-14">
             <LiveShareBanner />
+            <WeatherWarningBanner warnings={weather} states={[hereState]} />
             {/* During a train/bus trip, only what matters on the way: the trip panel has the room */}
             {!transitTrip && <ConvoyBanner />}
             {!transitTrip && <ItineraryChip />}

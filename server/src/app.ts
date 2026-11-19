@@ -1,4 +1,5 @@
 import cors from 'cors';
+import { weatherRouter } from './routes/weather.js';
 import { assistantRouter } from './routes/assistant.js';
 import express from 'express';
 import helmet from 'helmet';
@@ -38,6 +39,7 @@ export function createApp() {
   app.use('/api/geo/miss', rateLimit({ name: 'geo-miss', windowMs: 10 * 60_000, max: 20 }));
   app.use('/api/geo', rateLimit({ name: 'geo', windowMs: 60_000, max: 120 }), geocodingRouter);
   app.use('/api/fuel', rateLimit({ name: 'fuel', windowMs: 60_000, max: 30 }), fuelRouter);
+  app.use('/api/weather', rateLimit({ name: 'weather', windowMs: 60_000, max: 30 }), weatherRouter);
   app.use('/api/transit', rateLimit({ name: 'transit', windowMs: 60_000, max: 30 }), transitRouter);
   app.use('/api/directions', rateLimit({ name: 'directions', windowMs: 60_000, max: 60 }), directionsRouter);
   app.use('/api/probes', rateLimit({ name: 'probes', windowMs: 60_000, max: 12 }), probesRouter);

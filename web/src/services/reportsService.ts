@@ -9,7 +9,7 @@ import type { ConfirmationType, NewReport, TrafficReport } from '@/types';
  */
 
 export const DESCRIPTION_MAX = 280;
-const COLUMNS = 'id,user_id,report_type,description,latitude,longitude,status,confirm_count,resolve_count,expires_at,created_at,updated_at';
+const COLUMNS = 'id,user_id,report_type,description,latitude,longitude,status,confirm_count,resolve_count,expires_at,created_at,updated_at,flood_passable';
 
 export class ReportError extends Error {
   constructor(
@@ -53,6 +53,26 @@ export interface Bounds {
   maxLat: number;
   minLng: number;
   maxLng: number;
+}
+
+/** Floods reported as impassable in an area (routes go around them). */
+export async function fetchImpassableFloods(bounds: Bounds, signal?: AbortSignal): Promise<TrafficReport[]> {
+  let q = client()
+    .from('traffic_reports')
+    .select(COLUMNS)
+    .eq('status', 'active')
+    .eq('report_type', 'flood')
+    .eq('flood_passable', false)
+    .gt('expires_at', new Date().toISOString())
+    .gte('latitude', bounds.minLat)
+    .lte('latitude', bounds.maxLat)
+    .gte('longitude', bounds.minLng)
+    .lte('longitude', bounds.maxLng)
+    .limit(100);
+  if (signal) q = q.abortSignal(signal);
+  const { data, error } = await q;
+  if (error) throw toReportError(error);
+  return (data ?? []) as TrafficReport[];
 }
 
 export async function fetchActiveReports(bounds: Bounds, signal?: AbortSignal): Promise<TrafficReport[]> {
@@ -101,6 +121,7 @@ export async function submitReport(r: NewReport, userId: string): Promise<Traffi
       description: r.description.trim() || null,
       latitude: Math.round(r.coordinates.lat * 1e6) / 1e6,
       longitude: Math.round(r.coordinates.lng * 1e6) / 1e6,
+      ...(r.type === 'flood' && typeof r.floodPassable === 'boolean' ? { flood_passable: r.floodPassable } : {}),
     })
     .select(COLUMNS)
     .single();

@@ -243,6 +243,12 @@ Pelan penuh ada dalam `docs/MARKETPLACE.md`. Fasa 0 hanya pendaftaran dan penges
 - **Carian suara:** tekan 🎤 dan sebut destinasi. JalanGo cari tempat itu, buat laluan, dan membaca laluan tersebut (`web/src/components/voice/VoiceSearch.tsx`).
 - **Tekan lama pada peta:** pilih titik tepat sebagai destinasi.
 
+## Musim banjir: laporan banjir + amaran cuaca
+- **Laporan banjir "boleh lalu?":** bila lapor **Banjir**, wajib pilih **"Boleh lalu, perlahan"** atau **"Tak boleh lalu"** (lajur `traffic_reports.flood_passable`, hanya untuk banjir; laporan lama = tidak dinyatakan). Tajuk di mana-mana (amaran di laluan, suara, kad laporan, senarai laporan): "Banjir · tak boleh lalu" / "Banjir · boleh lalu perlahan". Tamat sendiri selepas 12 jam (sedia ada), pengesahan "masih ada / dah surut" seperti laporan lain.
+- **Laluan elak banjir:** semasa mengira laluan memandu (termasuk reroute), app ambil laporan banjir **tak boleh lalu** yang aktif dalam kotak perjalanan (+15 km), buang yang dalam 300 m dari titik mula/destinasi, ambil ≤10 yang paling dekat dengan perjalanan (`utils/floodAvoid.ts`, ≤1.5 s, gagal = laluan biasa), dan server minta Mapbox `exclude=point(lng lat)` (bersama `toll` jika Elak tol). Jika tiada laluan lain, server kira semula tanpa titik itu (`avoided: 0`). Panel laluan: "🌊 Laluan mengelak N kawasan banjir yang dilaporkan tak boleh lalu."
+- **Amaran cuaca MetMalaysia:** `GET /api/weather/warnings` (data.gov.my `weather/warning`, cache 10 min) — hanya amaran darat (ribut petir, hujan lebat/berterusan, cuaca buruk); amaran laut dan "Tiada Nasihat" dibuang; negeri dikesan dari teks BM/EN. App kenal pasti negeri anda tanpa rangkaian (bandar terdekat daripada ~120 bandar, `utils/malaysiaState.ts`) dan papar banner kuning di peta (negeri anda) dan di panel laluan (negeri anda + destinasi): "Amaran Ribut Petir · Selangor · sehingga 1:00 PTG · MetMalaysia"; tekan untuk teks penuh (daerah), X untuk sorok amaran itu. Tiada lokasi dihantar untuk ini.
+- Suapan paras air sungai JPS di data.gov.my (`flood-warning`) **lapuk sejak Feb 2024**, jadi belum diguna; boleh ditambah bila JPS/data.gov.my hidupkan semula.
+
 ## Komuniti
 
 - **Carian yang belajar:** hasil yang namanya ada semua perkataan ditaip keluar dulu; sinonim tempatan terbina (ktm → stesen ktmb, lrt/mrt → stesen, hosp → hospital, rnr → r&r, masjid → mosque) dicuba bila hasil teratas tak padan, kemudian OpenStreetMap.

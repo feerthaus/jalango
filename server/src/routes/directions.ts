@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { z } from 'zod';
-import { getDirections, MAX_VIA } from '../services/directions.js';
+import { getDirectionsAvoiding, MAX_AVOID, MAX_VIA } from '../services/directions.js';
 
 const point = z
   .string()
@@ -28,6 +28,19 @@ const query = z.object({
   heading: z.coerce.number().min(0).max(360).optional(),
   /** walking: footpaths and crossings (e.g. to a station); default driving */
   profile: z.enum(['driving', 'walking']).optional(),
+  /** spots to route around, e.g. floods reported impassable: "lng,lat;lng,lat" (at most 10, in Malaysia) */
+  avoid: z
+    .string()
+    .max(400)
+    .transform((s, ctx) => {
+      const pts = s.split(';').filter(Boolean).map((pair) => pair.split(',').map(Number));
+      if (pts.length > MAX_AVOID || !pts.every(([x, y]) => Number.isFinite(x) && Number.isFinite(y) && x >= 99 && x <= 120 && y >= 0.5 && y <= 7.6)) {
+        ctx.addIssue({ code: 'custom', message: `avoid: at most ${MAX_AVOID} "lng,lat" points in Malaysia` });
+        return z.NEVER;
+      }
+      return pts.map(([lng, lat]) => ({ lng, lat }));
+    })
+    .optional(),
   avoidTolls: z
     .enum(['0', '1', 'true', 'false'])
     .optional()
@@ -37,6 +50,7 @@ const query = z.object({
 export const directionsRouter = Router();
 
 directionsRouter.get('/', async (req, res) => {
-  const { from, to, avoidTolls, via, heading, profile } = query.parse(req.query);
-  res.json({ routes: await getDirections(from, to, { avoidTolls, via, heading, walking: profile === 'walking' }) });
+  const { from, to, avoidTolls, via, heading, profile, avoid } = query.parse(req.query);
+  const { routes, avoided } = await getDirectionsAvoiding(from, to, { avoidTolls, via, heading, walking: profile === 'walking', avoidPoints: avoid });
+  res.json({ routes, avoided });
 });

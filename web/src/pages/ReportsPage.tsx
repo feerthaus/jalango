@@ -8,7 +8,7 @@ import { PagePanel } from '@/components/ui/PagePanel';
 import { useLocation } from '@/contexts/LocationContext';
 import { useReports } from '@/contexts/ReportsContext';
 import { cn } from '@/lib/cn';
-import { REPORT_TYPES, reportMeta } from '@/lib/reportTypes';
+import { REPORT_TYPES, reportMeta, reportTitle } from '@/lib/reportTypes';
 import type { ReportType, TrafficReport } from '@/types';
 import { formatRelativeTime } from '@/utils/format';
 import { formatDistance, haversineMeters } from '@/utils/geo';
@@ -107,7 +107,7 @@ export function ReportsPage() {
                           <Icon className="size-5" />
                         </span>
                         <span className="min-w-0 flex-1">
-                          <span className="block font-medium">{t(meta.labelMs, meta.label)}</span>
+                          <span className="block font-medium">{reportTitle(r, lang)}</span>
                           <span className="block truncate text-sm text-ink-500 dark:text-ink-300">{r.description || formatRelativeTime(r.created_at, lang)}</span>
                         </span>
                         <span className="shrink-0 text-right text-xs text-ink-500 dark:text-ink-400">
