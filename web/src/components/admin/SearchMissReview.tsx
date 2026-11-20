@@ -106,13 +106,20 @@ function SuggestionsSection({ onChange }: { onChange: () => void }) {
   return (
     <section>
       <h2 className="mb-2 text-sm font-bold">Cadangan tempat ({rows.length})</h2>
-      <p className="mb-3 text-xs text-ink-500">Pin = lokasi yang pengguna letak sendiri. AI = mercu tanda yang AI jumpa (disimpan sebagai teks sahaja). Lulus: carian itu akan terus jumpa tempat ini.</p>
+      <p className="mb-3 text-xs text-ink-500">Pin = lokasi yang pengguna letak sendiri (📍 Di lokasi = dihantar dari dalam 150 m). Pengguna berdekatan mengundi Betul/Salah: diluluskan automatik bila 📍 + 2 Betul, atau 3 Betul, tanpa Salah; 2 Salah = dipertikai (menunggu anda). AI = tempat tepat yang AI jumpa (teks sahaja). Lulus: carian itu akan terus jumpa tempat ini.</p>
       {error && <p role="alert" className="mb-2 text-sm text-red-600">{error}</p>}
       <ul className="space-y-2">
         {rows.map((r) => (
           <li key={r.id} className="rounded-2xl bg-white p-3 text-sm shadow-sm ring-1 ring-ink-200 dark:bg-ink-900 dark:ring-ink-800">
             <div className="flex items-start gap-2">
               <Chip tone={r.kind === 'pin' ? 'amber' : 'ink'}>{r.kind === 'pin' ? 'Pin' : 'AI'}</Chip>
+              {r.at_location && <Chip tone="ink">📍 Di lokasi</Chip>}
+              {r.kind === 'pin' && (
+                <Chip tone={r.disputed ? 'red' : 'ink'}>
+                  ✓ {r.yes_count} · ✗ {r.no_count}
+                  {r.disputed ? ' · dipertikai' : ''}
+                </Chip>
+              )}
               <div className="min-w-0 flex-1">
                 <p className="font-semibold">“{r.query}” → {r.name}</p>
                 <p className="text-xs text-ink-500">

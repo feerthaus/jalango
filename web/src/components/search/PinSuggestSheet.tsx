@@ -1,6 +1,7 @@
 import { Check, MapPin } from 'lucide-react';
 import { useState } from 'react';
-import { LocationPicker } from '@/components/business/LocationPicker';
+import { LocationPicker, type RoadCheck } from '@/components/business/LocationPicker';
+import { useLocation } from '@/contexts/LocationContext';
 import { Button } from '@/components/ui/Button';
 import { Sheet } from '@/components/ui/Sheet';
 import { useT } from '@/lib/i18n';
@@ -15,6 +16,8 @@ import { haversineMeters } from '@/utils/geo';
  */
 export function PinSuggestSheet({ query, start, source, onClose }: { query: string; start: Coordinates | null; source: 'user' | 'ai'; onClose: () => void }) {
   const [t] = useT();
+  const { fix } = useLocation();
+  const [road, setRoad] = useState<RoadCheck | null>(null);
   const [at, setAt] = useState<Coordinates | null>(null);
   const [area, setArea] = useState('');
   const [name, setName] = useState(query.trim().slice(0, 120));
@@ -25,17 +28,29 @@ export function PinSuggestSheet({ query, start, source, onClose }: { query: stri
   // Started from the AI's landmark (map data we may not keep): the person must place the pin themselves
   const mustMove = source === 'ai' && start !== null;
   const moved = Boolean(at && start && haversineMeters(at, start) > 5);
-  const ready = Boolean(at) && name.trim().length >= 2 && (!mustMove || moved);
+  // Streets must be pinned on a road drawn on the map (when the map can tell)
+  const streetName = /\b(jalan|jln|lorong|lrg|persiaran|lebuh|lebuhraya|lingkaran|road|street)\b/i.test(name);
+  const offRoad = streetName && road?.onRoad === false;
+  // Sent from within ~150 m of the pin: marked "Ditanda di lokasi" (the server checks; your position isn't kept)
+  const here = Boolean(at && fix && fix.accuracy <= 100 && haversineMeters(at, fix.coordinates) <= 150);
+  const ready = Boolean(at) && name.trim().length >= 2 && (!mustMove || moved) && !offRoad;
 
   const send = async () => {
     if (!at || !ready) return;
     setBusy(true);
     setError(null);
     try {
-      await suggestPin({ query, name, address: area, at, source });
+      await suggestPin({ query, name, address: area, at, source, from: fix && fix.accuracy <= 100 ? fix.coordinates : null });
       setDone(true);
     } catch (e) {
-      setError(e instanceof Error && e.message === 'rate_limited' ? t('Terlalu banyak cadangan hari ini. Cuba esok.', 'Too many suggestions today. Try tomorrow.') : t('Tak dapat hantar. Cuba lagi.', 'Couldn’t send. Try again.'));
+      const code = e instanceof Error ? e.message : '';
+      setError(
+        code === 'rate_limited'
+          ? t('Terlalu banyak cadangan hari ini. Cuba esok.', 'Too many suggestions today. Try tomorrow.')
+          : code === 'duplicate'
+            ? t('Alamat ini sudah dicadangkan di sini dan sedang disemak. Terima kasih!', 'This address was already suggested here and is being checked. Thanks!')
+            : t('Tak dapat hantar. Cuba lagi.', 'Couldn’t send. Try again.'),
+      );
     } finally {
       setBusy(false);
     }
@@ -46,7 +61,7 @@ export function PinSuggestSheet({ query, start, source, onClose }: { query: stri
       {done ? (
         <div className="py-6 text-center">
           <Check className="mx-auto size-10 text-jade-500" />
-          <p className="mt-2 font-semibold">{t('Terima kasih! Admin akan semak, kemudian sesiapa yang cari alamat ini akan terus jumpa.', 'Thanks! After an admin checks it, anyone searching this address will find it.')}</p>
+          <p className="mt-2 font-semibold">{t('Terima kasih! Bila 2–3 orang berdekatan mengesahkannya (atau admin meluluskannya), sesiapa yang cari alamat ini akan terus jumpa.', 'Thanks! Once 2–3 people nearby confirm it (or an admin approves it), anyone searching this address will find it.')}</p>
           <Button className="mt-4" onClick={onClose}>
             {t('Tutup', 'Close')}
           </Button>
@@ -62,7 +77,19 @@ export function PinSuggestSheet({ query, start, source, onClose }: { query: stri
               setAt(c);
               if (hint) setArea(hint);
             }}
+            onRoadCheck={setRoad}
           />
+          {road?.onRoad && road.roadName && (
+            <p className="text-xs text-ink-500">{t(`Pin di atas jalan yang peta namakan “${road.roadName}”.`, `The pin is on a road the map calls “${road.roadName}”.`)}</p>
+          )}
+          {offRoad && <p className="text-xs font-semibold text-amber-600">{t('Letak pin betul-betul di atas jalan itu.', 'Put the pin right on the road.')}</p>}
+          {at && (
+            <p className={here ? 'text-xs font-semibold text-jade-600' : 'text-xs text-ink-500'}>
+              {here
+                ? t('📍 Anda berada di sini: cadangan akan ditanda "Ditanda di lokasi" dan disahkan lebih cepat.', '📍 You’re here: the suggestion is marked "Marked on site" and gets confirmed faster.')
+                : t('Orang berdekatan akan diminta mengesahkan. Jika anda berada di tempat itu, cadangan disahkan lebih cepat.', 'People nearby will be asked to confirm it. If you’re at the spot, it gets confirmed faster.')}
+            </p>
+          )}
           <label className="block">
             <span className="text-sm font-medium">{t('Nama / alamat', 'Name / address')}</span>
             <input

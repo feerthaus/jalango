@@ -16,7 +16,29 @@ if (env.mapboxToken) mapboxgl.accessToken = env.mapboxToken;
  * Pick a premises location: "use my location", search (incl. a pasted Google Maps
  * link), or drag the pin. Reports the point and a short area name.
  */
-export function LocationPicker({ value, onChange }: { value: Coordinates | null; onChange: (c: Coordinates, areaHint?: string) => void }) {
+/** Is the pin on a road? null = can't tell (e.g. the raster demo basemap). */
+export interface RoadCheck {
+  onRoad: boolean | null;
+  roadName: string | null;
+}
+
+/** Roads drawn on the map within a few metres of the point (vector styles only). */
+function roadAt(m: mapboxgl.Map, c: Coordinates): RoadCheck {
+  try {
+    const pt = m.project([c.lng, c.lat]);
+    const r = 14; // px: about 10–20 m at street zoom
+    const feats = m.queryRenderedFeatures([[pt.x - r, pt.y - r], [pt.x + r, pt.y + r]]);
+    if (!feats.length && !m.getStyle()?.sources) return { onRoad: null, roadName: null };
+    const vector = Object.values(m.getStyle()?.sources ?? {}).some((src) => (src as { type?: string }).type === 'vector');
+    if (!vector) return { onRoad: null, roadName: null };
+    const road = feats.find((f) => /road|street|path/i.test(`${f.sourceLayer ?? ''} ${f.layer?.id ?? ''}`) && f.geometry.type.includes('LineString'));
+    return { onRoad: Boolean(road), roadName: (road?.properties?.name as string | undefined) ?? null };
+  } catch {
+    return { onRoad: null, roadName: null };
+  }
+}
+
+export function LocationPicker({ value, onChange, onRoadCheck }: { value: Coordinates | null; onChange: (c: Coordinates, areaHint?: string) => void; onRoadCheck?: (r: RoadCheck) => void }) {
   const [t] = useT();
   const box = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
@@ -29,10 +51,15 @@ export function LocationPicker({ value, onChange }: { value: Coordinates | null;
   const [waitingGps, setWaitingGps] = useState(false);
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;
+  const onRoadRef = useRef(onRoadCheck);
+  onRoadRef.current = onRoadCheck;
 
   const place = async (c: Coordinates, zoom = 16, hint?: string) => {
     marker.current?.setLngLat([c.lng, c.lat]);
     map.current?.easeTo({ center: [c.lng, c.lat], zoom: Math.max(map.current.getZoom(), zoom) });
+    // Once the map has settled, see whether the pin sits on a road
+    const m = map.current;
+    if (m && onRoadRef.current) m.once('idle', () => onRoadRef.current?.(roadAt(m, c)));
     let area = hint;
     if (!area) {
       try {

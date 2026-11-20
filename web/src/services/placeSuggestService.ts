@@ -42,32 +42,70 @@ export async function locateWithAi(query: string, near: Coordinates | null, lang
   return apiPost<LocateAnswer>('/assistant/locate', { query: query.trim().slice(0, 120), near: at, lang }, await token());
 }
 
-async function userId(): Promise<string> {
-  const { data } = await db().auth.getUser();
-  if (!data.user) throw new Error('Please sign in again first.');
-  return data.user.id;
-}
-
 function check(error: { message: string; hint?: string } | null) {
   if (!error) return;
-  if (error.hint === 'rate_limited') throw new Error('rate_limited');
+  if (error.hint === 'rate_limited' || error.hint === 'duplicate' || error.hint === 'too_far' || error.hint === 'voted' || error.hint === 'own') throw new Error(error.hint);
   throw new Error(error.message);
 }
 
-/** A point the person placed on the map themselves. */
-export async function suggestPin(s: { query: string; name: string; address: string; at: Coordinates; source: 'user' | 'ai' }): Promise<void> {
-  const { error } = await db()
-    .from('place_suggestions')
-    .insert({ user_id: await userId(), kind: 'pin', query: s.query.trim(), name: s.name.trim(), address: s.address.trim().slice(0, 200), latitude: Math.round(s.at.lat * 1e6) / 1e6, longitude: Math.round(s.at.lng * 1e6) / 1e6, source: s.source });
+const r6 = (n: number) => Math.round(n * 1e6) / 1e6;
+
+/**
+ * A point the person placed on the map themselves. Their current position (if
+ * known) is sent only so the server can mark it "Ditanda di lokasi"; it is not kept.
+ */
+export async function suggestPin(s: { query: string; name: string; address: string; at: Coordinates; source: 'user' | 'ai'; from: Coordinates | null }): Promise<void> {
+  const { error } = await db().rpc('submit_place_suggestion', {
+    p_kind: 'pin',
+    p_query: s.query.trim(),
+    p_name: s.name.trim(),
+    p_address: s.address.trim().slice(0, 200),
+    p_lat: r6(s.at.lat),
+    p_lng: r6(s.at.lng),
+    p_target_query: null,
+    p_source: s.source,
+    p_from_lat: s.from ? r6(s.from.lat) : null,
+    p_from_lng: s.from ? r6(s.from.lng) : null,
+  });
   check(error);
 }
 
 /** Text only: this search should show what another search finds (no map data kept). */
 export async function suggestRedirect(s: { query: string; name: string; targetQuery: string }): Promise<void> {
-  const { error } = await db()
-    .from('place_suggestions')
-    .insert({ user_id: await userId(), kind: 'redirect', query: s.query.trim(), name: s.name.trim().slice(0, 120), target_query: s.targetQuery.trim().slice(0, 200), source: 'ai' });
+  const { error } = await db().rpc('submit_place_suggestion', {
+    p_kind: 'redirect',
+    p_query: s.query.trim(),
+    p_name: s.name.trim().slice(0, 120),
+    p_address: '',
+    p_lat: null,
+    p_lng: null,
+    p_target_query: s.targetQuery.trim().slice(0, 200),
+    p_source: 'ai',
+  });
   check(error);
+}
+
+export interface NearbySuggestion {
+  id: string;
+  name: string;
+  latitude: number;
+  longitude: number;
+  at_location: boolean;
+  yes_count: number;
+}
+
+/** Pins near here that others suggested and still need checking (not yours, not voted). */
+export async function fetchNearbySuggestions(at: Coordinates): Promise<NearbySuggestion[]> {
+  const { data, error } = await db().rpc('nearby_place_suggestions', { p_lat: r6(at.lat), p_lng: r6(at.lng) });
+  check(error);
+  return (data ?? []) as NearbySuggestion[];
+}
+
+/** "Betul ini …?" — only counted from near the pin. Returns pending / approved / disputed. */
+export async function voteSuggestion(id: string, vote: 'yes' | 'no', from: Coordinates): Promise<'pending' | 'approved' | 'disputed'> {
+  const { data, error } = await db().rpc('vote_place_suggestion', { p_id: id, p_vote: vote, p_from_lat: r6(from.lat), p_from_lng: r6(from.lng) });
+  check(error);
+  return data as 'pending' | 'approved' | 'disputed';
 }
 
 export interface PlaceSuggestionRow {
@@ -81,13 +119,17 @@ export interface PlaceSuggestionRow {
   target_query: string | null;
   source: 'user' | 'ai';
   created_at: string;
+  at_location: boolean;
+  yes_count: number;
+  no_count: number;
+  disputed: boolean;
 }
 
 /** Admin: suggestions waiting for review, newest first. */
 export async function fetchPendingSuggestions(): Promise<PlaceSuggestionRow[]> {
   const { data, error } = await db()
     .from('place_suggestions')
-    .select('id, kind, query, name, address, latitude, longitude, target_query, source, created_at')
+    .select('id, kind, query, name, address, latitude, longitude, target_query, source, created_at, at_location, yes_count, no_count, disputed')
     .eq('status', 'pending')
     .order('created_at', { ascending: false })
     .limit(100);
