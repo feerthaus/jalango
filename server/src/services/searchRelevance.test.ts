@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('../config.js', () => ({ config: { mapboxToken: 'test-token', corsOrigins: [], port: 0, supabaseUrl: null, supabaseServiceRoleKey: null }, integrations: {} }));
 
-import { matchScore, queryVariants, rankByMatch, searchPlaces } from './mapbox.js';
+import { matchScore, parentStreet, queryVariants, rankByMatch, searchPlaces, streetCodes } from './mapbox.js';
 import type { Place } from '../types.js';
 
 let n = 0;
@@ -58,5 +58,37 @@ describe('search relevance', () => {
     const r = await searchPlaces('stesen gemas');
     expect(r[0].name).toBe('Stesen KTMB Gemas');
     expect(asked).toEqual(['stesen gemas']);
+  });
+
+  it('reads Malaysian street codes and the main road of a side road', () => {
+    expect(streetCodes('Jalan P9C/1')).toEqual(['p9c']);
+    expect(streetCodes('No 12 Jalan SS 2/24 PJ')).toEqual(['ss2']);
+    expect(streetCodes('Lot 1234 Kg Baru')).toEqual([]);
+    expect(parentStreet('Jalan P9C/1')).toBe('Jalan P9C');
+    expect(parentStreet('jalan ss2/24 petaling jaya')).toBe('jalan ss2 petaling jaya');
+    expect(parentStreet('Jalan Tun Razak')).toBeNull();
+  });
+
+  it('"Jalan P9C/1" (Putrajaya): no "Jalan KLIA 1" on top; the main road Jalan P9C first', async () => {
+    const asked: string[] = [];
+    const geo = (name: string, kind: string, lng: number, lat: number) => ({ geometry: { coordinates: [lng, lat] }, properties: { mapbox_id: name, name, full_address: `${name}, Putrajaya, 62250, Malaysia`, feature_type: kind } });
+    vi.stubGlobal('fetch', async (u: URL) => {
+      const url = new URL(String(u));
+      const q = url.searchParams.get('q') ?? '';
+      asked.push(`${url.hostname.includes('photon') ? 'osm' : url.pathname.includes('geocode') ? 'geo' : 'box'}:${q}`);
+      if (url.hostname.includes('photon')) {
+        return Response.json({ features: [
+          { geometry: { coordinates: [101.677, 2.7915] }, properties: { name: 'Jalan KLIA 1', osm_key: 'highway', osm_value: 'secondary', city: 'Sepang', state: 'Selangor', country: 'Malaysia', osm_id: 1, osm_type: 'W' } },
+        ] });
+      }
+      if (url.pathname.includes('geocode') && q === 'Jalan P9C') return Response.json({ features: [geo('Jalan P9c', 'street', 101.6765, 2.9385)] });
+      if (url.pathname.includes('geocode')) return Response.json({ features: [] });
+      return Response.json({ features: [feat('Blok C, Fasa 10 Jalan P9C', 'Jalan P9c, Putrajaya, 62250, Malaysia'), feat('107, Jalan MR 1', 'Cyberjaya, 63000, Malaysia'), feat('Jalan Alamanda 1 Garage', 'Putrajaya, 62000, Malaysia')] });
+    });
+    const r = await searchPlaces('Jalan P9C/1', { lat: 2.93, lng: 101.69 });
+    expect(r[0].name).toBe('Jalan P9c');
+    expect(r[1].name).toBe('Blok C, Fasa 10 Jalan P9C');
+    expect(r.map((p) => p.name)).not.toContain('Jalan KLIA 1');
+    expect(asked).toContain('geo:Jalan P9C');
   });
 });

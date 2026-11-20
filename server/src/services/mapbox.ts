@@ -101,6 +101,32 @@ export function spaceStreetCodes(q: string): string {
   return q.replace(/\b([a-z]{1,4})(\d{1,3}[a-z]?)\b/gi, '$1 $2');
 }
 
+/**
+ * Malaysian street/area codes in a query: "Jalan P9C/1" → ["p9c"], "ss2/24" → ["ss2"],
+ * "usj 1" → ["usj1"]. A result that doesn't mention the code is about somewhere else.
+ */
+export function streetCodes(q: string): string[] {
+  const out = new Set<string>();
+  for (const m of q.toLowerCase().matchAll(/\b([a-z]{1,4})\s?(\d{1,3}[a-z]?)(?=\b|\/)/g)) {
+    if (/^(no|lot|blok|tingkat|level)$/.test(m[1])) continue; // house/lot numbers, not area codes
+    out.add(`${m[1]}${m[2]}`);
+  }
+  return [...out];
+}
+
+/** Does the place (name or address) mention every street code of the query? */
+export function hasStreetCodes(p: Pick<Place, 'name' | 'address'>, codes: string[]): boolean {
+  if (!codes.length) return true;
+  const text = compactName(`${p.name} ${p.address ?? ''}`);
+  return codes.every((c) => text.includes(c));
+}
+
+/** "Jalan P9C/1" → "Jalan P9C": the main road, when a side road isn't on the map. */
+export function parentStreet(q: string): string | null {
+  const m = q.trim().match(/^(.*\b[a-z]{1,4}\s?\d{1,3}[a-z]?)\s*\/\s*\d{1,3}[a-z]?\b(.*)$/i);
+  return m ? `${m[1]}${m[2]}`.replace(/\s+/g, ' ').trim() : null;
+}
+
 /** Same place from two sources: same name, or within ~60 m. */
 function isDuplicate(a: Place, b: Place): boolean {
   const close = Math.abs(a.coordinates.lat - b.coordinates.lat) < 0.0006 && Math.abs(a.coordinates.lng - b.coordinates.lng) < 0.0006;
@@ -214,6 +240,7 @@ export async function searchPlaces(query: string, near?: Coordinates, limit = 8,
     return toPlaces(await request(url));
   }
 
+  const codes = streetCodes(q);
   // Street-looking queries ask both sources at once; others only fall back when the POI search is thin
   const streety = /\b(jalan|jln|lorong|lrg|persiaran|lebuh|street|road|jalan)\b/i.test(q) || /\b[a-z]{1,4}\s?\d{1,3}\b/i.test(q);
   const [pois, streets] = await Promise.all([
@@ -228,7 +255,8 @@ export async function searchPlaces(query: string, near?: Coordinates, limit = 8,
   if (streety && !results.some(isStreetLike)) {
     let osm = await searchOsm(q, near, limit);
     if (!osm.some(isStreetLike) && spaceStreetCodes(q) !== q) osm = osm.concat(await searchOsm(spaceStreetCodes(q), near, limit));
-    const osmStreets = osm.filter(isStreetLike);
+    // only streets that are about the typed code ("Jalan P9C/1" must not bring "Jalan KLIA 1")
+    const osmStreets = osm.filter(isStreetLike).filter((p) => hasStreetCodes(p, codes));
     // OSM splits one street into several ways: keep the first of each name nearby
     if (osmStreets.length) results = mergePlaces([], osmStreets.concat(results), limit);
   }
@@ -238,6 +266,14 @@ export async function searchPlaces(query: string, near?: Coordinates, limit = 8,
   if (results.length === 0 && spaced !== q) {
     const [p2, s2] = await Promise.all([searchBox(spaced, near, limit), geocodeStreets(spaced, near, limit).catch(() => [] as Place[])]);
     results = mergePlaces(s2.filter((p) => p.kind === 'street' || p.kind === 'address').concat(p2), s2, limit);
+  }
+
+  // "Jalan P9C/1" not on the map at all: offer the main road "Jalan P9C" so people reach the right area
+  const parent = parentStreet(q);
+  if (parent && !results.some((p) => isStreetLike(p) && hasStreetCodes(p, codes) && nameHasAllTokens(p.name, q))) {
+    const main = await geocodeStreets(parent, near, limit).catch(() => [] as Place[]);
+    const mainStreets = main.filter((p) => isStreetLike(p) && hasStreetCodes(p, codes));
+    if (mainStreets.length) results = mergePlaces(mainStreets.slice(0, 2), results, limit);
   }
 
   // Still nothing: the name is half-typed ("Awana Sky") or split differently ("Awana Sky Way").
@@ -254,7 +290,9 @@ export async function searchPlaces(query: string, near?: Coordinates, limit = 8,
       results = mergePlaces(results, (await searchOsm(q, near, limit)).filter((p) => matchScore(p, q) > 0), limit * 3);
     }
   }
-  return rankByMatch(results, q).slice(0, limit);
+  // Results that mention the typed street/area code come first; others only after them
+  const ranked = rankByMatch(results, q);
+  return codes.length ? [...ranked.filter((p) => hasStreetCodes(p, codes)), ...ranked.filter((p) => !hasStreetCodes(p, codes))].slice(0, limit) : ranked.slice(0, limit);
 }
 
 /**
