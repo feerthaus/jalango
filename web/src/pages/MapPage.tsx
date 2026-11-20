@@ -41,6 +41,7 @@ import { useLocation } from '@/contexts/LocationContext';
 import { useWeatherWarnings } from '@/hooks/useWeatherWarnings';
 import { stateAt } from '@/utils/malaysiaState';
 import { WeatherWarningBanner } from '@/components/weather/WeatherWarningBanner';
+import { NearbyCheckCard } from '@/components/search/NearbyCheckCard';
 
 export function MapPage() {
   const [t] = useT();
@@ -150,6 +151,7 @@ export function MapPage() {
           <div className="space-y-2 max-md:mr-14">
             <LiveShareBanner />
             <WeatherWarningBanner warnings={weather} states={[hereState]} />
+            {!transitTrip && <NearbyCheckCard />}
             {/* During a train/bus trip, only what matters on the way: the trip panel has the room */}
             {!transitTrip && <ConvoyBanner />}
             {!transitTrip && <ItineraryChip />}
