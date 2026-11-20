@@ -6,6 +6,7 @@ import { HttpError } from '../lib/errors.js';
 import { supabaseAdmin } from '../lib/supabaseAdmin.js';
 import { hashKey } from '../middleware/rateLimit.js';
 import { askAssistant } from '../services/assistant/assistant.js';
+import { locateAddress } from '../services/assistant/locate.js';
 import { userFromRequest } from './account.js';
 
 export const assistantSchema = z.object({
@@ -67,6 +68,39 @@ assistantRouter.post('/', async (req, res) => {
     if (err instanceof Anthropic.APIError) {
       console.warn(`[assistant] API error ${err.status}`);
       throw new HttpError(502, 'assistant_unavailable', 'The trip assistant is busy right now. Please try again in a moment.');
+    }
+    throw err;
+  }
+});
+
+export const locateSchema = z.object({
+  query: z.string().trim().min(3).max(120),
+  near: z.object({ lat: z.number().min(0.5).max(7.5), lng: z.number().min(99).max(120) }).optional(),
+  lang: z.enum(['ms', 'en']).default('ms'),
+});
+
+/** AI address finder (web search, never Google Maps), per person per day. */
+export function locateDailyLimit(): number {
+  const n = Number(process.env.LOCATE_DAILY_LIMIT);
+  return Number.isFinite(n) && n > 0 ? n : 10;
+}
+
+assistantRouter.post('/locate', async (req, res) => {
+  if (!config.anthropicKey) throw new HttpError(503, 'assistant_not_configured', 'The AI address finder is not switched on yet');
+  const user = await userFromRequest(req);
+  if (!user) throw new HttpError(401, 'unauthorized', 'Please sign in to use the AI address finder');
+  const body = locateSchema.parse(req.body);
+  const limit = locateDailyLimit();
+  const used = await counter(hashKey(user.id, 'locate'));
+  if (used > limit) throw new HttpError(429, 'daily_limit', `You have used today's ${limit} AI address searches. Try again tomorrow.`);
+  const near = body.near ? { lat: Math.round(body.near.lat * 100) / 100, lng: Math.round(body.near.lng * 100) / 100 } : undefined;
+  try {
+    const out = await locateAddress(body.query, { near, lang: body.lang });
+    res.json({ ...out, remaining: Math.max(0, limit - used) });
+  } catch (err) {
+    if (err instanceof Anthropic.APIError) {
+      console.warn(`[locate] API error ${err.status}`);
+      throw new HttpError(502, 'assistant_unavailable', 'The AI address finder is busy right now. Please try again in a moment.');
     }
     throw err;
   }
