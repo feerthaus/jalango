@@ -75,15 +75,8 @@ export function AddressFinderSheet({ query, onClose, onDone }: { query: string; 
     );
   }
 
-  const p = answer?.place ?? null;
-  const badge =
-    answer?.precision === 'exact'
-      ? t('Lokasi tepat', 'Exact')
-      : answer?.precision === 'nearby'
-        ? t('Anggaran: mercu tanda berhampiran', 'Estimate: nearby landmark')
-        : answer?.precision === 'area'
-          ? t('Kawasan sahaja', 'Area only')
-          : null;
+  // Only an exact match is pinned; otherwise no guess (a wrong pin sends drivers to the wrong place)
+  const p = answer?.precision === 'exact' ? answer.place : null;
 
   return (
     <Sheet title={title} onClose={onClose}>
@@ -110,7 +103,7 @@ export function AddressFinderSheet({ query, onClose, onDone }: { query: string; 
           )}
           {p ? (
             <div className="rounded-2xl bg-ink-100 p-3 dark:bg-ink-800">
-              {badge && <span className="mb-1 inline-block rounded-full bg-amber-400 px-2 py-0.5 text-[11px] font-bold text-ink-950">{badge}</span>}
+              <span className="mb-1 inline-block rounded-full bg-jade-500 px-2 py-0.5 text-[11px] font-bold text-ink-950">{t('Lokasi tepat', 'Exact location')}</span>
               <p className="font-bold">{p.name}</p>
               <p className="text-xs text-ink-500">{p.address}</p>
               <div className="mt-3 grid grid-cols-2 gap-2">
@@ -138,7 +131,17 @@ export function AddressFinderSheet({ query, onClose, onDone }: { query: string; 
               </div>
             </div>
           ) : (
-            <p className="text-sm text-ink-500">{t('AI tak dapat pastikan lokasi pada peta.', 'The AI couldn’t pin this on the map.')}</p>
+            <div className="rounded-2xl bg-ink-100 p-3 text-sm dark:bg-ink-800">
+              {answer.area && (
+                <p>
+                  {t('Kawasan:', 'Area:')} <strong>{answer.area}</strong>
+                </p>
+              )}
+              <p className="mt-1 font-semibold">{t('Lokasi tepat tak dapat dipastikan, jadi JalanGo tak meneka.', 'The exact spot couldn’t be confirmed, so JalanGo won’t guess.')}</p>
+              <p className="mt-1 text-xs text-ink-500">
+                {t('Minta orang di sana kongsi lokasi (WhatsApp atau Google Maps) dan tampal pautannya dalam carian, atau tanda sendiri jika anda tahu tempatnya.', 'Ask someone there to share their location (WhatsApp or Google Maps) and paste the link into search, or mark it yourself if you know the place.')}
+              </p>
+            </div>
           )}
 
           <div className="space-y-2 border-t border-ink-100 pt-3 dark:border-ink-800">
@@ -180,7 +183,7 @@ export function AddressFinderSheet({ query, onClose, onDone }: { query: string; 
             </div>
           )}
           <p className="text-[11px] leading-snug text-ink-400">
-            {t('Hasil AI ialah anggaran dan boleh tersilap. Teks carian dihantar ke Anthropic untuk diproses.', 'AI results are estimates and can be wrong. The search text is sent to Anthropic to process.')}
+            {t('AI hanya memberi pin bila lokasinya tepat, tapi masih boleh tersilap: semak sebelum bertolak. Teks carian dihantar ke Anthropic untuk diproses.', 'The AI only pins exact matches, but can still be wrong: check before you go. The search text is sent to Anthropic to process.')}
             {` ${t(`${answer.remaining} carian AI lagi hari ini.`, `${answer.remaining} AI searches left today.`)}`}
           </p>
         </div>

@@ -5,7 +5,7 @@ import { adminChanged } from './adminCounts';
 
 /** AI address finder + people's suggestions for addresses our search can't find. */
 
-export type Precision = 'exact' | 'nearby' | 'area' | 'not_found';
+export type Precision = 'exact' | 'area' | 'not_found';
 
 export interface LocatedPlace {
   id: string;

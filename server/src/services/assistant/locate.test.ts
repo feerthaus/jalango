@@ -28,14 +28,14 @@ describe('AI address finder', () => {
       })
       .mockResolvedValueOnce({
         stop_reason: 'tool_use',
-        content: [{ type: 'tool_use', id: 't2', name: 'report_location', input: { place_id: 'mb-nadi', precision: 'nearby', area: 'Presint 9, Putrajaya', landmark_query: 'NADI Presint 9 Fasa 10 Putrajaya', note: 'Jalan P9C/1 di Presint 9, bersebelahan NADI Presint 9 Fasa 10.' } }],
+        content: [{ type: 'tool_use', id: 't2', name: 'report_location', input: { place_id: 'mb-nadi', precision: 'exact', area: 'Presint 9, Putrajaya', landmark_query: 'NADI Presint 9 Fasa 10 Putrajaya', note: 'NADI Presint 9 Fasa 10 ialah alamat ini.' } }],
       });
     runTool.mockImplementation(async (_n: string, _i: unknown, ctx: { places: Map<string, unknown> }) => {
       ctx.places.set('mb-nadi', nadi);
       return { results: [nadi] };
     });
-    const r = await locateAddress('Jalan P9C/1', { lang: 'ms', near: { lat: 2.93, lng: 101.69 } });
-    expect(r).toMatchObject({ precision: 'nearby', area: 'Presint 9, Putrajaya', landmarkQuery: 'NADI Presint 9 Fasa 10 Putrajaya' });
+    const r = await locateAddress('NADI Presint 9 Fasa 10', { lang: 'ms', near: { lat: 2.93, lng: 101.69 } });
+    expect(r).toMatchObject({ precision: 'exact', area: 'Presint 9, Putrajaya', landmarkQuery: 'NADI Presint 9 Fasa 10 Putrajaya' });
     expect(r.place).toEqual(nadi);
     expect(r.sources).toEqual([{ url: 'https://presint9.example/fasa10', title: 'Presint 9 Fasa 10' }]);
     const tools = create.mock.calls[0][0].tools;
@@ -51,7 +51,7 @@ describe('AI address finder', () => {
     });
     const r = await locateAddress('Jalan Rekaan 9', { lang: 'en' });
     expect(r.place).toBeNull();
-    expect(r.precision).toBe('not_found');
+    expect(r.precision).not.toBe('exact'); // only the area it named is kept
     expect(r.landmarkQuery).toBeNull();
   });
 
@@ -62,5 +62,18 @@ describe('AI address finder', () => {
     expect(create.mock.calls[1][0].messages.at(-1).role).toBe('assistant');
     expect(r.precision).toBe('not_found');
     expect(r.note).toMatch(/Tak dapat/);
+  });
+
+  it('a nearby landmark or the main road is never pinned: area only', async () => {
+    create.mockResolvedValueOnce({
+      stop_reason: 'tool_use',
+      content: [{ type: 'tool_use', id: 't', name: 'report_location', input: { place_id: 'mb-nadi', precision: 'area', area: 'Presint 9, Putrajaya', landmark_query: 'NADI Presint 9 Fasa 10', note: 'Jalan P9C/1 di Presint 9, Putrajaya; lokasi tepat tak dapat dipastikan.' } }],
+    });
+    runTool.mockResolvedValue({ results: [] });
+    const r = await locateAddress('Jalan P9C/1', { lang: 'ms' });
+    expect(r.place).toBeNull();
+    expect(r.precision).toBe('area');
+    expect(r.area).toBe('Presint 9, Putrajaya');
+    expect(r.landmarkQuery).toBeNull();
   });
 });

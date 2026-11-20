@@ -17,11 +17,13 @@ const SOFT_DEADLINE_MS = 22_000;
 /** Google's map content may not feed a non-Google map: keep its pages out of the web search. */
 const BLOCKED = ['google.com', 'google.com.my', 'goo.gl', 'g.page', 'g.co'];
 
-const SYSTEM = `You help a Malaysian navigation app find an address its map search could not find.
-1. Use web_search (at most a couple of searches) to learn where the address is: town/area, postcode, and the nearest well-known landmark (school, mosque, clinic, community centre, apartment block, shop row) on or next to that road.
-2. Use search_place to find that landmark (or the road itself, or the area) on our map. Try the most specific first. Only places returned by search_place can be pinned.
-3. Call report_location once with your answer. Pick the search_place result that is ON the address if any; otherwise the closest landmark next to it; otherwise the area.
-Never invent coordinates or places. If the web gives nothing reliable, report precision "not_found".
+const SYSTEM = `You help a Malaysian navigation app find an address its map search could not find. Drivers will go exactly where you pin, and people may be waiting there, so a wrong pin is worse than no pin.
+1. Use web_search (at most a couple of searches) to learn where the address is: town/area, postcode, and the exact place if a page states it (e.g. the building or premises AT that address).
+2. Use search_place to look for the address itself or that exact place on our map. Only places returned by search_place can be pinned.
+3. Call report_location once:
+   - precision "exact" ONLY if a search_place result IS the asked address or the premises at it (same road name and number, or the named building the web says is at that address). A landmark merely nearby, the main road, or a guess is NOT exact.
+   - otherwise precision "area" with place_id null, and say the area (e.g. "Presint 9, Putrajaya") — or "not_found" if even the area is unclear.
+Never invent coordinates or places. Never pin a nearby landmark as if it were the address.
 Write "note" in the app language given, one short sentence, e.g. "Jalan P9C/1 di Presint 9, Putrajaya, bersebelahan NADI Presint 9 Fasa 10." Keep "landmark_query" to the words to search for the chosen place.`;
 
 const REPORT: Anthropic.Beta.BetaTool = {
@@ -32,7 +34,7 @@ const REPORT: Anthropic.Beta.BetaTool = {
     type: 'object',
     properties: {
       place_id: { type: ['string', 'null'], description: 'id of a search_place result to pin; null if none fits' },
-      precision: { type: 'string', enum: ['exact', 'nearby', 'area', 'not_found'], description: 'exact: the place is the address; nearby: a landmark next to it; area: only the town/area' },
+      precision: { type: 'string', enum: ['exact', 'area', 'not_found'], description: 'exact: the place IS the address (pin it); area: only the town/area is known (no pin); not_found' },
       area: { type: 'string', description: 'Town/area and state, e.g. "Presint 9, Putrajaya"' },
       landmark_query: { type: ['string', 'null'], description: 'search text that finds the pinned place on the map' },
       note: { type: 'string', description: 'one short sentence for the person, in the app language' },
@@ -42,7 +44,7 @@ const REPORT: Anthropic.Beta.BetaTool = {
   },
 };
 
-export type Precision = 'exact' | 'nearby' | 'area' | 'not_found';
+export type Precision = 'exact' | 'area' | 'not_found';
 
 export interface LocateResult {
   precision: Precision;
@@ -106,8 +108,10 @@ export async function locateAddress(query: string, opts: { near?: Coordinates; l
     const report = calls.find((c) => c.name === 'report_location');
     if (report) {
       const r = report.input as { place_id: string | null; precision: Precision; area: string; landmark_query: string | null; note: string };
-      const place = r.place_id ? places.get(r.place_id) ?? null : null;
-      const precision: Precision = place ? r.precision : r.precision === 'area' ? 'area' : 'not_found';
+      // Only an exact match gets a pin: a nearby landmark would send drivers to the wrong place
+      const found = r.place_id ? places.get(r.place_id) ?? null : null;
+      const place = r.precision === 'exact' ? found : null;
+      const precision: Precision = place ? 'exact' : r.precision === 'not_found' || !r.area ? 'not_found' : 'area';
       return {
         precision,
         place,
