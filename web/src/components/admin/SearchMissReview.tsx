@@ -16,6 +16,7 @@ import {
   type SearchRules,
 } from '@/services/searchAdmin';
 import type { Place } from '@/types';
+import { fetchPendingSuggestions, reviewSuggestion, type PlaceSuggestionRow } from '@/services/placeSuggestService';
 import { formatRelativeTime } from '@/utils/format';
 
 /**
@@ -44,6 +45,7 @@ export function SearchMissReview() {
 
   return (
     <div className="space-y-6">
+      <SuggestionsSection onChange={load} />
       <section>
         <div className="mb-2 flex items-center justify-between">
           <h2 className="text-sm font-bold">Carian yang gagal</h2>
@@ -67,6 +69,76 @@ export function SearchMissReview() {
 
       <RulesList rules={rules} onChange={load} />
     </div>
+  );
+}
+
+/**
+ * Places people suggested for searches that found nothing: pins they placed
+ * themselves, or the AI address finder's landmark (text only). Approve to make
+ * that search find it for everyone.
+ */
+function SuggestionsSection({ onChange }: { onChange: () => void }) {
+  const [rows, setRows] = useState<PlaceSuggestionRow[] | null>(null);
+  const [busy, setBusy] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const load = useCallback(() => {
+    fetchPendingSuggestions()
+      .then(setRows)
+      .catch((e: Error) => setError(e.message));
+  }, []);
+  useEffect(load, [load]);
+
+  const act = async (id: string, approve: boolean) => {
+    setBusy(id);
+    setError(null);
+    try {
+      await reviewSuggestion(id, approve);
+      load();
+      onChange();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Gagal');
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  if (!rows || rows.length === 0) return null;
+  return (
+    <section>
+      <h2 className="mb-2 text-sm font-bold">Cadangan tempat ({rows.length})</h2>
+      <p className="mb-3 text-xs text-ink-500">Pin = lokasi yang pengguna letak sendiri. AI = mercu tanda yang AI jumpa (disimpan sebagai teks sahaja). Lulus: carian itu akan terus jumpa tempat ini.</p>
+      {error && <p role="alert" className="mb-2 text-sm text-red-600">{error}</p>}
+      <ul className="space-y-2">
+        {rows.map((r) => (
+          <li key={r.id} className="rounded-2xl bg-white p-3 text-sm shadow-sm ring-1 ring-ink-200 dark:bg-ink-900 dark:ring-ink-800">
+            <div className="flex items-start gap-2">
+              <Chip tone={r.kind === 'pin' ? 'amber' : 'ink'}>{r.kind === 'pin' ? 'Pin' : 'AI'}</Chip>
+              <div className="min-w-0 flex-1">
+                <p className="font-semibold">“{r.query}” → {r.name}</p>
+                <p className="text-xs text-ink-500">
+                  {r.kind === 'pin' ? (
+                    <a className="underline" href={`https://www.openstreetmap.org/?mlat=${r.latitude}&mlon=${r.longitude}#map=18/${r.latitude}/${r.longitude}`} target="_blank" rel="noopener noreferrer">
+                      {r.latitude?.toFixed(5)}, {r.longitude?.toFixed(5)}
+                    </a>
+                  ) : (
+                    <>Cari semula: “{r.target_query}”</>
+                  )}
+                  {r.address && ` · ${r.address}`} · {formatRelativeTime(r.created_at, 'ms')}
+                </p>
+              </div>
+            </div>
+            <div className="mt-2 flex gap-2">
+              <Button className="flex-1 py-1.5 text-xs" disabled={busy === r.id} onClick={() => act(r.id, true)}>
+                <Check className="size-3.5" /> Lulus
+              </Button>
+              <Button variant="secondary" className="flex-1 py-1.5 text-xs" disabled={busy === r.id} onClick={() => act(r.id, false)}>
+                <Trash2 className="size-3.5" /> Tolak
+              </Button>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }
 

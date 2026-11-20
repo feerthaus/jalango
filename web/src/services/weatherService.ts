@@ -16,6 +16,8 @@ export interface WeatherWarning {
 }
 
 export async function fetchWeatherWarnings(signal?: AbortSignal): Promise<WeatherWarning[]> {
-  const { warnings } = await apiGet<{ warnings: WeatherWarning[] }>('/weather/warnings', {}, signal);
-  return warnings;
+  const body = await apiGet<{ warnings?: unknown }>('/weather/warnings', {}, signal);
+  // Never let an odd answer break the map: keep only well-formed warnings
+  if (!Array.isArray(body?.warnings)) return [];
+  return body.warnings.filter((w): w is WeatherWarning => Boolean(w) && typeof w === 'object' && Array.isArray((w as WeatherWarning).states) && typeof (w as WeatherWarning).id === 'string');
 }

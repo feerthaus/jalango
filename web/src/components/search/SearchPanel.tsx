@@ -23,13 +23,15 @@ interface SearchPanelProps {
   onReport: (query: string) => void;
   /** Open the trip assistant (AI), with this text to start from; absent when it's off */
   onAsk?: (text: string) => void;
+  /** "Cari alamat dengan AI": web + map lookup for an address the search can't find; absent when AI is off */
+  onFind?: (text: string) => void;
 }
 
 export function optionId(index: number) {
   return `search-option-${index}`;
 }
 
-export function SearchPanel({ query, search, activeIndex, onSelect, onReport, onAsk }: SearchPanelProps) {
+export function SearchPanel({ query, search, activeIndex, onSelect, onReport, onAsk, onFind }: SearchPanelProps) {
   const [t] = useT();
   const { recents, favourites, removeRecent, clearRecents } = useSavedPlaces();
   const typing = query.trim().length >= 2;
@@ -55,7 +57,7 @@ export function SearchPanel({ query, search, activeIndex, onSelect, onReport, on
         </button>
       )}
       {typing ? (
-        <Results search={search} activeIndex={activeIndex} onSelect={onSelect} onReport={onReport} onAsk={onAsk} pending={search.query !== query.trim()} />
+        <Results search={search} activeIndex={activeIndex} onSelect={onSelect} onReport={onReport} onAsk={onAsk} onFind={onFind} pending={search.query !== query.trim()} />
       ) : (
         <>
           {onAsk && (
@@ -139,7 +141,7 @@ export function SearchPanel({ query, search, activeIndex, onSelect, onReport, on
   );
 }
 
-function Results({ search, activeIndex, onSelect, onReport, onAsk, pending }: { search: PlaceSearchState; activeIndex: number; onSelect: (p: Place) => void; onReport: (q: string) => void; onAsk?: (text: string) => void; pending: boolean }) {
+function Results({ search, activeIndex, onSelect, onReport, onAsk, onFind, pending }: { search: PlaceSearchState; activeIndex: number; onSelect: (p: Place) => void; onReport: (q: string) => void; onAsk?: (text: string) => void; onFind?: (text: string) => void; pending: boolean }) {
   const [t] = useT();
   if (search.error) {
     return (
@@ -192,6 +194,11 @@ function Results({ search, activeIndex, onSelect, onReport, onAsk, pending }: { 
         {search.mode === 'demo' && <p className="text-xs">{t('Data contoh luar talian hanya meliputi bandar dan mercu tanda utama Malaysia.', 'Offline sample data only covers major Malaysian cities and landmarks.')}</p>}
         {!link && search.mode !== 'demo' && (
           <>
+            {onFind && (
+              <button type="button" onClick={() => onFind(search.query)} className="flex items-center gap-1.5 rounded-full bg-violet-600 px-4 py-2 text-sm font-bold text-white">
+                <Sparkles className="size-4" /> {t('Cari alamat dengan AI', 'Find the address with AI')}
+              </button>
+            )}
             {onAsk && (
               <button type="button" onClick={() => onAsk(search.query)} className="flex items-center gap-1.5 rounded-full bg-violet-500/10 px-3 py-1.5 text-sm font-semibold text-violet-700 dark:text-violet-300">
                 <Sparkles className="size-4" /> {t('Tanya pembantu AI', 'Ask the AI assistant')}
@@ -229,6 +236,11 @@ function Results({ search, activeIndex, onSelect, onReport, onAsk, pending }: { 
       {search.mode === 'live' && !looksLikeLinkOrCoords(search.query) && (
         <div className="mt-1 flex items-center gap-2 border-t border-ink-100 px-2 pt-2 text-xs text-ink-500 dark:border-ink-800">
           <span className="min-w-0 flex-1">{t('Tak jumpa tempat yang betul?', 'Not the right place?')}</span>
+          {onFind && (
+            <button type="button" onClick={() => onFind(search.query)} className="flex items-center gap-1 rounded-full bg-violet-500/10 px-2.5 py-1 font-semibold text-violet-700 dark:text-violet-300">
+              <Sparkles className="size-3.5" /> {t('Cari dengan AI', 'Find with AI')}
+            </button>
+          )}
           <ReportButton onClick={() => onReport(search.query)} compact />
           <GoogleMapsHelp query={search.query} compact />
         </div>
