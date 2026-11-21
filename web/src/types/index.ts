@@ -118,6 +118,8 @@ export interface Route {
   hasTolls: boolean;
   /** toll plazas / gantries along the route, in order */
   tollPoints?: TollPoint[];
+  /** metres driven on toll roads (from the router's road classes), for the toll estimate */
+  tollMeters?: number;
   hasMotorway: boolean;
   congestion?: Congestion[];
   /** speed limit (km/h) per geometry segment, null where unknown */

@@ -11,6 +11,20 @@ export const CONSUMPTION = { car: 7, motorcycle: 3 } as const;
 
 /** Highway toll for a car, RM per km (PLUS class 1 is about RM0.10/km). Motorcycles: free on most. */
 export const TOLL_PER_KM = 0.1;
+/** Range for the toll estimate shown on a route: long highways ~RM0.09/km, city expressways cost more per km. */
+const TOLL_RANGE = { min: 0.09, max: 0.14 } as const;
+
+/**
+ * Estimated toll for a car on a route (RM range), from the distance on toll
+ * roads. Not the real fare table (coming per highway): always shown as "~".
+ * Null when the route has no tolls or for motorcycles.
+ */
+export function tollEstimate(r: { hasTolls: boolean; tollMeters?: number; distanceMeters: number }, vehicle: 'car' | 'motorcycle' = 'car'): { min: number; max: number } | null {
+  if (!r.hasTolls || vehicle !== 'car') return null;
+  const km = (r.tollMeters ?? r.distanceMeters) / 1000;
+  const min = Math.max(1, Math.round(km * TOLL_RANGE.min));
+  return { min, max: Math.max(min + 1, Math.round(km * TOLL_RANGE.max)) };
+}
 
 interface ParkingZone {
   name: string;
@@ -56,11 +70,13 @@ export interface CarCost {
 }
 
 /** One-way drive: fuel + estimated toll + parking for `days` at the destination. */
-export function carTripCost(o: { distanceMeters: number; hasTolls: boolean; vehicle: 'car' | 'motorcycle'; fuelPrice: number; parkingPerDay: number; days: number }): CarCost {
+export function carTripCost(o: { distanceMeters: number; hasTolls: boolean; tollMeters?: number; vehicle: 'car' | 'motorcycle'; fuelPrice: number; parkingPerDay: number; days: number }): CarCost {
   const km = o.distanceMeters / 1000;
   const litres = (km * CONSUMPTION[o.vehicle]) / 100;
   const fuel = Math.round(litres * o.fuelPrice);
-  const toll = o.hasTolls && o.vehicle === 'car' ? Math.round(km * TOLL_PER_KM) : 0;
+  // the middle of the route's toll estimate (toll-road distance when known)
+  const est = tollEstimate(o, o.vehicle);
+  const toll = est ? Math.round((est.min + est.max) / 2) : 0;
   const parking = Math.round(o.parkingPerDay * Math.max(0, o.days));
   return { fuel, toll, parking, total: fuel + toll + parking, litres: Math.round(litres * 10) / 10 };
 }

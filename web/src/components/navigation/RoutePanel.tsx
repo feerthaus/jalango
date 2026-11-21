@@ -1,4 +1,6 @@
 import { AlertTriangle, ArrowLeft, BadgeCheck, Car, Coins, Footprints, Megaphone, Waves, Gauge, LocateFixed, Navigation, RefreshCw, Route as RouteIcon, ShieldCheck, TrainFront, Utensils } from 'lucide-react';
+import { useMyVehicle } from '@/lib/vehicle';
+import { tollEstimate } from '@/utils/tripCost';
 import { WeatherWarningBanner } from '@/components/weather/WeatherWarningBanner';
 import { useWeatherWarnings } from '@/hooks/useWeatherWarnings';
 import { stateAt } from '@/utils/malaysiaState';
@@ -204,6 +206,9 @@ export function RoutePanel() {
 
 function RouteOption({ route, reportCount, selected, fastest, onSelect }: { route: Route; reportCount: number; selected: boolean; fastest: boolean; onSelect: () => void }) {
   const [t] = useT();
+  const [vehicle] = useMyVehicle();
+  // "Tol ~RM12–19": an estimate from the distance on toll roads (cars only)
+  const toll = tollEstimate(route, vehicle);
   const delay = route.typicalDurationSeconds ? route.durationSeconds - route.typicalDurationSeconds : 0;
   const heavy = delay > 300;
   const demo = route.source === 'demo';
@@ -233,7 +238,7 @@ function RouteOption({ route, reportCount, selected, fastest, onSelect }: { rout
           {fastest && <Chip className="bg-jade-500/15 text-jade-700 dark:text-jade-300">{t('Terpantas', 'Fastest')}</Chip>}
           {route.hasTolls && (
             <Chip className="bg-amber-400/15 text-amber-700 dark:text-amber-300">
-              <Coins className="size-3" /> {t('Bertol', 'Toll road')}
+              <Coins className="size-3" /> {toll ? t(`Tol ~RM${toll.min}–${toll.max}`, `Toll ~RM${toll.min}–${toll.max}`) : t('Bertol', 'Toll road')}
             </Chip>
           )}
           {route.hasMotorway && (

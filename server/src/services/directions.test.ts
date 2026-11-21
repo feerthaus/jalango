@@ -159,4 +159,27 @@ describe('buildDirectionsUrl', () => {
     const many = Array.from({ length: 15 }, (_, i) => ({ lng: 101.6 + i * 0.001, lat: 3.0 }));
     expect(buildDirectionsUrl({ lng: 101.6, lat: 3.0 }, { lng: 101.7, lat: 3.1 }, { avoidPoints: many }).searchParams.get('exclude')!.split(',')).toHaveLength(10);
   });
+
+  it('measures how far the route runs on toll roads (for the toll estimate)', () => {
+    const r = normalizeRoute(
+      {
+        distance: 30_000,
+        duration: 1800,
+        geometry: { type: 'LineString', coordinates: [[101.6, 3.0], [101.7, 3.1]] },
+        legs: [
+          {
+            steps: [
+              { distance: 5_000, duration: 300, maneuver: { type: 'depart', location: [101.6, 3.0] }, intersections: [{ classes: [] }, { classes: [] }] },
+              { distance: 20_000, duration: 900, maneuver: { type: 'turn', location: [101.62, 3.02] }, intersections: [{ classes: ['toll', 'motorway'] }, { classes: ['toll', 'motorway'] }, { classes: ['toll', 'motorway'] }, { classes: ['motorway'] }] },
+              { distance: 5_000, duration: 600, maneuver: { type: 'arrive', location: [101.7, 3.1] }, intersections: [{ classes: [] }] },
+            ],
+          },
+        ],
+      },
+      0,
+    );
+    expect(r.hasTolls).toBe(true);
+    expect(r.tollMeters).toBe(15_000); // 3 of 4 samples on the 20 km step
+    expect(normalizeRoute({ distance: 1000, duration: 60, geometry: { type: 'LineString', coordinates: [[101.6, 3.0], [101.61, 3.0]] }, legs: [{ steps: [{ distance: 1000, duration: 60, maneuver: { type: 'depart', location: [101.6, 3.0] }, intersections: [{}] }] }] }, 0).tollMeters).toBeUndefined();
+  });
 });
