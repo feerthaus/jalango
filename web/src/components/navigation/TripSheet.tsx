@@ -1,4 +1,4 @@
-import { Coins, Flag, ListOrdered, Map as MapIcon, Megaphone, Navigation, Radio, Route as RouteIcon, Search, Volume2, VolumeX, X } from 'lucide-react';
+import { ChevronDown, Coins, Flag, ListOrdered, Map as MapIcon, Megaphone, Navigation, Radio, Route as RouteIcon, Search, Volume2, VolumeX, X } from 'lucide-react';
 import { useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 import { CONGESTION_COLORS, ROUTE_BLUE } from '@/components/map/RouteLayer';
 import { Button } from '@/components/ui/Button';
@@ -61,20 +61,36 @@ export function TripSheet({ remainingSeconds, remainingMeters, demo, showSteps, 
   const toll = route ? tollEstimate(route, vehicle) : null;
   const reportsAhead = strip ? strip.markers.filter((m) => m.kind === 'report').length : 0;
 
-  const onDown = (e: ReactPointerEvent) => {
-    drag.current = e.clientY;
+  // Swipe up to open, down to close. Touch events, not pointer events: on phones
+  // the browser cancels a pointer gesture once it decides the finger is
+  // scrolling the sheet, but a touch always ends with touchend.
+  const swipe = useRef<{ y: number; atTop: boolean } | null>(null);
+  const content = useRef<HTMLDivElement>(null);
+  const decide = (dy: number, atTop: boolean) => {
+    if (!open && dy < -SWIPE_PX) setOpen(true);
+    // closing from the list only when it's scrolled to the top (otherwise it's a scroll)
+    else if (open && dy > SWIPE_PX && atTop) setOpen(false);
   };
-  // Follow the finger even when it leaves the bar (only once it's really a swipe, so taps still reach the buttons)
-  const onMove = (e: ReactPointerEvent<HTMLDivElement>) => {
-    if (drag.current === null || e.currentTarget.hasPointerCapture(e.pointerId)) return;
-    if (Math.abs(e.clientY - drag.current) > 8) e.currentTarget.setPointerCapture(e.pointerId);
+  const onTouchStart = (e: React.TouchEvent) => {
+    // From the handle or the bar it always counts; from the list only at its top
+    const inList = content.current?.contains(e.target as Node) ?? false;
+    swipe.current = { y: e.touches[0].clientY, atTop: !inList || (content.current?.scrollTop ?? 0) <= 0 };
   };
-  const onUp = (e: ReactPointerEvent) => {
-    if (drag.current === null) return;
+  const onTouchEnd = (e: React.TouchEvent) => {
+    const s = swipe.current;
+    swipe.current = null;
+    if (!s || !e.changedTouches[0]) return;
+    decide(e.changedTouches[0].clientY - s.y, s.atTop);
+  };
+  // Mouse (desktop): the same with pointer events
+  const onMouseDown = (e: ReactPointerEvent) => {
+    if (e.pointerType === 'mouse') drag.current = e.clientY;
+  };
+  const onMouseUp = (e: ReactPointerEvent) => {
+    if (e.pointerType !== 'mouse' || drag.current === null) return;
     const dy = e.clientY - drag.current;
     drag.current = null;
-    if (dy < -SWIPE_PX) setOpen(true);
-    else if (dy > SWIPE_PX) setOpen(false);
+    decide(dy, !(content.current?.contains(e.target as Node) ?? false) || (content.current?.scrollTop ?? 0) <= 0);
   };
 
   const overview = () => {
@@ -109,10 +125,11 @@ export function TripSheet({ remainingSeconds, remainingMeters, demo, showSteps, 
   return (
     <div
       className="glass pointer-events-auto rounded-3xl shadow-float ring-1 ring-ink-900/5 dark:ring-white/10"
-      onPointerDown={onDown}
-      onPointerMove={onMove}
-      onPointerUp={onUp}
-      onPointerCancel={() => (drag.current = null)}
+      onTouchStart={onTouchStart}
+      onTouchEnd={onTouchEnd}
+      onTouchCancel={() => (swipe.current = null)}
+      onPointerDown={onMouseDown}
+      onPointerUp={onMouseUp}
       onKeyDown={(e) => e.key === 'Escape' && open && setOpen(false)}
     >
       {/* Grab handle: swipe up / down, or tap */}
@@ -122,13 +139,15 @@ export function TripSheet({ remainingSeconds, remainingMeters, demo, showSteps, 
         aria-expanded={open}
         aria-controls="trip-sheet"
         aria-label={open ? t('Tutup butiran perjalanan', 'Close trip details') : t('Buka butiran perjalanan', 'Open trip details')}
-        className="flex w-full touch-none justify-center pb-0.5 pt-2"
+        className="flex w-full touch-none flex-col items-center pb-0.5 pt-2"
       >
         <span className="h-1.5 w-10 rounded-full bg-ink-300 dark:bg-ink-600" />
+        {/* open: a clear "tap or pull down to close" */}
+        {open && <ChevronDown className="-mb-1 size-5 text-ink-400" aria-hidden />}
       </button>
 
       {open && (
-        <div id="trip-sheet" className="max-h-[min(60dvh,520px)] space-y-4 overflow-y-auto border-b border-ink-900/5 px-4 pb-4 pt-1 dark:border-white/10 short:max-h-[55dvh]">
+        <div id="trip-sheet" ref={content} className="max-h-[min(60dvh,520px)] space-y-4 overflow-y-auto overscroll-contain border-b border-ink-900/5 px-4 pb-4 pt-1 dark:border-white/10 short:max-h-[55dvh]">
           {/* Arrival: JalanGo's trip header (same type scale as the route options) */}
           <div className="flex items-end justify-between gap-3">
             <div>
