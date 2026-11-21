@@ -31,6 +31,8 @@ describe('trip cost estimates', () => {
     expect(tollEstimate({ hasTolls: true, tollMeters: 150_000, distanceMeters: 160_000 })).toEqual({ min: 14, max: 21 });
     expect(tollEstimate({ hasTolls: true, distanceMeters: 100_000 })).toEqual({ min: 9, max: 14 }); // older saved route: whole distance
     expect(tollEstimate({ hasTolls: true, tollMeters: 2_000, distanceMeters: 10_000 })).toEqual({ min: 1, max: 2 }); // short city stretch: at least RM1
+    // toll plazas but no toll-road distance (Malaysia today): whole trip, never "RM1–2" for KL→Melaka
+    expect(tollEstimate({ hasTolls: true, tollMeters: 0, distanceMeters: 147_000 })).toEqual({ min: 13, max: 21 });
     expect(tollEstimate({ hasTolls: false, distanceMeters: 100_000 })).toBeNull();
     expect(tollEstimate({ hasTolls: true, tollMeters: 50_000, distanceMeters: 60_000 }, 'motorcycle')).toBeNull();
   });
