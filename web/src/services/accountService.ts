@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase';
 import { apiPost } from './apiClient';
+import { ensureFeedbackCode } from './feedbackReplyService';
 
 /** Permanently delete the signed-in account (server-side), then clear this device. */
 export async function deleteMyAccount(): Promise<void> {
@@ -25,5 +26,6 @@ export function clearLocalData() {
 
 export async function sendFeedback(input: { category: string; message: string; contact?: string; page?: string }): Promise<void> {
   const token = supabase ? (await supabase.auth.getSession()).data.session?.access_token : null;
-  await apiPost('/feedback', input, token);
+  // so the reply shows up in the app on this phone, even without an account
+  await apiPost('/feedback', { ...input, replyToken: ensureFeedbackCode() }, token);
 }

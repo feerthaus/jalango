@@ -77,11 +77,12 @@ export function FeedbackSheet({ onClose }: { onClose: () => void }) {
               value={contact}
               onChange={(e) => setContact(e.target.value)}
               maxLength={120}
-              placeholder={t('Emel atau telefon (pilihan, jika mahu balasan)', 'Email or phone (optional, if you’d like a reply)')}
+              placeholder={t('Emel atau telefon (pilihan)', 'Email or phone (optional)')}
               aria-label={t('Hubungan', 'Contact')}
               className="w-full rounded-xl bg-ink-100 px-3 py-2.5 text-base outline-none ring-jade-500 focus:ring-2 dark:bg-ink-800"
             />
           )}
+          <p className="text-xs text-ink-500">{t('Balasan pasukan JalanGo akan muncul dalam app ini.', 'Replies from the JalanGo team show up in this app.')}</p>
           {error && <p role="alert" className="text-sm text-red-600">{error}</p>}
           <Button className="w-full py-3" onClick={send} disabled={busy || message.trim().length < 3}>
             {busy && <Loader2 className="size-4 animate-spin" />} {t('Hantar', 'Send')}

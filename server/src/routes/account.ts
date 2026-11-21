@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { Router, type Request } from 'express';
 import { z } from 'zod';
 import { HttpError } from '../lib/errors.js';
@@ -42,7 +43,11 @@ export const feedbackSchema = z.object({
   message: z.string().trim().min(3).max(2000),
   contact: z.string().trim().max(120).optional(),
   page: z.string().trim().max(200).optional(),
+  /** random code kept on the sender's device, so a guest can read the reply there (only its hash is stored) */
+  replyToken: z.string().regex(/^[A-Za-z0-9_-]{20,100}$/).optional(),
 });
+
+export const tokenHash = (token: string) => createHash('sha256').update(token).digest('hex');
 
 export const feedbackRouter = Router();
 
@@ -58,6 +63,7 @@ feedbackRouter.post('/', async (req, res) => {
     contact: body.contact || user?.email || null,
     page: body.page || null,
     user_agent: (req.get('user-agent') ?? '').slice(0, 300) || null,
+    device_token_hash: body.replyToken ? tokenHash(body.replyToken) : null,
   });
   if (error) {
     console.error('[jalango] feedback insert failed', error.message);
