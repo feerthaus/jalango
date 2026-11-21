@@ -70,6 +70,8 @@ export interface Route {
   hasTolls: boolean;
   /** toll plazas / gantries along the route, in order */
   tollPoints?: TollPoint[];
+  /** metres driven on toll roads (from the router's road classes), for the toll estimate */
+  tollMeters?: number;
   hasMotorway: boolean;
   /** Per-segment live congestion (length = coordinates - 1) */
   congestion?: Congestion[];

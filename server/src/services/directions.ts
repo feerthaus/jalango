@@ -60,6 +60,7 @@ export function normalizeRoute(r: MbRoute, index: number): Route {
   const summaries: string[] = [];
   const maxspeeds: (number | null)[] = [];
   const tollPoints: TollPoint[] = [];
+  let tollMeters = 0;
 
   for (const leg of r.legs ?? []) {
     if (leg.summary) summaries.push(leg.summary);
@@ -71,6 +72,9 @@ export function normalizeRoute(r: MbRoute, index: number): Route {
     }
     for (const s of leg.steps ?? []) {
       let stepMotorway = false;
+      // share of this step on toll roads (intersections sample the step along its length)
+      const ix = s.intersections ?? [];
+      if (ix.length) tollMeters += (s.distance * ix.filter((i) => i.classes?.includes('toll')).length) / ix.length;
       for (const i of s.intersections ?? []) {
         if (i.classes?.includes('toll')) hasTolls = true;
         const tc = i.toll_collection;
@@ -114,6 +118,7 @@ export function normalizeRoute(r: MbRoute, index: number): Route {
     steps,
     hasTolls,
     tollPoints: tollPoints.length ? tollPoints : undefined,
+    tollMeters: hasTolls ? Math.round(tollMeters) : undefined,
     hasMotorway,
     congestion: congestion.length === r.geometry.coordinates.length - 1 ? congestion : undefined,
     maxspeeds: maxspeeds.length === r.geometry.coordinates.length - 1 && maxspeeds.some((v) => v !== null) ? maxspeeds : undefined,

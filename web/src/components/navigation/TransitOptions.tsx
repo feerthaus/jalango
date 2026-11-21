@@ -90,7 +90,7 @@ export function TransitOptions() {
 
   const route = routes[selectedIndex] ?? routes[0];
   const parking = useMemo(() => (to ? parkingPerDay(to) : { perDay: 0, zone: null }), [to]);
-  const car = route && fuel ? carTripCost({ distanceMeters: route.distanceMeters, hasTolls: route.hasTolls, vehicle, fuelPrice: fuel.price, parkingPerDay: parking.perDay, days }) : null;
+  const car = route && fuel ? carTripCost({ distanceMeters: route.distanceMeters, hasTolls: route.hasTolls, tollMeters: route.tollMeters, vehicle, fuelPrice: fuel.price, parkingPerDay: parking.perDay, days }) : null;
   const best = options?.length ? options.reduce((a, b) => (b.costMax < a.costMax ? b : a)) : null;
   const train = best ? trainTripCost({ fareMin: best.fareMin, fareMax: best.fareMax, rideMin: best.access.costMin + best.egress.costMin, rideMax: best.access.costMax + best.egress.costMax, people }) : null;
 
