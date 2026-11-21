@@ -47,6 +47,9 @@ interface MbRoute {
   legs: MbLeg[];
 }
 
+/** A light this close to a turn counts as "at the lights" (same junction). */
+const SIGNAL_AT_TURN_M = 35;
+
 /** Rough metres between two nearby points. */
 function metres(a: Coordinates, b: Coordinates): number {
   const x = (b.lng - a.lng) * 111_320 * Math.cos((a.lat * Math.PI) / 180);
@@ -124,6 +127,12 @@ export function normalizeRoute(r: MbRoute, index: number): Route {
         exits: s.exits || undefined,
       });
     }
+  }
+
+  // A junction's light is often on a node a few metres from the turn point (the
+  // stop line, or the other carriageway): still the same junction
+  for (const st of steps) {
+    if (!st.atSignal && signals.some((g) => metres(g, st.maneuver.location) <= SIGNAL_AT_TURN_M)) st.atSignal = true;
   }
 
   return {

@@ -154,6 +154,26 @@ describe('traffic lights', () => {
     expect(r.steps.map((s) => s.atSignal)).toEqual([undefined, true, undefined]);
     expect(normalizeRoute(fixture, 0).signals).toBeUndefined();
   });
+  it('counts a light a few metres from the turn as the same junction', () => {
+    const r = normalizeRoute(
+      {
+        distance: 1000,
+        duration: 120,
+        geometry: { type: 'LineString', coordinates: [[101.7, 3.1], [101.7, 3.11]] },
+        legs: [
+          {
+            steps: [
+              { distance: 900, duration: 100, maneuver: { type: 'depart', location: [101.7, 3.1] }, intersections: [{ location: [101.7, 3.1] }, { location: [101.7, 3.1049], traffic_signal: true }] },
+              { distance: 100, duration: 20, maneuver: { type: 'turn', modifier: 'right', location: [101.7, 3.105] }, intersections: [{ location: [101.7, 3.105] }] },
+              { distance: 0, duration: 0, maneuver: { type: 'turn', modifier: 'left', location: [101.7, 3.107] }, intersections: [{ location: [101.7, 3.107] }] },
+            ],
+          },
+        ],
+      },
+      0,
+    );
+    expect(r.steps.map((s) => s.atSignal)).toEqual([undefined, true, undefined]);
+  });
 });
 
 describe('buildDirectionsUrl', () => {
