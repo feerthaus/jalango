@@ -400,6 +400,28 @@ Permintaan pemilik (Nov 2026): ahli konvoi boleh berbual sesama sendiri.
 - **Konvoi:** kereta dan motosikal.
 - **Kad pratonton link:** tag Open Graph dan `web/public/og-image.jpg`.
 
+## Laman utama awam (/home) dan SEO asas (Fasa 1, Sprint 2A)
+
+Keputusan pemilik (Nov 2026): laman utama pemasaran di **`/home`**. **`/` kekal sebagai peta dan navigasi**, supaya app yang dipasang (`start_url: "/"`), pautan tempat `/?tempat=…` dan jemputan konvoi `/convoy/KOD` tidak terjejas.
+
+- **Laman utama** untuk dua kumpulan pembaca, pengguna dan pemilik bisnes (BM/EN, ikut tetapan bahasa app):
+  - **Hero** dengan butang "Buka peta" (`/`) dan "Daftar bisnes" (`/business`).
+  - **Di jalan raya:** panduan suara BM, laporan komuniti, elak jem, minyak/tol/R&R, konvoi, pengangkutan awam.
+  - **Cari tempat:** Hotel & homestay (`/sewa?jenis=homestay`), Tempat menarik (`/explore`), Makan (`/sewa?jenis=food`), Kereta sewa & pengangkutan (`/sewa?jenis=car_rental`), dan pintu masuk "Sewa & Makan" (`/sewa`).
+  - **Untuk pemilik bisnes:** faedah dan 4 langkah pendaftaran. Butang membawa ke **pendaftaran sedia ada** (`/business`); tiada sistem pendaftaran baharu. Kategori sekarang dinyatakan dengan jujur: homestay, kereta sewa, makan. Hotel, tarikan dan aktiviti "sedang dirancang".
+  - **Tentang JalanGo:** pengetahuan tempatan, komuniti, privasi.
+  - **Sokong JalanGo:** ruang letak sahaja ("Pilihan sumbangan akan datang"), dengan butang Kongsi JalanGo dan Maklum balas. **Tiada bayaran.**
+- **Profil** ada pautan "Tentang JalanGo" ke `/home`. Tiada pautan baharu dalam peta atau semasa navigasi.
+- **Satu alamat laman (`VITE_SITE_URL`):** digunakan untuk pautan kongsi, URL canonical, `og:url`/`og:image` dalam `index.html`, `robots.txt`, `sitemap.xml` dan teks "Buka … di telefon". Server menggunakan `SITE_URL` (atau `VITE_SITE_URL`). Lalai: `https://jalango.netlify.app`. Untuk pindah ke domain baharu, tetapkan satu pemboleh ubah itu.
+- **SEO:**
+  - `robots.txt` dan `sitemap.xml` dijana semasa build daripada satu senarai (`web/src/lib/sitePaths.ts`). Sitemap: `/home`, `/`, `/sewa`, `/explore`, `/privacy`, `/terms`. Robots menyekat `/admin`, `/api/`, `/live/`, `/business/listings/`, `/profile` dan `/saved`.
+  - **Tajuk dan deskripsi** untuk setiap halaman utama (`usePageMeta`), dan **URL canonical** untuk halaman awam.
+  - Halaman peribadi (`/profile`, `/saved`, `/admin`, lokasi live, sunting listing, 404) diberi `noindex`.
+  - **Had:** ini SPA, jadi meta ditetapkan dalam pelayar. Google membacanya, tetapi pratonton WhatsApp/Facebook masih menggunakan kad lalai dalam `index.html`. Pratonton per halaman dirancang untuk sprint kemudian.
+- **Service worker:** shell luar talian kini hanya dikemas kini oleh respons HTML. Membuka `/robots.txt` atau `/sitemap.xml` dalam app tak lagi menimpa shell itu.
+
+**Kod:** `web/src/pages/HomePage.tsx`, `web/src/hooks/usePageMeta.ts`, `web/src/lib/site.ts`, `web/src/lib/sitePaths.ts`, plugin `siteFiles` dalam `web/vite.config.ts`, `config.siteUrl` dalam `server/src/config.ts`. Ujian: `web/src/lib/site.test.ts`.
+
 ## Lain-lain
 
 - **Harga minyak mingguan:** dari data.gov.my.

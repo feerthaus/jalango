@@ -1,3 +1,4 @@
+import { usePageMeta } from '@/hooks/usePageMeta';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { Bell, BellOff, CheckCircle2, Clock, Flag, TrafficCone, ListOrdered, Loader2, LocateFixed, MapPinOff, MessageCircle, Navigation, Phone, Radio, VolumeX, X } from 'lucide-react';
@@ -22,6 +23,7 @@ const POLL_MS = 5_000;
 /** Public page behind a share link: someone's live position, smoothly animated. No sign-in needed. */
 export function LiveViewPage() {
   const [t, lang] = useT();
+  usePageMeta({ title: t('Lokasi live', 'Live location'), noindex: true });
   const { token = '' } = useParams();
   const { theme } = useTheme();
   const containerRef = useRef<HTMLDivElement>(null);

@@ -31,8 +31,11 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(
       fetch(req)
         .then((res) => {
-          const copy = res.clone();
-          caches.open(VERSION).then((c) => c.put('/', copy));
+          // Only the app page is the offline shell (not /robots.txt, /sitemap.xml or an error page)
+          if (res.ok && (res.headers.get('content-type') || '').includes('text/html')) {
+            const copy = res.clone();
+            caches.open(VERSION).then((c) => c.put('/', copy));
+          }
           return res;
         })
         .catch(() => caches.match('/')),

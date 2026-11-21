@@ -1,3 +1,4 @@
+import { usePageMeta } from '@/hooks/usePageMeta';
 import { ArrowLeft, Camera, CheckCircle2, Loader2, Pause, Play, Send, Star, Trash2 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
@@ -40,6 +41,7 @@ type Form = Omit<ListingInput, 'latitude' | 'longitude' | 'price'> & { price: st
 /** Create / edit one listing: a rental car or a homestay unit. */
 export function ListingEditorPage() {
   const [t] = useT();
+  usePageMeta({ title: t('Sunting listing', 'Edit listing'), noindex: true });
   const { id = 'new' } = useParams();
   const { user, loading } = useAuth();
   const navigate = useNavigate();

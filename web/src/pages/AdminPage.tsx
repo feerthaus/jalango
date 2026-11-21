@@ -1,3 +1,4 @@
+import { usePageMeta } from '@/hooks/usePageMeta';
 import { ArrowLeft, Ban, Bell, Check, EyeOff, Loader2, RefreshCw, RotateCcw, Send, ShieldAlert, X } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router';
@@ -38,6 +39,7 @@ const TAB_COUNT = { operators: 'operators', listings: 'listings', flags: 'flags'
 
 /** Moderation queue + feedback inbox. Only usable by users in public.admins (enforced in the database). */
 export function AdminPage() {
+  usePageMeta({ title: 'Admin', noindex: true });
   const { user, loading } = useAuth();
   const [allowed, setAllowed] = useState<boolean | null>(null);
   const [needs2fa, setNeeds2fa] = useState(false);

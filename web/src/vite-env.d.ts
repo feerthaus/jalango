@@ -9,6 +9,8 @@ interface ImportMetaEnv {
   readonly VITE_CONTACT_EMAIL?: string;
   /** Sentry DSN (public by design); empty = crash reporting off */
   readonly VITE_SENTRY_DSN?: string;
+  /** Public address of the site (canonical URLs, shared links, sitemap). Default: https://jalango.netlify.app */
+  readonly VITE_SITE_URL?: string;
 }
 
 interface ImportMeta {

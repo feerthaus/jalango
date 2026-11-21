@@ -1,3 +1,4 @@
+import { usePageMeta } from '@/hooks/usePageMeta';
 import { Compass } from 'lucide-react';
 import { Link } from 'react-router';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -6,6 +7,7 @@ import { useT } from '@/lib/i18n';
 
 export function NotFoundPage() {
   const [t] = useT();
+  usePageMeta({ title: t('Halaman tidak dijumpai', 'Page not found'), noindex: true });
   return (
     <PagePanel title={t('Sesat?', 'Lost?')}>
       <EmptyState icon={Compass} title={t('Halaman ini tidak wujud', 'This page doesn’t exist')}>

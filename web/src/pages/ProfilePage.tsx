@@ -1,3 +1,4 @@
+import { usePageMeta } from '@/hooks/usePageMeta';
 import { AdminCard } from '@/components/admin/AdminCard';
 import { CountBadge } from '@/components/admin/CountBadge';
 import { useAdminCounts } from '@/hooks/useAdminCounts';
@@ -51,6 +52,7 @@ const GPS_LABEL: Record<string, string> = {
 
 export function ProfilePage() {
   const [t] = useT();
+  usePageMeta({ title: t('Profil', 'Profile'), noindex: true });
   const { preference, setPreference } = useTheme();
   const { server, searchMode, tilesMode, refresh } = useServiceStatus();
   const { status: gpsStatus, fix } = useLocation();
@@ -149,6 +151,9 @@ export function ProfilePage() {
         <Logo withText />
         <p>{t('v0.1 · Dibina untuk jalan raya Malaysia', 'v0.1 · Made for Malaysian roads')}</p>
         <p className="mt-1 flex gap-3">
+          <Link to="/home" className="font-semibold text-jade-700 hover:underline dark:text-jade-400">
+            {t('Tentang JalanGo', 'About JalanGo')}
+          </Link>
           <Link to="/privacy" className="font-semibold text-jade-700 hover:underline dark:text-jade-400">
             {t('Privasi', 'Privacy')}
           </Link>

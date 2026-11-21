@@ -1,3 +1,4 @@
+import { usePageMeta } from '@/hooks/usePageMeta';
 import { ArrowLeft, Bath, Utensils, BedDouble, Car, ChevronLeft, ChevronRight, Clock, Fuel, Home, Info, MapPin, Navigation, Phone, Share2, Users } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
@@ -24,6 +25,7 @@ export function ListingPage() {
   const navigating = useIsNavigating();
   const [l, setL] = useState<PublicListing | null | undefined>(undefined);
   const [error, setError] = useState<string | null>(null);
+  usePageMeta({ title: l ? l.title : t('Sewa & Makan', 'Rent & Food'), description: l ? `${l.title} · ${l.area_label}` : undefined, noindex: l === null });
 
   useEffect(() => {
     if (navigating) return;

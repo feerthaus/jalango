@@ -1,3 +1,4 @@
+import { usePageMeta } from '@/hooks/usePageMeta';
 import { Clock, Star, Trash2, X } from 'lucide-react';
 import { useState } from 'react';
 import { PlaceRow } from '@/components/places/PlaceRow';
@@ -15,6 +16,7 @@ import { useT } from '@/lib/i18n';
 
 export function SavedPage() {
   const [t, lang] = useT();
+  usePageMeta({ title: t('Simpanan', 'Saved'), noindex: true });
   const [tr] = useT();
   const { favourites, recents, removeFavourite, removeRecent, clearRecents } = useSavedPlaces();
   const showOnMap = useShowOnMap();

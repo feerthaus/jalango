@@ -216,7 +216,7 @@ export async function searchOsm(q: string, near: Coordinates | undefined, limit:
     url.searchParams.set('lon', String(near.lng));
   }
   try {
-    const res = await fetch(url, { signal: AbortSignal.timeout(3500), headers: { 'User-Agent': 'JalanGo/1.0 (+https://jalango.netlify.app)' } });
+    const res = await fetch(url, { signal: AbortSignal.timeout(3500), headers: { 'User-Agent': `JalanGo/1.0 (+${config.siteUrl})` } });
     if (!res.ok) return [];
     const body = (await res.json()) as { features?: PhotonFeature[] };
     return (body.features ?? []).map(photonToPlace).filter((p): p is Place => p !== null);
