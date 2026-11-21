@@ -5,12 +5,12 @@ import { useMapContext } from '@/contexts/MapContext';
 import { useRouting } from '@/contexts/RoutingContext';
 import { useTheme, type ResolvedTheme } from '@/contexts/ThemeContext';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
-import { buildRouteIndex, sliceRoute } from '@/utils/routeProgress';
+import { buildRouteIndex, projectOnRoute, sliceRoute } from '@/utils/routeProgress';
 import { useTrainView } from '@/lib/trainView';
 import type { Congestion, Route } from '@/types';
 
 const SOURCE = 'jg-routes';
-const LAYERS = { alt: 'jg-route-alt', casing: 'jg-route-casing', main: 'jg-route-main', passed: 'jg-route-passed' } as const;
+const LAYERS = { alt: 'jg-route-alt', casing: 'jg-route-casing', main: 'jg-route-main', stop: 'jg-route-stop', passed: 'jg-route-passed' } as const;
 
 /**
  * Route colours are deliberately NOT green: Mapbox's navigation styles draw
@@ -18,6 +18,8 @@ const LAYERS = { alt: 'jg-route-alt', casing: 'jg-route-casing', main: 'jg-route
  * out, with traffic shown on top of it in amber/red only where it's slow.
  */
 export const ROUTE_BLUE = '#2f7bff';
+/** The way to a stop on the route ("Singgah: …"), in the stop banner's violet */
+export const STOP_VIOLET = '#7c3aed';
 export const CONGESTION_COLORS: Record<Congestion, string> = {
   unknown: ROUTE_BLUE,
   low: ROUTE_BLUE,
@@ -26,36 +28,44 @@ export const CONGESTION_COLORS: Record<Congestion, string> = {
   severe: '#a8001c',
 };
 
-type Props = { kind: 'alt' | 'main' | 'passed'; index: number; congestion: Congestion; demo: boolean };
+type Props = { kind: 'alt' | 'main' | 'stop' | 'passed'; index: number; congestion: Congestion; demo: boolean; toStop: boolean };
 
-/** Selected route split into runs of equal congestion so it can be coloured by live traffic. */
-function routeFeatures(routes: Route[], selected: number, passed: [number, number][]): FeatureCollection<LineString, Props> {
+/**
+ * Selected route split into runs of equal congestion so it can be coloured by
+ * live traffic. With a stop on the way (`stopSegment`: where it sits on the
+ * line), the route up to it is also given as a 'stop' line, drawn in violet on
+ * top of the blue route.
+ */
+export function routeFeatures(routes: Route[], selected: number, passed: [number, number][], stopSegment: number | null = null): FeatureCollection<LineString, Props> {
   const features: Feature<LineString, Props>[] = [];
   routes.forEach((route, index) => {
     const coords = route.geometry.coordinates;
     const demo = route.source === 'demo';
     if (index !== selected) {
-      features.push({ type: 'Feature', geometry: { type: 'LineString', coordinates: coords }, properties: { kind: 'alt', index, congestion: 'unknown', demo } });
+      features.push({ type: 'Feature', geometry: { type: 'LineString', coordinates: coords }, properties: { kind: 'alt', index, congestion: 'unknown', demo, toStop: false } });
       return;
     }
     const cong = route.congestion;
-    if (!cong) {
-      features.push({ type: 'Feature', geometry: { type: 'LineString', coordinates: coords }, properties: { kind: 'main', index, congestion: 'unknown', demo } });
-    } else {
-      let start = 0;
-      for (let i = 1; i <= cong.length; i++) {
-        if (i === cong.length || cong[i] !== cong[start]) {
-          features.push({
-            type: 'Feature',
-            geometry: { type: 'LineString', coordinates: coords.slice(start, i + 1) },
-            properties: { kind: 'main', index, congestion: cong[start], demo },
-          });
-          start = i;
-        }
-      }
+    const segments = coords.length - 1;
+    const cut = stopSegment !== null && stopSegment > 0 && stopSegment < segments ? stopSegment : null;
+    // runs of segments [start, i) with the same congestion and the same side of the stop
+    let start = 0;
+    for (let i = 1; i <= segments; i++) {
+      const same = i < segments && (cong ? cong[i] === cong[start] : true) && i !== cut;
+      if (same) continue;
+      features.push({
+        type: 'Feature',
+        geometry: { type: 'LineString', coordinates: coords.slice(start, i + 1) },
+        properties: { kind: 'main', index, congestion: cong?.[start] ?? 'unknown', demo, toStop: cut !== null && start < cut },
+      });
+      start = i;
+    }
+    // The way to the stop: a violet line drawn on top of the blue route
+    if (cut !== null) {
+      features.push({ type: 'Feature', geometry: { type: 'LineString', coordinates: coords.slice(0, cut + 1) }, properties: { kind: 'stop', index, congestion: 'unknown', demo, toStop: true } });
     }
     if (passed.length >= 2) {
-      features.push({ type: 'Feature', geometry: { type: 'LineString', coordinates: passed }, properties: { kind: 'passed', index, congestion: 'unknown', demo } });
+      features.push({ type: 'Feature', geometry: { type: 'LineString', coordinates: passed }, properties: { kind: 'passed', index, congestion: 'unknown', demo, toStop: false } });
     }
   });
   return { type: 'FeatureCollection', features };
@@ -131,6 +141,18 @@ function ensureLayers(map: MapboxMap, data: FeatureCollection, theme: ResolvedTh
     },
     before,
   );
+  // Narrower than the route, so the blue (and any traffic colour) still shows on both sides
+  map.addLayer(
+    {
+      id: LAYERS.stop,
+      type: 'line',
+      source: SOURCE,
+      filter: ['==', ['get', 'kind'], 'stop'],
+      layout,
+      paint: { 'line-color': STOP_VIOLET, 'line-width': width(5) as never },
+    },
+    before,
+  );
   map.addLayer(
     {
       id: LAYERS.passed,
@@ -148,7 +170,7 @@ function ensureLayers(map: MapboxMap, data: FeatureCollection, theme: ResolvedTh
 /** Draws route alternatives + the selected route (coloured by live congestion) and frames them. */
 export function RouteLayer() {
   const { map } = useMapContext();
-  const { routes, selectedIndex, selectRoute, status, progress } = useRouting();
+  const { routes, selectedIndex, selectRoute, status, progress, stop } = useRouting();
   const { theme } = useTheme();
   const isDesktop = useMediaQuery('(min-width: 768px)');
   const navigating = status === 'navigating' || status === 'arrived';
@@ -157,7 +179,13 @@ export function RouteLayer() {
   // Grey out what's already been driven (rounded so we don't redraw for every metre)
   const drivenAlong = navigating && progress ? Math.floor(progress.along / 10) * 10 : 0;
   const passed = useMemo(() => (index && drivenAlong > 0 ? sliceRoute(index, drivenAlong) : []), [index, drivenAlong]);
-  const data = useMemo(() => routeFeatures(routes, selectedIndex, passed), [routes, selectedIndex, passed]);
+  // Where a stop on the way sits on the route (it's a via point, so the line passes through it)
+  const stopSegment = useMemo(() => {
+    if (!index || !stop) return null;
+    const p = projectOnRoute(index, stop.coordinates);
+    return p.offset <= 150 ? p.segment + 1 : null;
+  }, [index, stop]);
+  const data = useMemo(() => routeFeatures(routes, selectedIndex, passed, stopSegment), [routes, selectedIndex, passed, stopSegment]);
 
   // Keep layers in sync, and re-add after a style (theme) change wipes them
   useEffect(() => {

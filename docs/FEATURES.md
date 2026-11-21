@@ -350,6 +350,15 @@ Permintaan pemilik (Nov 2026), selepas maklum balas pengguna pertama: admin bole
 
 **Kod:** `web/src/components/feedback/FeedbackReplyCard.tsx`, `web/src/services/feedbackReplyService.ts`, `FeedbackReplyBox` dalam `web/src/pages/AdminPage.tsx`, `server/src/routes/account.ts` (`replyToken`).
 
+## Warna laluan ke tempat singgah
+
+Permintaan pemilik (Nov 2026): bila pengguna menambah tempat singgah dalam perjalanan (contohnya "Singgah: Surau R&R Seremban"), **garisan ungu baharu dilukis di atas garisan biru**, dari kedudukan sekarang hingga tempat singgah. Ungu ialah warna banner "Singgah". Garisan biru kekal penuh hingga ke destinasi.
+- Garisan ungu lebih nipis daripada laluan, supaya tepi biru kelihatan di kiri dan kanannya. Warna kesesakan (oren/merah) juga masih kelihatan di tepi itu.
+- Sebaik pemandu sampai di tempat singgah, atau menekan "Batal", garisan ungu hilang.
+- Tempat singgah diletakkan pada laluan dengan unjuran ke garisan laluan (dalam lingkungan 150 m), kerana laluan memang melaluinya sebagai titik *via*.
+
+**Kod:** `routeFeatures()` dan `STOP_VIOLET` dalam `web/src/components/map/RouteLayer.tsx`. Ujian: `RouteLayer.test.ts`.
+
 ## Chat konvoi
 
 Permintaan pemilik (Nov 2026): ahli konvoi boleh berbual sesama sendiri.
