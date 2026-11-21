@@ -86,7 +86,7 @@ export async function searchNearbyCategory(category: ExploreCategory, near: Coor
 
 export { ApiError };
 
-export type AlongCategory = 'food' | 'cafe' | 'attraction' | 'rnr' | 'petrol' | 'ev' | 'stay';
+export type AlongCategory = 'food' | 'cafe' | 'convenience' | 'attraction' | 'rnr' | 'petrol' | 'ev' | 'stay';
 
 /** Places of a category around sample points ahead on the route (live only — never sample data). */
 export async function searchAlongRoute(category: AlongCategory, points: Coordinates[], signal?: AbortSignal): Promise<Place[]> {

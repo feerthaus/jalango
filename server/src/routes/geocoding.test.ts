@@ -13,3 +13,9 @@ describe('alongQuery', () => {
     expect(alongQuery.safeParse({ category: 'casino', points: '101.7,3.0' }).success).toBe(false);
   });
 });
+
+describe('convenience stores along the route', () => {
+  it('accepts the category (KK Mart, 99 Speedmart, 7-Eleven… are "convenience store" in Mapbox)', () => {
+    expect(alongQuery.parse({ category: 'convenience', points: '101.7,3.0' }).category).toBe('convenience');
+  });
+});

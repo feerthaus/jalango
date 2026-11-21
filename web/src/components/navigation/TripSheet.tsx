@@ -22,7 +22,7 @@ import { arrivalClock } from '@/utils/time';
 import { tollEstimate } from '@/utils/tripCost';
 
 /** Stops offered in the sheet (the full list is in the along-route sheet) */
-const QUICK_STOPS: AlongCategory[] = ['petrol', 'food', 'rnr', 'cafe'];
+const QUICK_STOPS: AlongCategory[] = ['petrol', 'food', 'rnr', 'convenience', 'cafe'];
 const SWIPE_PX = 30;
 
 interface Props {
