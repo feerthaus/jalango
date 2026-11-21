@@ -21,6 +21,14 @@ import { useEffect, useState } from 'react';
 export function isIOSWebKit(ua = typeof navigator === 'undefined' ? '' : navigator.userAgent, touchPoints = typeof navigator === 'undefined' ? 0 : navigator.maxTouchPoints): boolean {
   return /iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && touchPoints > 1);
 }
+/**
+ * Chrome, Firefox, Edge… on iPhone are WebKit web views: there the screen can
+ * still auto-lock even when the lock and the video report success (owner,
+ * Chrome on iPhone 16 Pro Max, Nov 2026), so we tell the driver what works.
+ */
+export function isIOSOtherBrowser(ua = typeof navigator === 'undefined' ? '' : navigator.userAgent, touchPoints = typeof navigator === 'undefined' ? 0 : navigator.maxTouchPoints): boolean {
+  return isIOSWebKit(ua, touchPoints) && /CriOS|FxiOS|EdgiOS|OPiOS|GSA\//.test(ua);
+}
 export type WakeState = 'off' | 'on' | 'fallback' | 'blocked';
 
 // 2 s of black 16×16 H.264, no sound (made with ffmpeg)
