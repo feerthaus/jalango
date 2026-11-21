@@ -1,3 +1,4 @@
+import { usePageMeta } from '@/hooks/usePageMeta';
 import { ListOrdered, Megaphone, Radio, Users, Utensils, WifiOff, LocateFixed } from 'lucide-react';
 import { AlongRouteSheet } from '@/components/along/AlongRouteSheet';
 import { AlongLayerChip, AlongPlaceCard } from '@/components/along/AlongMarkers';
@@ -46,6 +47,7 @@ import { FeedbackReplyCard } from '@/components/feedback/FeedbackReplyCard';
 
 export function MapPage() {
   const [t] = useT();
+  usePageMeta({ title: null, description: t('JalanGo: navigasi percuma untuk jalan Malaysia. Panduan suara BM, laporan trafik komuniti, laluan elak jem dan harga minyak.', 'JalanGo: free navigation for Malaysian roads. Malay voice guidance, community traffic reports, jam-beating routes and fuel prices.'), canonicalPath: '/' });
   // MetMalaysia warnings for the state you're in
   const weather = useWeatherWarnings();
   const { fix } = useLocation();

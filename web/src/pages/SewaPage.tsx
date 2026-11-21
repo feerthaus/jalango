@@ -1,3 +1,4 @@
+import { usePageMeta } from '@/hooks/usePageMeta';
 import mapboxgl from 'mapbox-gl';
 import { Car, Home, List, Map as MapIcon, Store, Utensils } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -28,6 +29,7 @@ const KINDS: { id: OperatorKind | 'all'; label: Msg; icon?: typeof Car }[] = [
 /** "Sewa & Makan": verified car rentals, homestays and food businesses, nearest first. Never shown while driving. */
 export function SewaPage() {
   const [t] = useT();
+  usePageMeta({ title: t('Sewa & Makan', 'Rent & Food'), description: t('Homestay, kereta sewa dan kedai makan yang pemiliknya disemak JalanGo. Hubungi terus melalui WhatsApp.', 'Homestays, rental cars and food businesses whose owners JalanGo has checked. Contact them directly on WhatsApp.'), canonicalPath: '/sewa' });
   const navigating = useIsNavigating();
   const [params, setParams] = useSearchParams();
   const kind = (params.get('jenis') as OperatorKind | null) ?? 'all';

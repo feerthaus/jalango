@@ -1,3 +1,4 @@
+import { SITE_HOST } from '@/lib/site';
 import { ArrowDown, ArrowUp, Check, Copy, Download, ExternalLink, MoreVertical, Share, SquarePlus, X } from 'lucide-react';
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
@@ -128,7 +129,7 @@ export function InstallSheet({ onClose, auto = false }: { onClose: () => void; a
       );
       break;
     default:
-      body = <p className="text-[15px]">{t('Buka', 'Open')} <strong>jalango.netlify.app</strong> {t('di telefon anda (Chrome atau Safari) untuk memasang JalanGo.', 'on your phone (Chrome or Safari) to install JalanGo.')}</p>;
+      body = <p className="text-[15px]">{t('Buka', 'Open')} <strong>{SITE_HOST}</strong> {t('di telefon anda (Chrome atau Safari) untuk memasang JalanGo.', 'on your phone (Chrome or Safari) to install JalanGo.')}</p>;
   }
 
   return createPortal(

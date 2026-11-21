@@ -1,3 +1,4 @@
+import { usePageMeta } from '@/hooks/usePageMeta';
 import { Car, CheckCircle2, FileText, Home, Loader2, Trash2, Upload, Utensils } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { AuthForm } from '@/components/auth/AuthForm';
@@ -30,6 +31,7 @@ const fmtDate = (iso: string | null) => (iso ? new Date(`${iso.slice(0, 10)}T00:
 /** Marketplace phase 0: register a business (homestay or licensed car rental) for review. */
 export function BusinessPage() {
   const [t] = useT();
+  usePageMeta({ title: t('Daftar bisnes', 'List your business'), description: t('Senaraikan homestay, kereta sewa atau kedai makan anda di JalanGo. Percuma untuk bermula, disemak oleh pasukan JalanGo.', 'List your homestay, rental car or food business on JalanGo. Free to start, checked by the JalanGo team.'), canonicalPath: '/business' });
   const { user, loading } = useAuth();
   const [operator, setOperator] = useState<Operator | null>(null);
   const [docs, setDocs] = useState<OperatorDocument[]>([]);

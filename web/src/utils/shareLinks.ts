@@ -31,4 +31,5 @@ export function shareUrl(platform: SharePlatform, c: ShareContent): string {
   }
 }
 
-export const APP_URL = 'https://jalango.netlify.app';
+/** The public address (from VITE_SITE_URL; see lib/site.ts). */
+export { SITE_URL as APP_URL } from '@/lib/site';

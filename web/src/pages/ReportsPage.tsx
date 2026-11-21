@@ -1,3 +1,4 @@
+import { usePageMeta } from '@/hooks/usePageMeta';
 import { AlertTriangle, Megaphone, Radio, RefreshCw, ShieldCheck, ThumbsUp } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router';
@@ -16,6 +17,7 @@ import { useT } from '@/lib/i18n';
 
 export function ReportsPage() {
   const [t, lang] = useT();
+  usePageMeta({ title: t('Laporan jalan', 'Road reports'), description: t('Laporan komuniti terkini: kemalangan, kesesakan, polis, banjir dan kerja jalan di Malaysia.', 'Latest community reports: accidents, jams, police, floods and roadworks in Malaysia.') });
   const { available, reports, loading, error, live, refresh, selectReport } = useReports();
   const { fix } = useLocation();
   const navigate = useNavigate();

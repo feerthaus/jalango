@@ -1,3 +1,4 @@
+import { usePageMeta } from '@/hooks/usePageMeta';
 import { BadgeCheck } from 'lucide-react';
 import { rm } from '@/lib/listingLabels';
 import { supabase } from '@/lib/supabase';
@@ -40,6 +41,7 @@ type NearbyState = { status: 'idle' | 'loading' | 'done' | 'error'; results: Pla
 
 export function ExplorePage() {
   const [t] = useT();
+  usePageMeta({ title: t('Teroka', 'Explore'), description: t('Cari stesen minyak, R&R, homestay, kereta sewa, makan, cas EV, parkir dan hospital berdekatan di Malaysia.', 'Find nearby petrol stations, R&R stops, homestays, rental cars, food, EV charging, parking and hospitals in Malaysia.') });
   const { searchMode } = useServiceStatus();
   const { fix } = useLocation();
   const { map } = useMapContext();

@@ -1,3 +1,4 @@
+import { config } from '../config.js';
 import type { Coordinates, Place } from '../types.js';
 import { MALAYSIA_BBOX, photonToPlace, searchCategory, type PhotonFeature } from './mapbox.js';
 
@@ -52,7 +53,7 @@ async function photon(q: string, tags: string[], near: Coordinates, limit: numbe
   url.searchParams.set('zoom', '12');
   for (const t of tags) url.searchParams.append('osm_tag', t);
   try {
-    const res = await fetch(url, { signal: AbortSignal.timeout(3500), headers: { 'User-Agent': 'JalanGo/1.0 (+https://jalango.netlify.app)' } });
+    const res = await fetch(url, { signal: AbortSignal.timeout(3500), headers: { 'User-Agent': `JalanGo/1.0 (+${config.siteUrl})` } });
     if (!res.ok) return [];
     const body = (await res.json()) as { features?: PhotonFeature[] };
     return (body.features ?? []).map(photonToPlace).filter((p): p is Place => p !== null);

@@ -15,11 +15,14 @@ import { ErrorBoundary } from '@/components/layout/ErrorBoundary';
 import { PrivacyPage } from '@/pages/legal/PrivacyPage';
 import { TermsPage } from '@/pages/legal/TermsPage';
 import { AdminPage } from '@/pages/AdminPage';
+import { HomePage } from '@/pages/HomePage';
 import { LiveViewPage } from '@/pages/LiveViewPage';
 import { useEffect } from 'react';
 import { pingActivity } from '@/lib/activity';
 
 const router = createBrowserRouter([
+  // Public homepage; the map app stays at "/" (installed apps, ?tempat= links, convoy invites)
+  { path: '/home', element: <HomePage />, errorElement: <ErrorBoundary /> },
   { path: '/privacy', element: <PrivacyPage />, errorElement: <ErrorBoundary /> },
   { path: '/terms', element: <TermsPage />, errorElement: <ErrorBoundary /> },
   { path: '/admin', element: <AdminPage />, errorElement: <ErrorBoundary /> },

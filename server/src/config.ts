@@ -5,7 +5,11 @@ function list(value: string | undefined, fallback: string[]): string[] {
   return value.split(',').map((s) => s.trim()).filter(Boolean);
 }
 
+/** Public address of the web app (same value as the web's VITE_SITE_URL). */
+const siteUrl = (process.env.SITE_URL || process.env.VITE_SITE_URL || 'https://jalango.netlify.app').trim().replace(/\/+$/, '');
+
 export const config = {
+  siteUrl,
   port: Number(process.env.PORT ?? 8787),
   corsOrigins: list(process.env.CORS_ORIGINS, ['http://localhost:5173']),
   mapboxToken: process.env.MAPBOX_ACCESS_TOKEN?.trim() || null,

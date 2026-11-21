@@ -1,3 +1,4 @@
+import { usePageMeta } from '@/hooks/usePageMeta';
 import { ArrowLeft } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import { Link } from 'react-router';
@@ -22,6 +23,7 @@ export function LegalPage({ title, content }: { title: Record<Lang, string>; con
       return 'ms';
     }
   });
+  usePageMeta({ title: title[lang] });
   const choose = (l: Lang) => {
     setLang(l);
     try {

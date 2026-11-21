@@ -41,6 +41,7 @@ The Profile tab shows which sources are live.
 | Where | Variable | Notes |
 |---|---|---|
 | `web/.env` | `VITE_MAPBOX_PUBLIC_TOKEN` | **Public** `pk.*` token only. Restrict it to your domains in Mapbox. A `sk.*` token is refused at runtime. |
+| `web/.env` (+ Netlify) | `VITE_SITE_URL` | Public address of the site (shared links, canonical URLs, `robots.txt`, `sitemap.xml`). Empty → `https://jalango.netlify.app`. Set it when moving domain; the API reads `SITE_URL` or the same value. |
 | `web/.env` | `VITE_API_BASE_URL` | Empty = same origin `/api` (Vite proxies to :8787 in dev) |
 | `web/.env` | `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` | Anon key is public by design; data is protected by RLS |
 | `server/.env` | `MAPBOX_ACCESS_TOKEN` | Used for Geocoding/Search/Directions. Never sent to the browser |
