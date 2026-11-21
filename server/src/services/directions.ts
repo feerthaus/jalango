@@ -1,4 +1,5 @@
 import { config } from '../config.js';
+import { priceTolls } from './tolls.js';
 import { HttpError } from '../lib/errors.js';
 import { guardUsage } from '../lib/usageGuard.js';
 import type { Congestion, Coordinates, Route, RouteStep, TollPoint } from '../types.js';
@@ -120,6 +121,7 @@ export function normalizeRoute(r: MbRoute, index: number): Route {
     tollPoints: tollPoints.length ? tollPoints : undefined,
     // Mapbox doesn't tag toll roads in Malaysia (only the toll plazas): 0 means unknown, not free
     tollMeters: hasTolls && tollMeters > 0 ? Math.round(tollMeters) : undefined,
+    tollFare: priceTolls(tollPoints).total ?? undefined,
     hasMotorway,
     congestion: congestion.length === r.geometry.coordinates.length - 1 ? congestion : undefined,
     maxspeeds: maxspeeds.length === r.geometry.coordinates.length - 1 && maxspeeds.some((v) => v !== null) ? maxspeeds : undefined,
