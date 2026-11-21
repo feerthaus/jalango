@@ -1,3 +1,4 @@
+import { setStatsOptOut, statsOptedOut } from '@/lib/activity';
 import { usePageMeta } from '@/hooks/usePageMeta';
 import { AdminCard } from '@/components/admin/AdminCard';
 import { CountBadge } from '@/components/admin/CountBadge';
@@ -58,6 +59,7 @@ export function ProfilePage() {
   const { status: gpsStatus, fix } = useLocation();
   const { favourites, recents, clearRecents } = useSavedPlaces();
   const [probeConsent, setProbeConsent] = useProbeConsent();
+  const [countMe, setCountMe] = useState(() => !statsOptedOut());
 
   return (
     <PagePanel title={t('Profil', 'Profile')}>
@@ -136,6 +138,27 @@ export function ProfilePage() {
           className={cn('relative h-7 w-12 shrink-0 rounded-full transition', probeConsent === 'granted' ? 'bg-jade-500' : 'bg-ink-200 dark:bg-ink-700')}
         >
           <span className={cn('absolute top-0.5 size-6 rounded-full bg-white shadow transition-all', probeConsent === 'granted' ? 'left-[1.375rem]' : 'left-0.5')} />
+        </button>
+      </div>
+      <div className="mb-3 flex items-start gap-3 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-ink-200 dark:bg-ink-900 dark:ring-ink-800">
+        <div className="min-w-0 flex-1">
+          <p id="stats-label" className="text-sm font-semibold">{t('Kira peranti ini dalam statistik', 'Count this device in statistics')}</p>
+          <p className="mt-0.5 text-xs text-ink-500 dark:text-ink-400">
+            {t('JalanGo mengira penggunaan harian dan dari mana pengguna baharu datang (cth. Google, TikTok, WhatsApp) dengan ID rawak telefon ini sahaja: tiada akaun, IP atau lokasi. Disimpan 13 bulan. Matikan untuk tidak dikira.', 'JalanGo counts daily use and where new users come from (e.g. Google, TikTok, WhatsApp) with this phone’s random ID only: no account, IP or location. Kept 13 months. Turn off to not be counted.')}
+          </p>
+        </div>
+        <button
+          type="button"
+          role="switch"
+          aria-checked={countMe}
+          aria-labelledby="stats-label"
+          onClick={() => {
+            setStatsOptOut(countMe);
+            setCountMe(!countMe);
+          }}
+          className={cn('relative h-7 w-12 shrink-0 rounded-full transition', countMe ? 'bg-jade-500' : 'bg-ink-200 dark:bg-ink-700')}
+        >
+          <span className={cn('absolute top-0.5 size-6 rounded-full bg-white shadow transition-all', countMe ? 'left-[1.375rem]' : 'left-0.5')} />
         </button>
       </div>
       <div className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-ink-200 dark:bg-ink-900 dark:ring-ink-800">

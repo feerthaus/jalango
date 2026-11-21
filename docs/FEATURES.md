@@ -422,6 +422,51 @@ Keputusan pemilik (Nov 2026): laman utama pemasaran di **`/home`**. **`/` kekal 
 
 **Kod:** `web/src/pages/HomePage.tsx`, `web/src/hooks/usePageMeta.ts`, `web/src/lib/site.ts`, `web/src/lib/sitePaths.ts`, plugin `siteFiles` dalam `web/vite.config.ts`, `config.siteUrl` dalam `server/src/config.ts`. Ujian: `web/src/lib/site.test.ts`.
 
+## Penjejakan pertumbuhan (Fasa 1, Sprint 3)
+
+Diluluskan pemilik selepas Laporan Impak Migrasi (Nov 2026). Matlamatnya: tahu **dari mana pengguna datang**, **saluran mana membawa pengguna sebenar**, dan **saluran mana menghasilkan pendaftaran bisnes**. Ini bukan kiraan page view.
+
+- **Sumber kedatangan pertama:**
+  - Direkod **sekali** bagi setiap peranti baharu, menggunakan ID rawak yang sama seperti kiraan aktif harian (`jalango:device-id`): tiada akaun, IP atau lokasi.
+  - Urutan pengelasan (`web/src/utils/attribution.ts`): tag UTM, kemudian ID klik iklan (`gclid`/`ttclid`/`fbclid`, dibaca untuk tentukan saluran, **tak disimpan**), kemudian domain laman perujuk. Jika tiada isyarat, ia dikira "direct".
+  - Yang disimpan: saluran (senarai tetap), medium, kempen, domain perujuk dan halaman pertama.
+  - Peranti yang sudah wujud sebelum ciri ini **tidak** direkod, kerana lawatan pertama mereka tidak diketahui.
+- **Pautan kongsi JalanGo** kini membawa `utm_source=<platform>&utm_medium=share`. Tanpa ini, WhatsApp tidak dapat dikesan kerana ia tidak menghantar perujuk.
+- **Penukaran (conversion):**
+  - **Daftar akaun** dan **daftar bisnes** dikira sekali bagi setiap akaun, hanya jika akaun atau bisnes itu dicipta dalam 24 jam terakhir.
+  - Ia dikreditkan kepada saluran peranti yang mendaftar.
+  - Yang disimpan hanya **jumlah harian bagi setiap saluran**. Tiada pautan antara peranti dan akaun.
+- **"Pengguna sebenar":** peranti yang membuka JalanGo pada sekurang-kurangnya 2 hari berbeza dalam 14 hari pertamanya. Kadar hanya dikira untuk peranti berumur ≥14 hari.
+- **Admin → Pertumbuhan** (admin sahaja, 2FA):
+  - julat 7, 30 atau 90 hari;
+  - untuk setiap saluran: peranti baharu, pengguna sebenar, kadar kembali, daftar akaun, daftar bisnes;
+  - jadual kempen; kempen dengan <5 peranti digabung dalam "(lain-lain)";
+  - tiada data individu.
+- **Profil → Privasi → "Kira peranti ini dalam statistik"** (hidup secara lalai). Bila dimatikan, kiraan harian dan penjejakan pertumbuhan dihentikan untuk peranti ini.
+- **Simpanan:**
+  - data peranti (`device_attribution`) dan juga `app_activity` yang sedia ada: **13 bulan**;
+  - jumlah harian tanpa ID (`growth_conversions`): **36 bulan**.
+  - Disapu semasa peranti baharu direkod, kerana tiada penjadual.
+- **Pangkalan data:** migrasi `20261201000000_growth_tracking.sql`, tambahan sahaja:
+  - jadual `device_attribution`, `growth_conversions` dan `growth_counted` (dipadam bersama akaun);
+  - fungsi `record_attribution` (anon, had 5,000 peranti baharu sehari), `record_conversion` (log masuk) dan `admin_growth` (admin).
+  - Jadual `users` dan `operators` serta trigger mereka **tidak disentuh**.
+
+**Pautan promosi siap guna** (tukar `kempen` ikut kempen sebenar; huruf kecil, nombor, `-` atau `_`):
+
+| Saluran | Pautan |
+|---|---|
+| WhatsApp (status / kumpulan / broadcast) | `https://jalango.netlify.app/home?utm_source=whatsapp&utm_medium=broadcast&utm_campaign=kempen` |
+| TikTok (bio) | `https://jalango.netlify.app/home?utm_source=tiktok&utm_medium=bio` |
+| TikTok (video / komen) | `https://jalango.netlify.app/home?utm_source=tiktok&utm_medium=social&utm_campaign=kempen` |
+| Instagram (bio) | `https://jalango.netlify.app/home?utm_source=instagram&utm_medium=bio` |
+| Facebook (hantaran) | `https://jalango.netlify.app/home?utm_source=facebook&utm_medium=social&utm_campaign=kempen` |
+| Telegram | `https://jalango.netlify.app/home?utm_source=telegram&utm_medium=broadcast&utm_campaign=kempen` |
+| Ajak bisnes mendaftar | `https://jalango.netlify.app/business?utm_source=whatsapp&utm_medium=broadcast&utm_campaign=bisnes` |
+| Iklan berbayar | `utm_medium=paid` (Google, Facebook dan TikTok juga menambah ID klik sendiri) |
+
+**Kod:** `web/src/utils/attribution.ts` (pengelasan, `withUtm`), `web/src/lib/activity.ts` (`recordFirstVisit`, `recordConversion`, `statsOptedOut`), `web/src/services/growthService.ts`, `web/src/components/admin/GrowthPanel.tsx`. Ujian: `attribution.test.ts`, `shareLinks.test.ts`, `growthService.test.ts`, serta ujian PGlite untuk migrasi (24 semakan).
+
 ## Lain-lain
 
 - **Harga minyak mingguan:** dari data.gov.my.
