@@ -72,9 +72,9 @@ Seperti Waze (permintaan pemilik, Nov 2026): semasa memandu, **tarik bar bawah k
 - **Tiba** (jam besar, hijau jade) dengan baki masa dan jarak di kanan.
 - Kad laluan gaya JalanGo: destinasi, "melalui" jalan utama, cip yang sama seperti pilihan laluan (tol, lebuh raya, laporan di depan), dan jalur laluan.
 - **Jalur laluan:** satu garisan dari anda ke destinasi. Kesesakan diwarnakan (oren/merah), laporan komuniti (polis, kemalangan, bahaya…) dan plaza tol diletakkan di tempatnya. Ikon yang terlalu rapat digabung dengan lencana "+n". Laporan dimuatkan dalam lingkungan ~25 km dari pemandu.
-- **Singgah di laluan:** cip kategori yang sama seperti "Sepanjang laluan" (Minyak, Makan, R&R, Kafe, Lagi).
+- **Singgah di laluan:** cip kategori yang sama seperti "Sepanjang laluan" (Minyak, Makan, R&R, Kafe, Lagi), dalam **warna pastel**: latar lembut dalam warna kategori, dengan teks yang lebih gelap supaya mudah dibaca (lebih cerah dalam mod gelap). Butang Kongsi (jade), Seluruh laluan (biru langit), Tamat (merah lembut) dan Teruskan (jade) pun pastel.
 - **Kongsi** (lokasi live) dan **Seluruh laluan** (peta zum keluar menunjukkan baki laluan; tekan "Tengah" untuk kembali ke paparan memandu).
-- Bila dibuka, bar bawah menjadi **Tamat** dan **Teruskan**. Tarik ke bawah atau tekan Teruskan untuk tutup.
+- Bila dibuka, bar bawah menjadi **Tamat** dan **Teruskan**. Untuk tutup, **tarik ke bawah** (dari pemegang, dari bar, atau dari isi sheet bila ia di paling atas), tekan pemegang (ada anak panah ↓), atau tekan Teruskan. Gerakan dikesan dengan *touch events*, supaya browser telefon tak membatalkannya bila ia menyangka jari sedang menatal.
 
 **Kod:** `web/src/components/navigation/TripSheet.tsx`, `web/src/utils/routeStrip.ts` (`routeStrip`, `clusterMarkers`). Ujian: `routeStrip.test.ts`.
 
