@@ -31,6 +31,14 @@ function road(step: RouteStep): string | null {
   return step.roadName ?? step.roadRef ?? null;
 }
 
+/** A turn at a junction with traffic lights (not a roundabout, ramp, fork or the start/end). */
+export function turnAtSignal(step: RouteStep): boolean {
+  if (!step.atSignal) return false;
+  const { type, modifier } = step.maneuver;
+  if (!['turn', 'continue', 'end of road', 'new name'].includes(type)) return false;
+  return Boolean(modifier && modifier !== 'straight');
+}
+
 /** What to do at a maneuver, in Malay (generated from the maneuver, not the provider's English text). */
 export function malayAction(step: RouteStep): string {
   const { type, modifier, exit } = step.maneuver;
@@ -48,18 +56,20 @@ export function malayAction(step: RouteStep): string {
   if (type === 'on ramp') return `masuk susur${side ? ` di sebelah ${side}` : ''}${onto}`;
   if (type === 'fork') return `di simpang, ikut sebelah ${side ?? 'kiri'}${onto}`;
   if (type === 'merge') return `masuk ke laluan${side ? ` sebelah ${side}` : ''}${onto}`;
+  // "di lampu isyarat, belok kiri ke …": the easiest way to tell which junction
+  const at = turnAtSignal(step) ? 'di lampu isyarat, ' : '';
   switch (modifier) {
     case 'uturn':
-      return `buat pusingan U${onto}`;
+      return `${at}buat pusingan U${onto}`;
     case 'sharp left':
     case 'sharp right':
-      return `belok tajam ke ${side}${onto}`;
+      return `${at}belok tajam ke ${side}${onto}`;
     case 'slight left':
     case 'slight right':
-      return `condong ke ${side}${onto}`;
+      return `${at}condong ke ${side}${onto}`;
     case 'left':
     case 'right':
-      return `belok ${side}${onto}`;
+      return `${at}belok ${side}${onto}`;
     default:
       return name ? `teruskan ke ${name}` : 'teruskan lurus';
   }
@@ -74,7 +84,8 @@ function englishAction(step: RouteStep): string {
   }
   // Provider text is already good English ("Turn right onto Jalan Ampang")
   const t = step.instruction.replace(/\.$/, '');
-  return t ? t.charAt(0).toLowerCase() + t.slice(1) : 'continue';
+  const text = t ? t.charAt(0).toLowerCase() + t.slice(1) : 'continue';
+  return turnAtSignal(step) ? `at the traffic lights, ${text}` : text;
 }
 
 /**
@@ -106,7 +117,7 @@ export function stageThresholds(speedMps: number | null): Record<VoiceStage, num
 
 /** Instruction text for the screen: Malay generated from the maneuver, or the provider's English. */
 export function displayInstruction(step: RouteStep, lang: VoiceLang): string {
-  if (lang === 'en') return step.instruction || capitalise(englishAction(step));
+  if (lang === 'en') return step.instruction && !turnAtSignal(step) ? step.instruction : capitalise(englishAction(step));
   if (step.maneuver.type === 'arrive') return 'Sampai di destinasi';
   if (step.maneuver.type === 'depart') return road(step) ? `Mula di ${road(step)}` : 'Mula perjalanan';
   return capitalise(malayAction(step));

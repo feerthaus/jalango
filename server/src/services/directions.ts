@@ -16,6 +16,7 @@ interface MbIntersection {
   classes?: string[];
   toll_collection?: { type?: string; name?: string };
   lanes?: { indications?: string[]; valid?: boolean }[];
+  traffic_signal?: boolean;
 }
 interface MbMaxspeed {
   speed?: number;
@@ -46,6 +47,13 @@ interface MbRoute {
   legs: MbLeg[];
 }
 
+/** Rough metres between two nearby points. */
+function metres(a: Coordinates, b: Coordinates): number {
+  const x = (b.lng - a.lng) * 111_320 * Math.cos((a.lat * Math.PI) / 180);
+  const y = (b.lat - a.lat) * 110_574;
+  return Math.hypot(x, y);
+}
+
 const CONGESTION: Congestion[] = ['low', 'moderate', 'heavy', 'severe', 'unknown'];
 
 function lanesOf(i: MbIntersection | undefined): RouteStep['lanes'] {
@@ -62,6 +70,7 @@ export function normalizeRoute(r: MbRoute, index: number): Route {
   const maxspeeds: (number | null)[] = [];
   const tollPoints: TollPoint[] = [];
   let tollMeters = 0;
+  const signals: Coordinates[] = [];
 
   for (const leg of r.legs ?? []) {
     if (leg.summary) summaries.push(leg.summary);
@@ -82,6 +91,13 @@ export function normalizeRoute(r: MbRoute, index: number): Route {
         if (tc && i.location) {
           tollPoints.push({ type: tc.type === 'toll_gantry' ? 'gantry' : 'booth', name: tc.name || undefined, location: { lng: i.location[0], lat: i.location[1] } });
           hasTolls = true;
+        }
+        // Traffic lights on the route (only where the map data has them)
+        if (i.traffic_signal && i.location) {
+          const at = { lng: i.location[0], lat: i.location[1] };
+          const last = signals[signals.length - 1];
+          // one junction is often several nodes a few metres apart: keep one light per junction
+          if (!last || metres(last, at) > 25) signals.push(at);
         }
         if (i.classes?.includes('motorway')) {
           hasMotorway = true;
@@ -104,6 +120,7 @@ export function normalizeRoute(r: MbRoute, index: number): Route {
         motorway: stepMotorway || undefined,
         destinations: s.destinations || undefined,
         lanes: lanesOf(s.intersections?.[0]),
+        atSignal: s.intersections?.[0]?.traffic_signal ? true : undefined,
         exits: s.exits || undefined,
       });
     }
@@ -123,6 +140,7 @@ export function normalizeRoute(r: MbRoute, index: number): Route {
     tollMeters: hasTolls && tollMeters > 0 ? Math.round(tollMeters) : undefined,
     tollFare: priceTolls(tollPoints).total ?? undefined,
     hasMotorway,
+    signals: signals.length ? signals : undefined,
     congestion: congestion.length === r.geometry.coordinates.length - 1 ? congestion : undefined,
     maxspeeds: maxspeeds.length === r.geometry.coordinates.length - 1 && maxspeeds.some((v) => v !== null) ? maxspeeds : undefined,
     source: 'mapbox',

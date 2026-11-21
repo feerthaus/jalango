@@ -47,6 +47,8 @@ export interface RouteStep {
   lanes?: { indications: string[]; valid: boolean }[];
   /** motorway exit number(s) signposted for this maneuver, e.g. "111" */
   exits?: string;
+  /** the maneuver is at a junction with traffic lights (only where the map data has them) */
+  atSignal?: boolean;
 }
 
 /** A toll plaza (booth) or open-road gantry the route passes. */
@@ -75,6 +77,8 @@ export interface Route {
   /** exact class 1 toll (RM) when every toll plaza on the route has an official fare; otherwise absent */
   tollFare?: number;
   hasMotorway: boolean;
+  /** traffic lights along the route, in order (only where the map data has them; absent ≠ none) */
+  signals?: Coordinates[];
   /** Per-segment live congestion (length = coordinates - 1) */
   congestion?: Congestion[];
   source: 'mapbox' | 'demo' | 'osm' | 'link';

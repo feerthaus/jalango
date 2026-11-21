@@ -118,6 +118,44 @@ describe('normalizeRoute', () => {
   });
 });
 
+describe('traffic lights', () => {
+  it('keeps one light per junction, in order, and marks turns at a light', () => {
+    const r = normalizeRoute(
+      {
+        distance: 2000,
+        duration: 300,
+        geometry: { type: 'LineString', coordinates: [[101.7, 3.1], [101.7, 3.12]] },
+        legs: [
+          {
+            steps: [
+              {
+                distance: 1500,
+                duration: 200,
+                maneuver: { type: 'depart', location: [101.7, 3.1] },
+                intersections: [
+                  { location: [101.7, 3.1] },
+                  { location: [101.7, 3.105], traffic_signal: true },
+                  { location: [101.7, 3.10505], traffic_signal: true }, // same junction, ~6 m on
+                  { location: [101.7, 3.11], traffic_signal: false },
+                ],
+              },
+              { distance: 500, duration: 100, maneuver: { type: 'turn', modifier: 'right', location: [101.7, 3.115] }, intersections: [{ location: [101.7, 3.115], traffic_signal: true }] },
+              { distance: 0, duration: 0, maneuver: { type: 'arrive', location: [101.7, 3.12] }, intersections: [{ location: [101.7, 3.12] }] },
+            ],
+          },
+        ],
+      },
+      0,
+    );
+    expect(r.signals).toEqual([
+      { lng: 101.7, lat: 3.105 },
+      { lng: 101.7, lat: 3.115 },
+    ]);
+    expect(r.steps.map((s) => s.atSignal)).toEqual([undefined, true, undefined]);
+    expect(normalizeRoute(fixture, 0).signals).toBeUndefined();
+  });
+});
+
 describe('buildDirectionsUrl', () => {
   it('sends the driver heading as the start bearing only', () => {
     const u = buildDirectionsUrl({ lng: 101.7, lat: 3.1 }, { lng: 102.9, lat: 1.85 }, { heading: 183.6, via: [{ lng: 102, lat: 2.5 }] });

@@ -55,6 +55,17 @@ Untuk pemandu yang tak sempat membaca skrin (maklum balas pengguna, Nov 2026):
 
 **Kod:** `web/src/components/map/ManeuverArrow.tsx`, `routeSegment()` dalam `web/src/utils/routeProgress.ts`, `web/src/utils/turnFocus.ts` (`isRealTurn`, `cameraZoom`), `shortInstruction()` dan `maneuverTarget()` dalam `web/src/utils/voiceInstructions.ts`, `web/src/components/map/NavigationCamera.tsx`. Ujian: `turnFocus.test.ts`, `routeProgress.test.ts`, `voiceInstructions.test.ts`, `laneSentence.test.ts`.
 
+## Lampu isyarat di laluan
+
+Maklum balas pengguna pertama (Nov 2026): tunjuk di mana ada lampu isyarat supaya pemandu tahu simpang mana untuk belok.
+- **Ikon lampu isyarat** di atas peta, pada setiap lampu isyarat di laluan yang dipilih. Ia hanya keluar bila peta dizum ke paras jalan (zum 13.5 ke atas), supaya paparan keseluruhan tak sesak.
+- **Banner:** bila belokan seterusnya berada di lampu isyarat, tanda kuning "🚦 Di lampu isyarat" dipaparkan bawah "Belok kiri".
+- **Ayat dan suara:** "Dalam 300 meter, di lampu isyarat, belok kanan ke Jalan Ampang". Ini hanya untuk belokan biasa, bukan bulatan, susur atau simpang (*fork*).
+
+**Sumber data:** `intersections[].traffic_signal` daripada Mapbox Directions, yang memang datang bersama laluan. **Tiada panggilan atau kos tambahan.** Lampu isyarat hanya dipaparkan di tempat yang ada data. Kalau ikon tiada, itu tak bermakna tiada lampu di situ. Satu simpang yang ada beberapa titik dalam lingkungan 25 m dikira sebagai satu lampu.
+
+**Kod:** `server/src/services/directions.ts` (`signals`, `atSignal`), `web/src/components/map/TrafficSignalLayer.tsx`, `web/src/components/navigation/TrafficLightIcon.tsx`, `turnAtSignal()` dalam `web/src/utils/voiceInstructions.ts`. Ujian: `directions.test.ts`, `voiceInstructions.test.ts`.
+
 ## Butiran perjalanan (bar bawah boleh ditarik ke atas)
 
 Seperti Waze (permintaan pemilik, Nov 2026): semasa memandu, **tarik bar bawah ke atas** (atau tekan masa / pemegang) untuk melihat seluruh perjalanan:
