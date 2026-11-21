@@ -115,3 +115,43 @@ export function displayInstruction(step: RouteStep, lang: VoiceLang): string {
 function capitalise(s: string) {
   return s.charAt(0).toUpperCase() + s.slice(1);
 }
+
+/**
+ * The short action for the banner, read at a glance while driving: "Belok kiri",
+ * "Bulatan: keluar ke-2", "Ikut kanan". The road goes on its own line under it.
+ */
+export function shortInstruction(step: RouteStep, lang: VoiceLang): string {
+  const { type, modifier, exit } = step.maneuver;
+  const ms = lang === 'ms';
+  const side = modifier?.includes('left') ? (ms ? 'kiri' : 'left') : modifier?.includes('right') ? (ms ? 'kanan' : 'right') : null;
+  if (type === 'arrive') return ms ? 'Sampai' : 'Arrive';
+  if (type === 'depart') return ms ? 'Mula' : 'Start';
+  if (type === 'roundabout' || type === 'rotary' || type === 'roundabout turn') {
+    if (!exit) return ms ? 'Masuk bulatan' : 'Enter the roundabout';
+    return ms ? `Bulatan: keluar ke-${exit}` : `Roundabout: exit ${exit}`;
+  }
+  if (type === 'off ramp') return ms ? `Keluar${side ? ` ${side}` : ''}` : `Exit${side ? ` ${side}` : ''}`;
+  if (type === 'on ramp') return ms ? `Masuk susur${side ? ` ${side}` : ''}` : `Take the ramp${side ? ` ${side}` : ''}`;
+  if (type === 'fork') return ms ? `Ikut ${side ?? 'kiri'}` : `Keep ${side ?? 'left'}`;
+  if (type === 'merge') return ms ? 'Masuk laluan' : 'Merge';
+  switch (modifier) {
+    case 'uturn':
+      return ms ? 'Pusingan U' : 'U-turn';
+    case 'sharp left':
+    case 'sharp right':
+      return ms ? `Belok tajam ${side}` : `Sharp ${side}`;
+    case 'slight left':
+    case 'slight right':
+      return ms ? `Condong ${side}` : `Bear ${side}`;
+    case 'left':
+    case 'right':
+      return ms ? `Belok ${side}` : `Turn ${side}`;
+    default:
+      return ms ? 'Terus' : 'Continue';
+  }
+}
+
+/** Where the maneuver takes you, for the line under the short action: the road, else the signposted places. */
+export function maneuverTarget(step: RouteStep): string | null {
+  return road(step) ?? towards(step);
+}

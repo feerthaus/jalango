@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import { useLocation } from '@/contexts/LocationContext';
 import { useRouting } from '@/contexts/RoutingContext';
 import { maneuverPhrase, PHRASES, stageThresholds, type VoiceStage } from '@/utils/voiceInstructions';
-import { laneSentence } from '@/utils/laneSentence';
+import { laneSentence, usableLanes } from '@/utils/laneSentence';
 import { speak, useVoiceAlerts, useVoiceLang } from './useVoiceAlerts';
 
 /**
@@ -56,7 +56,7 @@ export function useVoiceGuidance() {
     spoken.current.add(key);
     if (next.maneuver.type === 'arrive' && stage === 'now') return; // arrival phrase handles it
     // Lanes matter before the junction, not at it: "Dalam 600 meter, belok kiri. Guna dua lorong kiri."
-    const lanes = stage !== 'now' ? laneSentence(next.lanes, lang, true) : null;
+    const lanes = stage !== 'now' ? laneSentence(usableLanes(next), lang, true) : null;
     speak(lanes ? `${maneuverPhrase(next, d, lang, stage)}. ${lanes}.` : maneuverPhrase(next, d, lang, stage), lang, { interrupt: stage === 'now' });
   }, [navigating, on, lang, selectedRoute, progress, fix?.speed]);
 }

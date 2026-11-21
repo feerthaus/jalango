@@ -33,3 +33,33 @@ export function laneSentence(lanes: RouteStep['lanes'], lang: 'ms' | 'en', spoke
   if (p.count === 1) return p.side === 'middle' ? 'Use the middle lane' : `Use the ${side} lane`;
   return p.side === 'middle' ? `Use the ${n} middle lanes` : `Use the ${n} ${side} lanes`;
 }
+
+type Dir = 'left' | 'right' | 'straight' | 'uturn';
+const dirOf = (s: string): Dir | null => (s === 'uturn' ? 'uturn' : s.includes('left') ? 'left' : s.includes('right') ? 'right' : s === 'straight' ? 'straight' : null);
+
+/**
+ * The step's lanes, only if they agree with the turn. Mapbox's lane data is
+ * sometimes for the wrong movement (e.g. "Belok kiri" with only the straight
+ * lanes marked, Jalan Sultan Ismail → Jalan P. Ramlee): showing it would
+ * send drivers into the wrong lane, so it's dropped (no lane guide is better).
+ */
+export function usableLanes(step: RouteStep): RouteStep['lanes'] {
+  const lanes = step.lanes;
+  if (!lanes || lanes.length < 2 || !lanes.some((l) => l.valid)) return undefined;
+  const { type, modifier } = step.maneuver;
+  if (type === 'arrive' || type === 'depart' || !modifier) return lanes;
+  const turn = dirOf(modifier) ?? 'straight';
+  // Bear/keep/ramps: a straight lane can be right for a slight turn
+  const slight = modifier.startsWith('slight') || ['fork', 'off ramp', 'on ramp', 'merge'].includes(type);
+  const fits = lanes.some(
+    (l) =>
+      l.valid &&
+      (l.indications.length === 0 ||
+        l.indications.some((i) => {
+          if (i === 'none') return true; // unmarked lane: can't contradict
+          const d = dirOf(i);
+          return d === turn || (slight && d === 'straight') || (turn === 'straight' && i.startsWith('slight'));
+        })),
+  );
+  return fits ? lanes : undefined;
+}

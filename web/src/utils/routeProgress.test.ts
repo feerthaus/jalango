@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Route } from '@/types';
-import { bearingDeg, buildRouteIndex, computeProgress, hasEarlyUturn, pickRerouteIndex, sliceRoute } from './routeProgress';
+import { bearingDeg, buildRouteIndex, computeProgress, hasEarlyUturn, pickRerouteIndex, routeSegment, sliceRoute } from './routeProgress';
 
 // An L-shaped route: ~1.1 km north, then ~1.1 km east
 const route: Route = {
@@ -79,5 +79,22 @@ describe('U-turn avoidance', () => {
   it('prefers the first alternative without one', () => {
     expect(pickRerouteIndex([mk('a', [undefined, 'uturn']), mk('b', [undefined, 'right'])])).toBe(1);
     expect(pickRerouteIndex([mk('a', [undefined, 'uturn'])])).toBe(0);
+  });
+});
+
+describe('routeSegment', () => {
+  const index = buildRouteIndex(route);
+  it('cuts the stretch through the turn, corner included', () => {
+    const turn = index.stepStarts[1];
+    const seg = routeSegment(index, turn - 40, turn + 30);
+    expect(seg).toHaveLength(3);
+    expect(seg[1]).toEqual([101.7, 3.11]);
+    expect(seg[0][0]).toBeCloseTo(101.7, 6);
+    expect(seg[2][1]).toBeCloseTo(3.11, 6);
+    expect(bearingDeg(seg[1], seg[2])).toBeCloseTo(90, 0);
+  });
+  it('clamps to the route and handles empty ranges', () => {
+    expect(routeSegment(index, -50, 20)[0]).toEqual([101.7, 3.1]);
+    expect(routeSegment(index, 100, 100)).toEqual([]);
   });
 });

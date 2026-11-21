@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { RouteStep } from '@/types';
-import { displayInstruction, maneuverPhrase, malayAction, spokenDistance, stageThresholds } from './voiceInstructions';
+import { displayInstruction, maneuverPhrase, maneuverTarget, malayAction, shortInstruction, spokenDistance, stageThresholds } from './voiceInstructions';
 
 const step = (maneuver: RouteStep['maneuver'], roadName?: string, instruction = ''): RouteStep => ({ instruction, distanceMeters: 0, durationSeconds: 0, maneuver, roadName });
 const at = { lng: 101.7, lat: 3.1 };
@@ -49,5 +49,23 @@ describe('displayInstruction', () => {
   });
   it('keeps the provider English text', () => {
     expect(displayInstruction(step({}), 'en')).toBe('Take the ramp on the left towards Johor Bahru');
+  });
+});
+
+describe('shortInstruction', () => {
+  const s = (type: string, modifier?: string, extra: Partial<RouteStep> = {}, exit?: number) =>
+    ({ instruction: 'Turn left onto Jalan P. Ramlee.', distanceMeters: 0, durationSeconds: 0, maneuver: { type, modifier, exit, location: { lat: 0, lng: 0 } }, ...extra }) as RouteStep;
+  it('keeps the banner to a few words', () => {
+    expect(shortInstruction(s('turn', 'left'), 'ms')).toBe('Belok kiri');
+    expect(shortInstruction(s('turn', 'right'), 'en')).toBe('Turn right');
+    expect(shortInstruction(s('roundabout', 'right', {}, 2), 'ms')).toBe('Bulatan: keluar ke-2');
+    expect(shortInstruction(s('fork', 'slight right'), 'ms')).toBe('Ikut kanan');
+    expect(shortInstruction(s('off ramp', 'slight left'), 'ms')).toBe('Keluar kiri');
+    expect(shortInstruction(s('turn', 'uturn'), 'ms')).toBe('Pusingan U');
+  });
+  it('puts the road (or the signposted places) on its own line', () => {
+    expect(maneuverTarget(s('turn', 'left', { roadName: 'Jalan P. Ramlee' }))).toBe('Jalan P. Ramlee');
+    expect(maneuverTarget(s('off ramp', 'left', { destinations: 'E6: Ipoh, Rawang' }))).toBe('Ipoh / Rawang');
+    expect(maneuverTarget(s('turn', 'left'))).toBeNull();
   });
 });

@@ -12,6 +12,7 @@ import { DestinationMarker } from './DestinationMarker';
 import { Map3D } from './Map3D';
 import { NavigationCamera } from './NavigationCamera';
 import { TrainLayer } from './TrainLayer';
+import { ManeuverArrow } from './ManeuverArrow';
 import { RouteLayer } from './RouteLayer';
 import { ReportMarkers } from '@/components/reports/ReportMarkers';
 import { AccidentMarkers } from '@/components/accidents/AccidentMarkers';
@@ -147,6 +148,7 @@ export function MapView() {
       {map && <UserLocationMarker />}
       {map && markerPlace && <DestinationMarker place={markerPlace} />}
       {map && <RouteLayer />}
+      {map && <ManeuverArrow />}
       {map && <TrainLayer />}
       {map && <ShortcutLayer />}
       {map && <ReportMarkers />}

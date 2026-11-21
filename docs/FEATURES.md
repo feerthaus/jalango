@@ -43,6 +43,18 @@ Kemas kini fail ini dalam PR yang sama setiap kali fungsi baru ditambah atau diu
 - `web/src/components/navigation/NavigationHud.tsx`: memilih antara jalur rata dan 3D mengikut jarak.
 - Ujian: `web/src/utils/laneArrows.test.ts`.
 
+**Semakan lorong vs belokan (Nov 2026, maklum balas pengguna):** kadang-kadang data lorong Mapbox tak sepadan dengan belokan. Contohnya, "Belok kiri ke Jalan P. Ramlee" dari Jalan Sultan Ismail tandakan lorong **lurus** sebagai lorong yang betul. Sekarang, jika tiada satu pun lorong yang sah menghala ke arah belokan, panduan lorong tak dipaparkan langsung (jalur, 3D, ayat dan suara). Tiada panduan lebih baik daripada panduan yang salah. Lorong lurus masih dikira betul untuk belokan condong, simpang (*fork*) dan susur. Kod: `usableLanes()` dalam `web/src/utils/laneSentence.ts`.
+
+## Panduan belokan yang mudah dilihat
+
+Untuk pemandu yang tak sempat membaca skrin (maklum balas pengguna, Nov 2026):
+
+- **Anak panah atas jalan:** bila belokan seterusnya tinggal kurang 600 m, anak panah putih dilukis di atas peta, terus pada laluan melalui simpang itu (35 m sebelum hingga 25 m selepas, lebih panjang di lebuh raya), seperti cat anak panah di jalan. Ia keluar di **semua jalan**, termasuk jalan kecil dan simpang taman, kerana ia dilukis daripada garisan laluan sendiri, bukan data lorong. Tiada untuk "terus lurus".
+- **Arahan ringkas:** banner kini hanya memaparkan jarak, tindakan pendek ("Belok kiri", "Bulatan: keluar ke-2", "Ikut kanan", "Keluar kiri") dan nama jalan pada baris berasingan. Ayat penuh masih ada dalam senarai langkah dan suara. Baris "Kemudian" pun diringkaskan.
+- **Zum dekat simpang:** di jalan biasa (bukan lebuh raya), bawah ~60 km/j, kamera zum masuk (16.5 → 17.5) dalam 150 m terakhir sebelum belokan. Selepas belokan, ia zum keluar semula. Simpang kecil yang rapat jadi lebih mudah dibezakan.
+
+**Kod:** `web/src/components/map/ManeuverArrow.tsx`, `routeSegment()` dalam `web/src/utils/routeProgress.ts`, `web/src/utils/turnFocus.ts` (`isRealTurn`, `cameraZoom`), `shortInstruction()` dan `maneuverTarget()` dalam `web/src/utils/voiceInstructions.ts`, `web/src/components/map/NavigationCamera.tsx`. Ujian: `turnFocus.test.ts`, `routeProgress.test.ts`, `voiceInstructions.test.ts`, `laneSentence.test.ts`.
+
 ---
 
 ## Marketplace: kedai makan (restoran, warung, gerai)

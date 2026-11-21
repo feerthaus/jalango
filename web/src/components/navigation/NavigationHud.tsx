@@ -2,13 +2,13 @@ import { ChevronDown, ChevronUp, Flag, ListOrdered, Loader2, SunDim, Volume2, Vo
 import { useRouteAlerts } from '@/hooks/useRouteAlerts';
 import { useAccidentAlerts } from '@/hooks/useAccidentAlerts';
 import { useTollAlerts } from '@/hooks/useTollAlerts';
-import { laneSentence } from '@/utils/laneSentence';
+import { laneSentence, usableLanes } from '@/utils/laneSentence';
 import { RoadShields } from './RoadShields';
 import { TollBanner } from './TollBanner';
 import { AccidentAlertBanner } from '@/components/accidents/AccidentAlertBanner';
 import { useVoiceAlerts, useVoiceLang } from '@/hooks/useVoiceAlerts';
 import { useSpeedAlert } from '@/hooks/useSpeedLimit';
-import { displayInstruction } from '@/utils/voiceInstructions';
+import { displayInstruction, maneuverTarget, shortInstruction } from '@/utils/voiceInstructions';
 import { hasLanes, LaneGuide } from './LaneGuide';
 import { LaneView3D } from './LaneView3D';
 import { useWakeLock } from '@/hooks/useWakeLock';
@@ -99,7 +99,8 @@ export function NavigationHud() {
   const remainingSeconds = progress?.remainingSeconds ?? route.durationSeconds;
   const remainingMeters = progress?.remainingMeters ?? route.distanceMeters;
   const demo = route.source === 'demo';
-  const lanesText = progress && progress.distanceToManeuver < 2000 ? laneSentence(next.lanes, lang) : null;
+  const target = maneuverTarget(next);
+  const lanesText = progress && progress.distanceToManeuver < 2000 ? laneSentence(usableLanes(next), lang) : null;
 
   return (
     <>
@@ -112,14 +113,15 @@ export function NavigationHud() {
             </span>
             <span className="min-w-0 flex-1">
               <span className="block text-3xl font-black tabular-nums leading-none short:text-2xl">{progress ? formatDistance(progress.distanceToManeuver) : '–'}</span>
-              <span className="mt-1 line-clamp-2 block text-base font-semibold leading-snug short:text-sm">{displayInstruction(next, lang)}</span>
-              {lanesText && <span className="mt-1 block text-sm font-bold short:mt-0.5 short:text-xs text-jade-300">{lanesText}</span>}
-              {(next.roadRef || next.exits || next.roadName) && (
-                <span className="mt-1 flex min-w-0 items-center gap-1.5 text-sm text-ink-300">
+              {/* Short, glanceable: "Belok kiri" then the road; the full sentence is in the step list */}
+              <span className="mt-1 block text-xl font-bold leading-tight short:text-base" aria-label={displayInstruction(next, lang)}>{shortInstruction(next, lang)}</span>
+              {(next.roadRef || next.exits || target) && (
+                <span className="mt-0.5 flex min-w-0 items-center gap-1.5 text-base font-semibold text-ink-200 short:text-sm">
                   <RoadShields roadRef={next.roadRef} exits={next.exits} className="shrink-0" />
-                  {next.roadName && <span className="truncate">{next.roadName}</span>}
+                  {target && <span className="truncate">{target}</span>}
                 </span>
               )}
+              {lanesText && <span className="mt-1 block text-sm font-bold short:mt-0.5 short:text-xs text-jade-300">{lanesText}</span>}
             </span>
             {showSteps ? <ChevronUp className="size-5 text-ink-300" /> : <ChevronDown className="size-5 text-ink-300" />}
           </button>
@@ -129,7 +131,7 @@ export function NavigationHud() {
           {after && !showSteps && (
             <div className="flex items-center gap-2 border-t border-white/10 px-4 py-2 text-sm text-ink-300 short:py-1.5 short:text-xs">
               {lang === 'ms' ? 'Kemudian' : 'Then'} <ManeuverIcon step={after} className="size-4 text-white" />
-              <span className="truncate">{displayInstruction(after, lang)}</span>
+              <span className="truncate">{[shortInstruction(after, lang), maneuverTarget(after)].filter(Boolean).join(' · ')}</span>
             </div>
           )}
           {rerouting && (
