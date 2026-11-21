@@ -338,6 +338,18 @@ Pelan penuh ada dalam `docs/MARKETPLACE.md`. Fasa 0 hanya pendaftaran dan penges
 - **Laju:** pilihan tren diminta sebaik laluan jauh dirancang (sebelum tab Tren ditekan) dan diingat 3 minit di telefon dan di server. Pengiraan di server dioptimumkan (kira-kira 20–70 ms selepas jadual dimuat).
 - Belum: LRT/MRT/bas (Fasa 2), masa tren secara langsung.
 
+## Balasan maklum balas dalam app
+
+Permintaan pemilik (Nov 2026), selepas maklum balas pengguna pertama: admin boleh membalas mesej "Hantar maklum balas", dan pengirim membacanya terus dalam JalanGo.
+- **Admin → Mesej:** setiap mesej ada kotak "Send reply". Balasan boleh disunting, dan status "seen" atau "not seen yet" dipaparkan. Mesej yang dibalas ditandakan selesai, dan setiap balasan direkodkan dalam `admin_actions`.
+- **Pengguna:** kad "JalanGo membalas maklum balas anda" dipaparkan pada skrin peta (tak dipaparkan semasa memandu atau semasa perjalanan tren/bas). Tekan kad itu untuk lihat mesej asal dan balasan, kemudian "Terima kasih" untuk tandakan sudah dibaca. App menyemak semula bila dibuka kembali, paling kerap sekali setiap 10 minit.
+- **Tanpa log masuk pun boleh:** semasa menghantar maklum balas, telefon membuat satu kod rawak (`jalango:feedback-code`). Server hanya menyimpan SHA-256 kod itu (`device_token_hash`). Balasan dipaparkan pada telefon yang sama.
+- **Had:** mesej yang dihantar sebelum ciri ini wujud, tanpa akaun, tak boleh dibalas dalam app. Balas melalui maklumat hubungan yang ditinggalkan pengirim.
+
+**Pangkalan data:** migrasi `20261129000000_feedback_replies.sql` (tambahan sahaja): lajur `reply`, `replied_at`, `replied_by`, `reply_seen_at`, `device_token_hash`; fungsi `admin_reply_feedback` (admin sahaja), `my_feedback_replies` dan `mark_feedback_reply_seen` (hanya untuk mesej sendiri, sama ada mengikut akaun atau kod peranti).
+
+**Kod:** `web/src/components/feedback/FeedbackReplyCard.tsx`, `web/src/services/feedbackReplyService.ts`, `FeedbackReplyBox` dalam `web/src/pages/AdminPage.tsx`, `server/src/routes/account.ts` (`replyToken`).
+
 ## Perkongsian
 
 - **Butang Kongsi:** WhatsApp, Facebook, Instagram, Telegram, X, Threads, SMS, Email, Salin, dan menu kongsi telefon (`web/src/components/share/ShareSheet.tsx`).

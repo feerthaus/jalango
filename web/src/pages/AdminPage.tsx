@@ -1,4 +1,4 @@
-import { ArrowLeft, Ban, Bell, Check, EyeOff, Loader2, RefreshCw, RotateCcw, ShieldAlert, X } from 'lucide-react';
+import { ArrowLeft, Ban, Bell, Check, EyeOff, Loader2, RefreshCw, RotateCcw, Send, ShieldAlert, X } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import { Wordmark } from '@/components/brand/LogoMark';
@@ -23,6 +23,7 @@ import {
   FLAG_REASONS,
   moderate,
   setBan,
+  replyToFeedback,
   setFeedbackStatus,
   type FeedbackItem,
   type FlagQueueItem,
@@ -185,6 +186,55 @@ function FlagQueue() {
   );
 }
 
+/** Reply in the app (when the sender can see it), or a note to use their contact. */
+function FeedbackReplyBox({ item, onSent }: { item: FeedbackItem; onSent: () => void }) {
+  const [text, setText] = useState('');
+  const [editing, setEditing] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  if (!item.can_reply) {
+    return <p className="mt-2 text-xs text-ink-400">Sent before in-app replies existed (or without a device code): reply via the contact above.</p>;
+  }
+  if (item.reply && !editing) {
+    return (
+      <button type="button" className="mt-2 text-xs font-semibold text-jade-700 underline dark:text-jade-300" onClick={() => { setText(item.reply ?? ''); setEditing(true); }}>
+        Edit reply
+      </button>
+    );
+  }
+  const send = async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      await replyToFeedback(item.id, text);
+      setText('');
+      setEditing(false);
+      onSent();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Could not send');
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <div className="mt-2 space-y-2">
+      <textarea
+        rows={3}
+        maxLength={2000}
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        placeholder="Reply — the sender sees it in JalanGo"
+        aria-label="Reply"
+        className="w-full resize-none rounded-xl bg-ink-100 px-3 py-2 text-sm outline-none ring-jade-500 focus:ring-2 dark:bg-ink-800"
+      />
+      {error && <p role="alert" className="text-xs text-red-600">{error}</p>}
+      <Button className="px-3 py-1.5 text-xs" disabled={busy || !text.trim()} onClick={send}>
+        <Send className="size-3.5" /> {item.reply ? 'Update reply' : 'Send reply'}
+      </Button>
+    </div>
+  );
+}
+
 function FeedbackInbox() {
   const [items, setItems] = useState<FeedbackItem[] | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -209,6 +259,15 @@ function FeedbackInbox() {
           <p className="mt-1 text-xs text-ink-400">
             {f.contact ?? 'no contact'} {f.page && `· ${f.page}`}
           </p>
+          {f.reply && (
+            <div className="mt-2 rounded-xl bg-jade-500/10 p-2 text-sm ring-1 ring-jade-500/30">
+              <p className="text-xs font-semibold text-jade-700 dark:text-jade-300">
+                Reply · {f.replied_at && formatRelativeTime(f.replied_at, 'en')} · {f.reply_seen_at ? `seen ${formatRelativeTime(f.reply_seen_at, 'en')}` : 'not seen yet'}
+              </p>
+              <p className="mt-1 whitespace-pre-wrap">{f.reply}</p>
+            </div>
+          )}
+          <FeedbackReplyBox item={f} onSent={load} />
           {f.status !== 'done' && (
             <Button variant="secondary" className="mt-2 px-3 py-1.5 text-xs" onClick={() => setFeedbackStatus(f.id, 'done').then(load)}>
               <Check className="size-3.5" /> Mark done
