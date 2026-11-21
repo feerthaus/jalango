@@ -62,7 +62,7 @@ Maklum balas pengguna pertama (Nov 2026): tunjuk di mana ada lampu isyarat supay
 - **Banner:** bila belokan seterusnya berada di lampu isyarat, tanda kuning "🚦 Di lampu isyarat" dipaparkan bawah "Belok kiri".
 - **Ayat dan suara:** "Dalam 300 meter, di lampu isyarat, belok kanan ke Jalan Ampang". Ini hanya untuk belokan biasa, bukan bulatan, susur atau simpang (*fork*).
 
-**Sumber data:** `intersections[].traffic_signal` daripada Mapbox Directions, yang memang datang bersama laluan. **Tiada panggilan atau kos tambahan.** Lampu isyarat hanya dipaparkan di tempat yang ada data. Kalau ikon tiada, itu tak bermakna tiada lampu di situ. Satu simpang yang ada beberapa titik dalam lingkungan 25 m dikira sebagai satu lampu.
+**Sumber data:** `intersections[].traffic_signal` daripada Mapbox Directions, yang memang datang bersama laluan. **Tiada panggilan atau kos tambahan.** Lampu isyarat hanya dipaparkan di tempat yang ada data. Kalau ikon tiada, itu tak bermakna tiada lampu di situ. Satu simpang yang ada beberapa titik dalam lingkungan 25 m dikira sebagai satu lampu. Lampu dalam lingkungan 35 m dari titik belokan dikira berada di simpang itu, kerana Mapbox selalu meletakkan lampu pada nod garisan berhenti atau jalan sebelah, bukan pada titik belokan.
 
 **Kod:** `server/src/services/directions.ts` (`signals`, `atSignal`), `web/src/components/map/TrafficSignalLayer.tsx`, `web/src/components/navigation/TrafficLightIcon.tsx`, `turnAtSignal()` dalam `web/src/utils/voiceInstructions.ts`. Ujian: `directions.test.ts`, `voiceInstructions.test.ts`.
 
