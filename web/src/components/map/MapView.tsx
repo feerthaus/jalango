@@ -20,6 +20,7 @@ import { AccidentMarkers } from '@/components/accidents/AccidentMarkers';
 import { ShortcutLayer } from '@/components/shortcuts/ShortcutLayer';
 import { UserLocationMarker } from './UserLocationMarker';
 import { ConvoyMarkers } from '@/components/convoy/ConvoyMarkers';
+import { ConvoyMessagePins } from '@/components/convoy/ConvoyMessagePins';
 import { StopMarker } from '@/components/along/StopMarker';
 import { AlongMarkers } from '@/components/along/AlongMarkers';
 import { CameraMarkers } from './CameraMarkers';
@@ -143,6 +144,7 @@ export function MapView() {
     <div className="absolute inset-0">
       <div ref={containerRef} className="h-full w-full" role="region" aria-label={t('Peta', 'Map')} />
       {map && <ConvoyMarkers />}
+      {map && <ConvoyMessagePins />}
       {map && <CameraMarkers />}
       {map && <AlongMarkers />}
       {map && <StopMarker />}
