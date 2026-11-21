@@ -1,4 +1,4 @@
-import { Coins, Flag, ListOrdered, Map as MapIcon, Navigation, Radio, Search, Volume2, VolumeX, X } from 'lucide-react';
+import { Coins, Flag, ListOrdered, Map as MapIcon, Megaphone, Navigation, Radio, Route as RouteIcon, Search, Volume2, VolumeX, X } from 'lucide-react';
 import { useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 import { CONGESTION_COLORS, ROUTE_BLUE } from '@/components/map/RouteLayer';
 import { Button } from '@/components/ui/Button';
@@ -59,6 +59,7 @@ export function TripSheet({ remainingSeconds, remainingMeters, demo, showSteps, 
   const along = progress ? Math.floor(progress.along / 50) * 50 : 0;
   const strip = useMemo(() => (open && route && index ? routeStrip(route, index, along, onRoute) : null), [open, route, index, along, onRoute]);
   const toll = route ? tollEstimate(route, vehicle) : null;
+  const reportsAhead = strip ? strip.markers.filter((m) => m.kind === 'report').length : 0;
 
   const onDown = (e: ReactPointerEvent) => {
     drag.current = e.clientY;
@@ -128,44 +129,66 @@ export function TripSheet({ remainingSeconds, remainingMeters, demo, showSteps, 
 
       {open && (
         <div id="trip-sheet" className="max-h-[min(60dvh,520px)] space-y-4 overflow-y-auto border-b border-ink-900/5 px-4 pb-4 pt-1 dark:border-white/10 short:max-h-[55dvh]">
-          <div className="text-center">
-            <p className="text-3xl font-black tabular-nums leading-tight">{arrivalClock(remainingSeconds)}</p>
-            <p className="text-sm text-ink-500 dark:text-ink-300">
-              {demo && '~'}
-              {formatDuration(remainingSeconds)} · {formatDistance(remainingMeters)}
+          {/* Arrival: JalanGo's trip header (same type scale as the route options) */}
+          <div className="flex items-end justify-between gap-3">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-ink-500">{t('Tiba', 'Arrive')}</p>
+              <p className="text-3xl font-black tabular-nums leading-none text-jade-600 dark:text-jade-400">{arrivalClock(remainingSeconds)}</p>
+            </div>
+            <p className="pb-0.5 text-right text-sm text-ink-500 dark:text-ink-300">
+              <span className="block font-bold tabular-nums text-ink-900 dark:text-white">
+                {demo && '~'}
+                {formatDuration(remainingSeconds)}
+              </span>
+              {formatDistance(remainingMeters)}
             </p>
           </div>
-          <div className="text-center">
-            {destination && <p className="truncate text-sm text-ink-500 dark:text-ink-300">{t(`Ke ${destination.name}`, `To ${destination.name}`)}</p>}
-            {route?.summary && <p className="line-clamp-2 text-lg font-bold leading-snug">{t(`Melalui ${route.summary}`, `Via ${route.summary}`)}</p>}
-            {toll && (
-              <span className="mt-1 inline-flex items-center gap-1 rounded-md bg-ink-100 px-2 py-0.5 text-xs font-semibold dark:bg-ink-800">
-                <Coins className="size-3" /> {toll.min === toll.max ? t(`Tol RM${toll.min.toFixed(2)}`, `Toll RM${toll.min.toFixed(2)}`) : t(`Tol ~RM${toll.min}–${toll.max}`, `Toll ~RM${toll.min}–${toll.max}`)}
-              </span>
+
+          {/* Where and how: a JalanGo route card */}
+          <div className="rounded-2xl bg-white p-3 dark:bg-ink-800">
+            {destination && (
+              <p className="flex min-w-0 items-center gap-1.5 font-bold">
+                <Flag className="size-4 shrink-0 text-red-600" />
+                <span className="truncate">{destination.name}</span>
+              </p>
             )}
+            {route?.summary && <p className="mt-0.5 line-clamp-2 text-sm text-ink-600 dark:text-ink-300">{t(`melalui ${route.summary}`, `via ${route.summary}`)}</p>}
+            {(toll || route?.hasMotorway || reportsAhead > 0) && (
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {toll && (
+                  <Chip className="bg-amber-400/15 text-amber-700 dark:text-amber-300">
+                    <Coins className="size-3" /> {toll.min === toll.max ? t(`Tol RM${toll.min.toFixed(2)}`, `Toll RM${toll.min.toFixed(2)}`) : t(`Tol ~RM${toll.min}–${toll.max}`, `Toll ~RM${toll.min}–${toll.max}`)}
+                  </Chip>
+                )}
+                {route?.hasMotorway && (
+                  <Chip className="bg-sky-500/15 text-sky-700 dark:text-sky-300">
+                    <RouteIcon className="size-3" /> {t('Lebuh raya', 'Highway')}
+                  </Chip>
+                )}
+                {reportsAhead > 0 && (
+                  <Chip className="bg-red-500/15 text-red-600 dark:text-red-300">
+                    <Megaphone className="size-3" /> {reportsAhead} {t('laporan di depan', reportsAhead === 1 ? 'report ahead' : 'reports ahead')}
+                  </Chip>
+                )}
+              </div>
+            )}
+            {strip && <RouteStripView strip={strip} lang={lang} />}
           </div>
 
-          {strip && <RouteStripView strip={strip} lang={lang} />}
-
+          {/* Stops on the way: the same category chips as "Sepanjang laluan" */}
           <div>
-            <p className="mb-2 text-xs font-semibold text-ink-500">{t('Tambah hentian', 'Add a stop')}</p>
-            <div className="grid grid-cols-5 gap-1 rounded-2xl bg-white p-2 dark:bg-ink-800">
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-500">{t('Singgah di laluan', 'Stop on the way')}</p>
+            <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
               {QUICK_STOPS.map((id) => {
                 const c = ALONG_CATEGORIES.find((x) => x.id === id)!;
                 return (
-                  <button key={id} type="button" onClick={() => stopAt(id)} className="flex flex-col items-center gap-1 rounded-xl py-2 text-[11px] font-semibold hover:bg-ink-100 dark:hover:bg-ink-700">
-                    <span className="grid size-9 place-items-center rounded-full text-white" style={{ background: c.color }}>
-                      <c.icon className="size-5" />
-                    </span>
-                    {lang === 'en' ? c.label.en : c.label.ms}
+                  <button key={id} type="button" onClick={() => stopAt(id)} className="flex shrink-0 items-center gap-1.5 rounded-full px-3 py-2 text-sm font-semibold text-white" style={{ background: c.color }}>
+                    <c.icon className="size-4" /> {t(c.label)}
                   </button>
                 );
               })}
-              <button type="button" onClick={() => { onAlong(); setOpen(false); }} aria-label={t('Lagi jenis hentian', 'More kinds of stop')} className="flex flex-col items-center gap-1 rounded-xl py-2 text-[11px] font-semibold hover:bg-ink-100 dark:hover:bg-ink-700">
-                <span className="grid size-9 place-items-center rounded-full bg-ink-100 dark:bg-ink-700">
-                  <Search className="size-5" />
-                </span>
-                {t('Lagi', 'More')}
+              <button type="button" onClick={() => { onAlong(); setOpen(false); }} className="flex shrink-0 items-center gap-1.5 rounded-full bg-ink-100 px-3 py-2 text-sm font-semibold dark:bg-ink-800">
+                <Search className="size-4" /> {t('Lagi', 'More')}
               </button>
             </div>
           </div>
@@ -181,7 +204,7 @@ export function TripSheet({ remainingSeconds, remainingMeters, demo, showSteps, 
         </div>
       )}
 
-      {/* The bar itself: open → End / Resume (like Waze); closed → time and quick buttons */}
+      {/* The bar itself: open → End / Resume; closed → time and quick buttons */}
       {open ? (
         <div className="grid touch-none grid-cols-[auto_1fr] gap-2 p-3 short:p-2">
           <Button variant="danger" className="px-5 py-3" onClick={endNavigation}>
@@ -227,7 +250,7 @@ function RouteStripView({ strip, lang }: { strip: ReturnType<typeof routeStrip>;
   const tolls = strip.markers.filter((m) => m.kind === 'toll').length;
   return (
     <div>
-      <div className="relative mx-3 h-12" role="img" aria-label={t(`Laluan di depan: ${reports} laporan, ${tolls} plaza tol`, `Road ahead: ${reports} reports, ${tolls} toll plazas`)}>
+      <div className="relative mx-2 mt-3 h-11" role="img" aria-label={t(`Laluan di depan: ${reports} laporan, ${tolls} plaza tol`, `Road ahead: ${reports} reports, ${tolls} toll plazas`)}>
         <div className="absolute inset-x-0 bottom-2 h-1.5 overflow-hidden rounded-full" style={{ background: ROUTE_BLUE }}>
           {strip.runs.map((r, i) => (
             <span key={i} className="absolute inset-y-0" style={{ left: `${r.from * 100}%`, width: `${Math.max(0.6, (r.to - r.from) * 100)}%`, background: CONGESTION_COLORS[r.congestion] }} />
@@ -260,4 +283,8 @@ function RouteStripView({ strip, lang }: { strip: ReturnType<typeof routeStrip>;
 function More({ n }: { n: number }) {
   if (n <= 0) return null;
   return <span className="absolute -right-2 -top-1.5 rounded-full bg-ink-950 px-1 text-[10px] font-bold leading-4 text-white">+{n}</span>;
+}
+
+function Chip({ className, children }: { className: string; children: React.ReactNode }) {
+  return <span className={cn('inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold', className)}>{children}</span>;
 }
