@@ -1,3 +1,4 @@
+import { recordConversion } from '@/lib/activity';
 import type { Session, User } from '@supabase/supabase-js';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { supabase } from '@/lib/supabase';
@@ -65,6 +66,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       data.subscription.unsubscribe();
     };
   }, []);
+
+  // A new account (email or Google/Facebook): counted once for the growth stats.
+  // The server only counts accounts created in the last 24 hours.
+  const userId = session?.user?.id;
+  useEffect(() => {
+    if (userId) recordConversion('signup', userId);
+  }, [userId]);
 
   const signIn = useCallback(async (email: string, password: string) => {
     if (!supabase) throw new Error('Accounts are not available yet.');

@@ -1,3 +1,4 @@
+import { recordConversion } from '@/lib/activity';
 import { adminChanged } from './adminCounts';
 import { supabase } from '@/lib/supabase';
 import { preparePhoto } from './accidentService';
@@ -81,6 +82,7 @@ export async function saveOperator(userId: string, input: OperatorInput, existin
   const q = existingId ? client().from('operators').update(row).eq('id', existingId) : client().from('operators').insert(row);
   const { data, error } = await q.select(COLS).single();
   if (error) throw toReportError(error);
+  if (!existingId) recordConversion('business_registered'); // growth stats: a new business, counted once
   return data as Operator;
 }
 

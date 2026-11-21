@@ -1,3 +1,6 @@
+import { SITE_URL } from '@/lib/site';
+import { withUtm } from './attribution';
+
 export interface ShareContent {
   /** Short title (used by email subject / native share) */
   title: string;
@@ -10,8 +13,13 @@ export type SharePlatform = 'whatsapp' | 'facebook' | 'telegram' | 'x' | 'thread
 
 const enc = encodeURIComponent;
 
-/** Web links that open each app's own "share/compose" screen (no SDKs, no tracking). */
-export function shareUrl(platform: SharePlatform, c: ShareContent): string {
+/**
+ * Web links that open each app's own "share/compose" screen (no SDKs, no
+ * trackers). Our own link gets utm_source=<platform>&utm_medium=share, so the
+ * growth stats can tell which app a visitor came from (WhatsApp sends no referrer).
+ */
+export function shareUrl(platform: SharePlatform, content: ShareContent): string {
+  const c = { ...content, url: withUtm(content.url, SITE_URL, platform) };
   const msg = `${c.text} ${c.url}`.trim();
   switch (platform) {
     case 'whatsapp':
