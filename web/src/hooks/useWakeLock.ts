@@ -9,9 +9,18 @@ import { useEffect, useState } from 'react';
  *   when released, when the app comes back to the front, and every 15 s.
  * - Where that's missing or refused, a tiny silent video loops off screen:
  *   playing video keeps most phones awake (the classic NoSleep trick).
+ * - On iPhone/iPad (WebKit) the lock can be granted yet the screen still
+ *   dims after the Auto-Lock time (owner, iPhone 16 Pro Max, Nov 2026), so
+ *   there the video runs as well, all the time, and is restarted whenever
+ *   iOS pauses it (e.g. after spoken directions).
  * - Low Power Mode on iPhone refuses both: the state says so, and the screen
  *   shows how to keep it on.
  */
+
+/** iPhone, iPad (incl. iPadOS that says "Macintosh"), and every iOS browser: all WebKit. */
+export function isIOSWebKit(ua = typeof navigator === 'undefined' ? '' : navigator.userAgent, touchPoints = typeof navigator === 'undefined' ? 0 : navigator.maxTouchPoints): boolean {
+  return /iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && touchPoints > 1);
+}
 export type WakeState = 'off' | 'on' | 'fallback' | 'blocked';
 
 // 2 s of black 16×16 H.264, no sound (made with ffmpeg)
@@ -30,6 +39,7 @@ export function useWakeLock(active: boolean): WakeState {
     let lock: WakeLockSentinel | null = null;
     let video: HTMLVideoElement | null = null;
     let stopped = false;
+    const ios = isIOSWebKit();
 
     const startVideo = async (): Promise<boolean> => {
       try {
@@ -53,6 +63,8 @@ export function useWakeLock(active: boolean): WakeState {
 
     const acquire = async () => {
       if (stopped || document.visibilityState !== 'visible') return;
+      // iOS: belt and braces, the video runs alongside the lock
+      const videoOk = ios ? await startVideo() : false;
       if ('wakeLock' in navigator) {
         if (lock && !lock.released) return;
         try {
@@ -68,13 +80,15 @@ export function useWakeLock(active: boolean): WakeState {
           /* refused (e.g. Low Power Mode): try the video */
         }
       }
-      setState((await startVideo()) ? 'fallback' : 'blocked');
+      setState(videoOk || (await startVideo()) ? 'fallback' : 'blocked');
     };
 
     const onVisible = () => void acquire();
     void acquire();
     document.addEventListener('visibilitychange', onVisible);
     const watchdog = window.setInterval(() => {
+      // iOS pauses the video now and then (audio from directions, notifications): keep it playing
+      if (ios && video?.paused && document.visibilityState === 'visible') void video.play().catch(() => {});
       if (lock && !lock.released) return;
       if (video && !video.paused) return;
       void acquire();
