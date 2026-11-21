@@ -180,6 +180,10 @@ describe('buildDirectionsUrl', () => {
     );
     expect(r.hasTolls).toBe(true);
     expect(r.tollMeters).toBe(15_000); // 3 of 4 samples on the 20 km step
+    // a toll plaza but no toll-classed road: distance unknown, not zero
+    const plazaOnly = normalizeRoute({ distance: 147_000, duration: 6000, geometry: { type: 'LineString', coordinates: [[101.6, 3.0], [102.2, 2.2]] }, legs: [{ steps: [{ distance: 147_000, duration: 6000, maneuver: { type: 'depart', location: [101.6, 3.0] }, intersections: [{ location: [101.7, 3.0], toll_collection: { type: 'toll_booth', name: 'Plaza Tol Sungai Besi' }, classes: ['motorway'] }] }] }] }, 0);
+    expect(plazaOnly.hasTolls).toBe(true);
+    expect(plazaOnly.tollMeters).toBeUndefined();
     expect(normalizeRoute({ distance: 1000, duration: 60, geometry: { type: 'LineString', coordinates: [[101.6, 3.0], [101.61, 3.0]] }, legs: [{ steps: [{ distance: 1000, duration: 60, maneuver: { type: 'depart', location: [101.6, 3.0] }, intersections: [{}] }] }] }, 0).tollMeters).toBeUndefined();
   });
 });

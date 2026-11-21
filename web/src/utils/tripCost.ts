@@ -21,7 +21,8 @@ const TOLL_RANGE = { min: 0.09, max: 0.14 } as const;
  */
 export function tollEstimate(r: { hasTolls: boolean; tollMeters?: number; distanceMeters: number }, vehicle: 'car' | 'motorcycle' = 'car'): { min: number; max: number } | null {
   if (!r.hasTolls || vehicle !== 'car') return null;
-  const km = (r.tollMeters ?? r.distanceMeters) / 1000;
+  // no toll-road distance from the router (common in Malaysia): use the whole trip
+  const km = (r.tollMeters && r.tollMeters > 0 ? r.tollMeters : r.distanceMeters) / 1000;
   const min = Math.max(1, Math.round(km * TOLL_RANGE.min));
   return { min, max: Math.max(min + 1, Math.round(km * TOLL_RANGE.max)) };
 }

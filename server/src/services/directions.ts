@@ -118,7 +118,8 @@ export function normalizeRoute(r: MbRoute, index: number): Route {
     steps,
     hasTolls,
     tollPoints: tollPoints.length ? tollPoints : undefined,
-    tollMeters: hasTolls ? Math.round(tollMeters) : undefined,
+    // Mapbox doesn't tag toll roads in Malaysia (only the toll plazas): 0 means unknown, not free
+    tollMeters: hasTolls && tollMeters > 0 ? Math.round(tollMeters) : undefined,
     hasMotorway,
     congestion: congestion.length === r.geometry.coordinates.length - 1 ? congestion : undefined,
     maxspeeds: maxspeeds.length === r.geometry.coordinates.length - 1 && maxspeeds.some((v) => v !== null) ? maxspeeds : undefined,
