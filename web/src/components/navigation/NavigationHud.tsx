@@ -12,7 +12,7 @@ import { displayInstruction, maneuverTarget, shortInstruction, turnAtSignal } fr
 import { TrafficLightIcon } from './TrafficLightIcon';
 import { hasLanes, LaneGuide } from './LaneGuide';
 import { LaneView3D } from './LaneView3D';
-import { useWakeLock } from '@/hooks/useWakeLock';
+import { isIOSOtherBrowser, useWakeLock } from '@/hooks/useWakeLock';
 import { useVoiceGuidance } from '@/hooks/useVoiceGuidance';
 import { ResumeToast } from './ResumeToast';
 import { TripSheet } from './TripSheet';
@@ -170,6 +170,7 @@ export function NavigationHud() {
         {oncoming && <OncomingBanner threat={oncoming} />}
         {!showSteps && <OfflineBanner />}
         {!showSteps && wake === 'blocked' && <ScreenOffBanner />}
+        {!showSteps && wake !== 'blocked' && isIOSOtherBrowser() && <IOSBrowserTip />}
         {!showSteps && <LiveShareBanner />}
         {!showSteps && <ConvoyBanner />}
         {!showSteps && <StopBanner />}
@@ -198,6 +199,46 @@ export function NavigationHud() {
       {shareOpen && <ShareLiveSheet onClose={() => setShareOpen(false)} />}
       {alongOpen && <AlongRouteSheet onClose={() => setAlongOpen(false)} />}
     </>
+  );
+}
+
+const TIP_KEY = 'jalango:ios-browser-tip-hidden';
+
+/**
+ * Chrome / Firefox / Edge on iPhone: iOS may still auto-lock the screen there
+ * even though nothing reports a problem. Say what works, once (until dismissed).
+ */
+function IOSBrowserTip() {
+  const [t] = useT();
+  const [hidden, setHidden] = useState(() => {
+    try {
+      return localStorage.getItem(TIP_KEY) === '1';
+    } catch {
+      return false;
+    }
+  });
+  if (hidden) return null;
+  const hide = () => {
+    setHidden(true);
+    try {
+      localStorage.setItem(TIP_KEY, '1');
+    } catch {
+      /* ignore */
+    }
+  };
+  return (
+    <div role="status" className="pointer-events-auto flex items-start gap-2 rounded-2xl bg-ink-900/95 px-3 py-2 text-xs text-white shadow-float">
+      <SunDim className="mt-0.5 size-4 shrink-0 text-amber-400" />
+      <span className="min-w-0 flex-1">
+        {t(
+          'Di iPhone, Chrome tak dapat pastikan skrin kekal hidup. Buka JalanGo dalam Safari → Kongsi → Tambah ke Skrin Utama, atau set Tetapan → Paparan → Kunci Auto: Jangan semasa memandu.',
+          'On iPhone, Chrome can’t make sure the screen stays on. Open JalanGo in Safari → Share → Add to Home Screen, or set Settings → Display → Auto-Lock: Never while driving.',
+        )}
+      </span>
+      <button type="button" onClick={hide} className="-my-0.5 shrink-0 rounded-full bg-white/15 px-2 py-1 font-semibold">
+        {t('Faham', 'Got it')}
+      </button>
+    </div>
   );
 }
 
