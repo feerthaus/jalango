@@ -238,7 +238,7 @@ function RouteOption({ route, reportCount, selected, fastest, onSelect }: { rout
           {fastest && <Chip className="bg-jade-500/15 text-jade-700 dark:text-jade-300">{t('Terpantas', 'Fastest')}</Chip>}
           {route.hasTolls && (
             <Chip className="bg-amber-400/15 text-amber-700 dark:text-amber-300">
-              <Coins className="size-3" /> {toll ? t(`Tol ~RM${toll.min}–${toll.max}`, `Toll ~RM${toll.min}–${toll.max}`) : t('Bertol', 'Toll road')}
+              <Coins className="size-3" /> {toll && toll.min === toll.max ? t(`Tol RM${toll.min.toFixed(2)}`, `Toll RM${toll.min.toFixed(2)}`) : toll ? t(`Tol ~RM${toll.min}–${toll.max}`, `Toll ~RM${toll.min}–${toll.max}`) : t('Bertol', 'Toll road')}
             </Chip>
           )}
           {route.hasMotorway && (

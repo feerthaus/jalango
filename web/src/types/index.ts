@@ -120,6 +120,8 @@ export interface Route {
   tollPoints?: TollPoint[];
   /** metres driven on toll roads (from the router's road classes), for the toll estimate */
   tollMeters?: number;
+  /** exact class 1 toll (RM) when every toll plaza on the route has an official fare; otherwise absent */
+  tollFare?: number;
   hasMotorway: boolean;
   congestion?: Congestion[];
   /** speed limit (km/h) per geometry segment, null where unknown */

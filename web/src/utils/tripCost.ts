@@ -19,8 +19,10 @@ const TOLL_RANGE = { min: 0.09, max: 0.14 } as const;
  * roads. Not the real fare table (coming per highway): always shown as "~".
  * Null when the route has no tolls or for motorcycles.
  */
-export function tollEstimate(r: { hasTolls: boolean; tollMeters?: number; distanceMeters: number }, vehicle: 'car' | 'motorcycle' = 'car'): { min: number; max: number } | null {
+export function tollEstimate(r: { hasTolls: boolean; tollMeters?: number; tollFare?: number; distanceMeters: number }, vehicle: 'car' | 'motorcycle' = 'car'): { min: number; max: number } | null {
   if (!r.hasTolls || vehicle !== 'car') return null;
+  // the official fare for every plaza on the route (phase B): exact, so min = max
+  if (typeof r.tollFare === 'number') return { min: r.tollFare, max: r.tollFare };
   // no toll-road distance from the router (common in Malaysia): use the whole trip
   const km = (r.tollMeters && r.tollMeters > 0 ? r.tollMeters : r.distanceMeters) / 1000;
   const min = Math.max(1, Math.round(km * TOLL_RANGE.min));
@@ -71,7 +73,7 @@ export interface CarCost {
 }
 
 /** One-way drive: fuel + estimated toll + parking for `days` at the destination. */
-export function carTripCost(o: { distanceMeters: number; hasTolls: boolean; tollMeters?: number; vehicle: 'car' | 'motorcycle'; fuelPrice: number; parkingPerDay: number; days: number }): CarCost {
+export function carTripCost(o: { distanceMeters: number; hasTolls: boolean; tollMeters?: number; tollFare?: number; vehicle: 'car' | 'motorcycle'; fuelPrice: number; parkingPerDay: number; days: number }): CarCost {
   const km = o.distanceMeters / 1000;
   const litres = (km * CONSUMPTION[o.vehicle]) / 100;
   const fuel = Math.round(litres * o.fuelPrice);
