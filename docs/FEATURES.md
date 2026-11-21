@@ -72,7 +72,7 @@ Seperti Waze (permintaan pemilik, Nov 2026): semasa memandu, **tarik bar bawah k
 - **Tiba** (jam besar, hijau jade) dengan baki masa dan jarak di kanan.
 - Kad laluan gaya JalanGo: destinasi, "melalui" jalan utama, cip yang sama seperti pilihan laluan (tol, lebuh raya, laporan di depan), dan jalur laluan.
 - **Jalur laluan:** satu garisan dari anda ke destinasi. Kesesakan diwarnakan (oren/merah), laporan komuniti (polis, kemalangan, bahaya…) dan plaza tol diletakkan di tempatnya. Ikon yang terlalu rapat digabung dengan lencana "+n". Laporan dimuatkan dalam lingkungan ~25 km dari pemandu.
-- **Singgah di laluan:** cip kategori yang sama seperti "Sepanjang laluan" (Minyak, Makan, R&R, Kafe, Lagi), dalam **warna pastel**: latar lembut dalam warna kategori, dengan teks yang lebih gelap supaya mudah dibaca (lebih cerah dalam mod gelap). Butang Kongsi (jade), Seluruh laluan (biru langit), Tamat (merah lembut) dan Teruskan (jade) pun pastel.
+- **Singgah di laluan:** cip kategori yang sama seperti "Sepanjang laluan" (Minyak, Makan, R&R, Kedai serbaneka, Kafe, Lagi), dalam **warna pastel**: latar lembut dalam warna kategori, dengan teks yang lebih gelap supaya mudah dibaca (lebih cerah dalam mod gelap). Butang Kongsi (jade), Seluruh laluan (biru langit), Tamat (merah lembut) dan Teruskan (jade) pun pastel.
 - **Kongsi** (lokasi live) dan **Seluruh laluan** (peta zum keluar menunjukkan baki laluan; tekan "Tengah" untuk kembali ke paparan memandu).
 - Bila dibuka, bar bawah menjadi **Tamat** dan **Teruskan**. Untuk tutup, **tarik ke bawah** (dari pemegang, dari bar, atau dari isi sheet bila ia di paling atas), tekan pemegang (ada anak panah ↓), atau tekan Teruskan. Gerakan dikesan dengan *touch events*, supaya browser telefon tak membatalkannya bila ia menyangka jari sedang menatal.
 
@@ -349,6 +349,12 @@ Permintaan pemilik (Nov 2026), selepas maklum balas pengguna pertama: admin bole
 **Pangkalan data:** migrasi `20261129000000_feedback_replies.sql` (tambahan sahaja): lajur `reply`, `replied_at`, `replied_by`, `reply_seen_at`, `device_token_hash`; fungsi `admin_reply_feedback` (admin sahaja), `my_feedback_replies` dan `mark_feedback_reply_seen` (hanya untuk mesej sendiri, sama ada mengikut akaun atau kod peranti).
 
 **Kod:** `web/src/components/feedback/FeedbackReplyCard.tsx`, `web/src/services/feedbackReplyService.ts`, `FeedbackReplyBox` dalam `web/src/pages/AdminPage.tsx`, `server/src/routes/account.ts` (`replyToken`).
+
+## Kedai serbaneka sepanjang laluan
+
+Permintaan pemilik (Nov 2026): kategori baharu **Kedai serbaneka** (KK Mart, 99 Speedmart, 7-Eleven, CU, emart24, FamilyMart, myNEWS dan lain-lain) dalam senarai "Sepanjang laluan" dan dalam cip "Singgah di laluan" pada sheet perjalanan. Kedai dalam lingkungan 1.5 km dari laluan dipaparkan, dengan pin hijau teal di peta dan butang **Singgah**.
+- **Sumber:** kategori Mapbox `convenience_store`. Semakan carian live menunjukkan KK Mart, 99 Speedmart, 7-Eleven, CU Mart, emart24, FamilyMart dan myNEWS dikategorikan "convenience store" dalam Mapbox. Jika kategori itu tiada hasil, carian teks "convenience store" digunakan.
+- **Had:** sesetengah cawangan dikategorikan lain dalam Mapbox (contohnya "grocery"), jadi mungkin tak semua cawangan muncul.
 
 ## Warna laluan ke tempat singgah
 

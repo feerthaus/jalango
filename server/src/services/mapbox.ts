@@ -21,6 +21,8 @@ export const CATEGORY_MAP = {
   attraction: 'tourist_attraction',
   car_rental: 'car_rental',
   hotel: 'hotel',
+  /** KK Mart, 99 Speedmart, 7-Eleven, CU, emart24, FamilyMart, myNEWS… (all "convenience store" in Mapbox) */
+  convenience: 'convenience_store',
 } as const;
 export type CategoryId = keyof typeof CATEGORY_MAP | 'rnr' | 'homestay' | 'stay';
 
@@ -395,6 +397,7 @@ const FALLBACK_QUERY: Partial<Record<CategoryId, string>> = {
   rnr: 'rest area',
   ev: 'EV charging station',
   car_rental: 'kereta sewa',
+  convenience: 'convenience store',
 };
 
 /**

@@ -1,4 +1,4 @@
-import { BedDouble, Camera, Coffee, Fuel, ParkingSquare, Utensils, Zap, type LucideIcon } from 'lucide-react';
+import { BedDouble, Camera, Coffee, Fuel, ParkingSquare, Store, Utensils, Zap, type LucideIcon } from 'lucide-react';
 import type { Msg } from '@/lib/i18n';
 import type { AlongCategory } from '@/services/geocodingService';
 import type { CommunityCategory } from '@/types';
@@ -19,6 +19,8 @@ export interface AlongCategoryMeta {
 export const ALONG_CATEGORIES: AlongCategoryMeta[] = [
   { id: 'food', label: { ms: 'Makan', en: 'Food' }, icon: Utensils, color: '#ea580c', maxOffsetM: 2500, community: ['food'], glyph: '<path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2M7 2v20M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/>' },
   { id: 'cafe', label: { ms: 'Kafe', en: 'Café' }, icon: Coffee, color: '#a16207', maxOffsetM: 2500, community: ['cafe'], glyph: '<path d="M10 2v2M14 2v2M16 8a1 1 0 0 1 1 1v8a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V9a1 1 0 0 1 1-1h14a4 4 0 1 1 0 8h-1M6 2v2"/>' },
+  // KK Mart, 99 Speedmart, 7-Eleven, CU, emart24, FamilyMart, myNEWS…
+  { id: 'convenience', label: { ms: 'Kedai serbaneka', en: 'Convenience store' }, icon: Store, color: '#0d9488', maxOffsetM: 1500, community: [], glyph: '<path d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8M15 22v-4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4M2 7h20M22 7v3a2 2 0 0 1-2 2a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 16 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 12 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 8 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 4 12a2 2 0 0 1-2-2V7"/>' },
   { id: 'stay', label: { ms: 'Penginapan', en: 'Stay' }, icon: BedDouble, color: '#4f46e5', maxOffsetM: 5000, community: ['stay'], glyph: '<path d="M2 4v16M2 8h18a2 2 0 0 1 2 2v10M2 17h20M6 8v9"/>' },
   { id: 'attraction', label: { ms: 'Menarik', en: 'Sights' }, icon: Camera, color: '#db2777', maxOffsetM: 8000, community: ['attraction', 'nature'], glyph: '<path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/>' },
   { id: 'rnr', label: { ms: 'R&R', en: 'R&R' }, icon: ParkingSquare, color: '#2563eb', maxOffsetM: 800, community: [], glyph: '<rect width="18" height="18" x="3" y="3" rx="2"/><path d="M9 17V7h4a3 3 0 0 1 0 6H9"/>' },
