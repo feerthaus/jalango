@@ -2,6 +2,7 @@ import { ArrowUp, ArrowUpLeft, ArrowUpRight, CornerUpLeft, CornerUpRight, Undo2,
 import { cn } from '@/lib/cn';
 import type { RouteStep } from '@/types';
 import { useT } from '@/lib/i18n';
+import { usableLanes } from '@/utils/laneSentence';
 
 const ICONS: Record<string, LucideIcon> = {
   straight: ArrowUp,
@@ -20,8 +21,8 @@ export function laneArrow(indications: string[], modifier?: string): string {
   return indications[0] ?? 'straight';
 }
 
-/** Lane data worth showing: 2+ lanes and at least one to use. */
-export const hasLanes = (step: RouteStep) => Boolean(step.lanes && step.lanes.length >= 2 && step.lanes.some((l) => l.valid));
+/** Lane data worth showing: 2+ lanes, at least one to use, and in line with the turn. */
+export const hasLanes = (step: RouteStep) => Boolean(usableLanes(step));
 
 /** "Use these lanes" strip under the maneuver banner. */
 export function LaneGuide({ step }: { step: RouteStep }) {

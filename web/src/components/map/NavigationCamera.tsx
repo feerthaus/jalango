@@ -1,9 +1,10 @@
 import { useEffect, useRef } from 'react';
 import { useLocation } from '@/contexts/LocationContext';
 import { useMapContext } from '@/contexts/MapContext';
-import { useIsNavigating } from '@/contexts/RoutingContext';
+import { useIsNavigating, useRouting } from '@/contexts/RoutingContext';
 import { useVehiclePose } from '@/hooks/useVehiclePose';
 import { PITCH_2D_DRIVING, PITCH_3D } from '@/lib/map3d';
+import { cameraZoom } from '@/utils/turnFocus';
 
 /** Driving camera: tilted, heading-up, with the puck in the lower third. */
 export function NavigationCamera() {
@@ -11,6 +12,9 @@ export function NavigationCamera() {
   const { fix } = useLocation();
   const pose = useVehiclePose();
   const navigating = useIsNavigating();
+  const { selectedRoute, progress } = useRouting();
+  // Closer in for a few seconds before a turn on an ordinary road
+  const zoom = cameraZoom(fix?.speed, progress ? selectedRoute?.steps[progress.stepIndex + 1] : undefined, progress?.distanceToManeuver);
   const wasNavigating = useRef(false);
 
   useEffect(() => {
@@ -38,12 +42,12 @@ export function NavigationCamera() {
       center: [pose.position.lng, pose.position.lat],
       bearing: pose.bearing,
       pitch: mapMode === '3d' ? PITCH_3D : PITCH_2D_DRIVING,
-      zoom: (fix?.speed ?? 0) > 22 ? 15.5 : 16.5,
+      zoom,
       padding: { top: Math.round(h * (short ? 0.3 : 0.4)), bottom: 0, left, right: 0 },
       duration: reduceMotion ? 0 : pose.duration || 600,
       easing: (t) => t,
     });
-  }, [map, navigating, following, pose, mapMode]);
+  }, [map, navigating, following, pose, mapMode]); // eslint-disable-line react-hooks/exhaustive-deps -- zoom rides along with the next pose
 
   return null;
 }

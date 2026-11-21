@@ -180,3 +180,23 @@ export function pickRerouteIndex(routes: Route[]): number {
   const i = routes.findIndex((r) => !hasEarlyUturn(r));
   return i === -1 ? 0 : i;
 }
+
+/** The route between `from` and `to` metres along it (clamped), e.g. the stretch through a junction. */
+export function routeSegment(index: RouteIndex, from: number, to: number): [number, number][] {
+  const { coords, cum } = index;
+  if (coords.length < 2) return [];
+  const a = Math.max(0, from);
+  const b = Math.min(index.total, to);
+  if (b <= a) return [];
+  const at = (d: number): [number, number] => {
+    let i = 1;
+    while (i < cum.length - 1 && cum[i] < d) i++;
+    const seg = cum[i] - cum[i - 1];
+    const t = seg > 0 ? (d - cum[i - 1]) / seg : 0;
+    return [coords[i - 1][0] + t * (coords[i][0] - coords[i - 1][0]), coords[i - 1][1] + t * (coords[i][1] - coords[i - 1][1])];
+  };
+  const out: [number, number][] = [at(a)];
+  for (let i = 0; i < coords.length; i++) if (cum[i] > a && cum[i] < b) out.push(coords[i]);
+  out.push(at(b));
+  return out;
+}
