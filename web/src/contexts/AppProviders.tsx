@@ -12,6 +12,7 @@ import { ShortcutsProvider } from './ShortcutsContext';
 import { CommunityPlacesProvider } from './CommunityPlacesContext';
 import { LiveShareProvider } from './LiveShareContext';
 import { ConvoyProvider } from './ConvoyContext';
+import { ConvoyChatProvider } from './ConvoyChatContext';
 import { AlongProvider } from './AlongContext';
 import { CamerasProvider } from './CamerasContext';
 import { ItineraryProvider } from './ItineraryContext';
@@ -33,11 +34,13 @@ export function AppProviders({ children }: { children: ReactNode }) {
                           <ItineraryProvider>
                             <LiveShareProvider>
                               <ConvoyProvider>
+                                <ConvoyChatProvider>
                                 <AlongProvider>
                                   <CamerasProvider>
                                     <AccidentsProvider>{children}</AccidentsProvider>
                                   </CamerasProvider>
                                 </AlongProvider>
+                                </ConvoyChatProvider>
                               </ConvoyProvider>
                             </LiveShareProvider>
                           </ItineraryProvider>

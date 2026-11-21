@@ -350,6 +350,20 @@ Permintaan pemilik (Nov 2026), selepas maklum balas pengguna pertama: admin bole
 
 **Kod:** `web/src/components/feedback/FeedbackReplyCard.tsx`, `web/src/services/feedbackReplyService.ts`, `FeedbackReplyBox` dalam `web/src/pages/AdminPage.tsx`, `server/src/routes/account.ts` (`replyToken`).
 
+## Chat konvoi
+
+Permintaan pemilik (Nov 2026): ahli konvoi boleh berbual sesama sendiri.
+- **Butang chat** (ikon mesej ungu dengan bilangan mesej belum dibaca) di sebelah pil "Konvoi · N kereta". Butang ini ada di skrin peta dan semasa navigasi.
+- **Mesej pantas, selamat semasa memandu:** 👍 OK, ⛽ Singgah minyak, 🍽️ Singgah makan, 🚻 Singgah R&R, 🐢 Perlahan sikit, ✋ Tunggu saya, ⚠️ Ada bahaya, 🏁 Dah sampai. Butang minyak, makan, R&R dan bahaya turut menghantar **kedudukan pengirim**. Kedudukan ini dipaparkan sebagai pin emoji (dalam warna ahli) di peta semua ahli selama 1 jam, dan sebagai "Lihat di peta" dalam chat.
+- **Taip mesej** hanya bila kenderaan berhenti (bawah ~11 km/j), atau bila pengguna menekan "Saya penumpang". Semasa bergerak, chat hanya menunjukkan butang pantas.
+- **Mesej masuk:** banner pendek ("Ali: ⚠️ Ada bahaya") selama 9 saat, getaran, dan **dibaca dengan suara** jika suara dihidupkan. Mesej pantas dibaca dalam bahasa pendengar.
+- **Privasi dan kawalan:** hanya ahli konvoi yang masih dalam konvoi boleh membaca dan menghantar. Ahli yang keluar atau dibuang, akaun yang disekat dan orang luar ditolak. Had mesej ialah 300 aksara, 8 mesej seminit dan 300 sehari bagi setiap orang. **Mesej dipadam bila ketua menamatkan konvoi.** Konvoi yang luput (12 jam) terus disembunyikan, dan mesejnya disapu pada penghantaran seterusnya, kerana tiada penjadual.
+- **Masa nyata:** Supabase Realtime, dengan semakan setiap 20 saat sebagai sandaran.
+
+**Pangkalan data:** migrasi `20261130000000_convoy_chat.sql` (tambahan sahaja): jadual `convoy_messages` (RLS: ahli konvoi aktif sahaja), fungsi `send_convoy_message`, dan trigger `convoys_after_end` yang memadam chat bila konvoi ditamatkan.
+
+**Kod:** `web/src/contexts/ConvoyChatContext.tsx`, `web/src/services/convoyChatService.ts`, `web/src/components/convoy/ConvoyChatSheet.tsx`, `ConvoyMessagePins.tsx`, `ConvoyBanner.tsx`, `web/src/utils/convoyChat.ts`. Ujian: `convoyChat.test.ts`.
+
 ## Perkongsian
 
 - **Butang Kongsi:** WhatsApp, Facebook, Instagram, Telegram, X, Threads, SMS, Email, Salin, dan menu kongsi telefon (`web/src/components/share/ShareSheet.tsx`).
