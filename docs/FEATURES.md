@@ -55,6 +55,18 @@ Untuk pemandu yang tak sempat membaca skrin (maklum balas pengguna, Nov 2026):
 
 **Kod:** `web/src/components/map/ManeuverArrow.tsx`, `routeSegment()` dalam `web/src/utils/routeProgress.ts`, `web/src/utils/turnFocus.ts` (`isRealTurn`, `cameraZoom`), `shortInstruction()` dan `maneuverTarget()` dalam `web/src/utils/voiceInstructions.ts`, `web/src/components/map/NavigationCamera.tsx`. Ujian: `turnFocus.test.ts`, `routeProgress.test.ts`, `voiceInstructions.test.ts`, `laneSentence.test.ts`.
 
+## Butiran perjalanan (bar bawah boleh ditarik ke atas)
+
+Seperti Waze (permintaan pemilik, Nov 2026): semasa memandu, **tarik bar bawah ke atas** (atau tekan masa / pemegang) untuk melihat seluruh perjalanan:
+- **Masa tiba** (besar), baki masa dan jarak.
+- **Ke** destinasi, **Melalui** jalan utama laluan, dan anggaran tol.
+- **Jalur laluan:** satu garisan dari anda ke destinasi. Kesesakan diwarnakan (oren/merah), laporan komuniti (polis, kemalangan, bahaya…) dan plaza tol diletakkan di tempatnya. Ikon yang terlalu rapat digabung dengan lencana "+n". Laporan dimuatkan dalam lingkungan ~25 km dari pemandu.
+- **Tambah hentian:** Minyak, Makan, R&R, Kafe dan "Lagi". Semuanya membuka carian sepanjang laluan sedia ada.
+- **Kongsi** (lokasi live) dan **Seluruh laluan** (peta zum keluar menunjukkan baki laluan; tekan "Tengah" untuk kembali ke paparan memandu).
+- Bila dibuka, bar bawah menjadi **Tamat** dan **Teruskan**. Tarik ke bawah atau tekan Teruskan untuk tutup.
+
+**Kod:** `web/src/components/navigation/TripSheet.tsx`, `web/src/utils/routeStrip.ts` (`routeStrip`, `clusterMarkers`). Ujian: `routeStrip.test.ts`.
+
 ---
 
 ## Marketplace: kedai makan (restoran, warung, gerai)

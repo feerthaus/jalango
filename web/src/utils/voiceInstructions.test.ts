@@ -67,5 +67,6 @@ describe('shortInstruction', () => {
     expect(maneuverTarget(s('turn', 'left', { roadName: 'Jalan P. Ramlee' }))).toBe('Jalan P. Ramlee');
     expect(maneuverTarget(s('off ramp', 'left', { destinations: 'E6: Ipoh, Rawang' }))).toBe('Ipoh / Rawang');
     expect(maneuverTarget(s('turn', 'left'))).toBeNull();
+    expect(maneuverTarget(s('fork', 'slight right', { roadRef: '142; M1' }))).toBe('142 / M1');
   });
 });
