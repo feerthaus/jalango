@@ -17,11 +17,13 @@ const route = (congestion?: Route['congestion']): Route => ({
 const main = (fc: ReturnType<typeof routeFeatures>) => fc.features.filter((f) => f.properties.kind === 'main').map((f) => [f.geometry.coordinates.length - 1, f.properties.congestion, f.properties.toStop]);
 
 describe('routeFeatures', () => {
-  it('draws the way to a stop apart from the rest (violet, then blue)', () => {
-    expect(main(routeFeatures([route()], 0, [], 2))).toEqual([
-      [2, 'unknown', true],
-      [2, 'unknown', false],
-    ]);
+  it('adds a violet line to the stop on top of the whole blue route', () => {
+    const fc = routeFeatures([route()], 0, [], 2);
+    expect(main(fc).reduce((n, [len]) => n + (len as number), 0)).toBe(4); // the blue route is still all there
+    const stopLine = fc.features.filter((f) => f.properties.kind === 'stop');
+    expect(stopLine).toHaveLength(1);
+    expect(stopLine[0].geometry.coordinates).toEqual([[101.7, 3.1], [101.7, 3.11], [101.7, 3.12]]);
+    expect(routeFeatures([route()], 0, []).features.some((f) => f.properties.kind === 'stop')).toBe(false);
   });
   it('keeps traffic runs and splits them at the stop', () => {
     expect(main(routeFeatures([route(['low', 'heavy', 'heavy', 'low'])], 0, [], 2))).toEqual([

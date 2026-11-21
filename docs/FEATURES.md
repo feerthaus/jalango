@@ -352,9 +352,9 @@ Permintaan pemilik (Nov 2026), selepas maklum balas pengguna pertama: admin bole
 
 ## Warna laluan ke tempat singgah
 
-Permintaan pemilik (Nov 2026): bila pengguna menambah tempat singgah dalam perjalanan (contohnya "Singgah: Surau R&R Seremban"), bahagian laluan **dari kedudukan sekarang hingga tempat singgah dilukis ungu**, sama warna dengan banner "Singgah". Laluan **selepas** tempat singgah kekal **biru**, jadi pemandu nampak perbezaannya dengan jelas.
-- Kesesakan (oren/merah) masih dipaparkan di atas kedua-dua warna.
-- Sebaik pemandu sampai di tempat singgah, atau menekan "Batal", tempat singgah dibuang dan seluruh laluan kembali biru.
+Permintaan pemilik (Nov 2026): bila pengguna menambah tempat singgah dalam perjalanan (contohnya "Singgah: Surau R&R Seremban"), **garisan ungu baharu dilukis di atas garisan biru**, dari kedudukan sekarang hingga tempat singgah. Ungu ialah warna banner "Singgah". Garisan biru kekal penuh hingga ke destinasi.
+- Garisan ungu lebih nipis daripada laluan, supaya tepi biru kelihatan di kiri dan kanannya. Warna kesesakan (oren/merah) juga masih kelihatan di tepi itu.
+- Sebaik pemandu sampai di tempat singgah, atau menekan "Batal", garisan ungu hilang.
 - Tempat singgah diletakkan pada laluan dengan unjuran ke garisan laluan (dalam lingkungan 150 m), kerana laluan memang melaluinya sebagai titik *via*.
 
 **Kod:** `routeFeatures()` dan `STOP_VIOLET` dalam `web/src/components/map/RouteLayer.tsx`. Ujian: `RouteLayer.test.ts`.

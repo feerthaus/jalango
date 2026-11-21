@@ -10,7 +10,7 @@ import { useTrainView } from '@/lib/trainView';
 import type { Congestion, Route } from '@/types';
 
 const SOURCE = 'jg-routes';
-const LAYERS = { alt: 'jg-route-alt', casing: 'jg-route-casing', main: 'jg-route-main', passed: 'jg-route-passed' } as const;
+const LAYERS = { alt: 'jg-route-alt', casing: 'jg-route-casing', main: 'jg-route-main', stop: 'jg-route-stop', passed: 'jg-route-passed' } as const;
 
 /**
  * Route colours are deliberately NOT green: Mapbox's navigation styles draw
@@ -28,12 +28,13 @@ export const CONGESTION_COLORS: Record<Congestion, string> = {
   severe: '#a8001c',
 };
 
-type Props = { kind: 'alt' | 'main' | 'passed'; index: number; congestion: Congestion; demo: boolean; toStop: boolean };
+type Props = { kind: 'alt' | 'main' | 'stop' | 'passed'; index: number; congestion: Congestion; demo: boolean; toStop: boolean };
 
 /**
  * Selected route split into runs of equal congestion so it can be coloured by
- * live traffic, and at `stopSegment` (the segment where a stop on the way is),
- * so the way to the stop can be drawn in violet.
+ * live traffic. With a stop on the way (`stopSegment`: where it sits on the
+ * line), the route up to it is also given as a 'stop' line, drawn in violet on
+ * top of the blue route.
  */
 export function routeFeatures(routes: Route[], selected: number, passed: [number, number][], stopSegment: number | null = null): FeatureCollection<LineString, Props> {
   const features: Feature<LineString, Props>[] = [];
@@ -58,6 +59,10 @@ export function routeFeatures(routes: Route[], selected: number, passed: [number
         properties: { kind: 'main', index, congestion: cong?.[start] ?? 'unknown', demo, toStop: cut !== null && start < cut },
       });
       start = i;
+    }
+    // The way to the stop: a violet line drawn on top of the blue route
+    if (cut !== null) {
+      features.push({ type: 'Feature', geometry: { type: 'LineString', coordinates: coords.slice(0, cut + 1) }, properties: { kind: 'stop', index, congestion: 'unknown', demo, toStop: true } });
     }
     if (passed.length >= 2) {
       features.push({ type: 'Feature', geometry: { type: 'LineString', coordinates: passed }, properties: { kind: 'passed', index, congestion: 'unknown', demo, toStop: false } });
@@ -129,11 +134,22 @@ function ensureLayers(map: MapboxMap, data: FeatureCollection, theme: ResolvedTh
       filter: ['==', ['get', 'kind'], 'main'],
       layout,
       paint: {
-        // slow traffic shows on top; otherwise violet to the stop, blue after it
-        'line-color': ['match', ['get', 'congestion'], 'moderate', CONGESTION_COLORS.moderate, 'heavy', CONGESTION_COLORS.heavy, 'severe', CONGESTION_COLORS.severe, ['case', ['get', 'toStop'], STOP_VIOLET, ROUTE_BLUE]],
+        'line-color': ['match', ['get', 'congestion'], 'moderate', CONGESTION_COLORS.moderate, 'heavy', CONGESTION_COLORS.heavy, 'severe', CONGESTION_COLORS.severe, ROUTE_BLUE],
         'line-width': width(9) as never,
         'line-dasharray': ['case', ['get', 'demo'], ['literal', [1.5, 1.5]], ['literal', [1, 0]]],
       },
+    },
+    before,
+  );
+  // Narrower than the route, so the blue (and any traffic colour) still shows on both sides
+  map.addLayer(
+    {
+      id: LAYERS.stop,
+      type: 'line',
+      source: SOURCE,
+      filter: ['==', ['get', 'kind'], 'stop'],
+      layout,
+      paint: { 'line-color': STOP_VIOLET, 'line-width': width(5) as never },
     },
     before,
   );
