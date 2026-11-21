@@ -8,7 +8,8 @@ import { TollBanner } from './TollBanner';
 import { AccidentAlertBanner } from '@/components/accidents/AccidentAlertBanner';
 import { useVoiceAlerts, useVoiceLang } from '@/hooks/useVoiceAlerts';
 import { useSpeedAlert } from '@/hooks/useSpeedLimit';
-import { displayInstruction, maneuverTarget, shortInstruction } from '@/utils/voiceInstructions';
+import { displayInstruction, maneuverTarget, shortInstruction, turnAtSignal } from '@/utils/voiceInstructions';
+import { TrafficLightIcon } from './TrafficLightIcon';
 import { hasLanes, LaneGuide } from './LaneGuide';
 import { LaneView3D } from './LaneView3D';
 import { useWakeLock } from '@/hooks/useWakeLock';
@@ -112,6 +113,11 @@ export function NavigationHud() {
               <span className="block text-3xl font-black tabular-nums leading-none short:text-2xl">{progress ? formatDistance(progress.distanceToManeuver) : '–'}</span>
               {/* Short, glanceable: "Belok kiri" then the road; the full sentence is in the step list */}
               <span className="mt-1 block text-xl font-bold leading-tight short:text-base" aria-label={displayInstruction(next, lang)}>{shortInstruction(next, lang)}</span>
+              {turnAtSignal(next) && (
+                <span className="mt-1 inline-flex items-center gap-1.5 rounded-full bg-white/10 px-2 py-0.5 text-sm font-bold text-amber-300 short:text-xs">
+                  <TrafficLightIcon className="h-4 w-2" /> {t('Di lampu isyarat', 'At the traffic lights')}
+                </span>
+              )}
               {(next.roadRef || next.exits || target) && (
                 <span className="mt-0.5 flex min-w-0 items-center gap-1.5 text-base font-semibold text-ink-200 short:text-sm">
                   <RoadShields roadRef={next.roadRef} exits={next.exits} className="shrink-0" />

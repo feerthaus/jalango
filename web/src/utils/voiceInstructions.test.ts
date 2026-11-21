@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { RouteStep } from '@/types';
-import { displayInstruction, maneuverPhrase, maneuverTarget, malayAction, shortInstruction, spokenDistance, stageThresholds } from './voiceInstructions';
+import { displayInstruction, maneuverPhrase, maneuverTarget, malayAction, shortInstruction, spokenDistance, stageThresholds, turnAtSignal } from './voiceInstructions';
 
 const step = (maneuver: RouteStep['maneuver'], roadName?: string, instruction = ''): RouteStep => ({ instruction, distanceMeters: 0, durationSeconds: 0, maneuver, roadName });
 const at = { lng: 101.7, lat: 3.1 };
@@ -68,5 +68,23 @@ describe('shortInstruction', () => {
     expect(maneuverTarget(s('off ramp', 'left', { destinations: 'E6: Ipoh, Rawang' }))).toBe('Ipoh / Rawang');
     expect(maneuverTarget(s('turn', 'left'))).toBeNull();
     expect(maneuverTarget(s('fork', 'slight right', { roadRef: '142; M1' }))).toBe('142 / M1');
+  });
+});
+
+describe('turns at traffic lights', () => {
+  const at = (type: string, modifier?: string, atSignal = true) =>
+    ({ instruction: 'Turn right onto Jalan Ampang.', distanceMeters: 0, durationSeconds: 0, maneuver: { type, modifier, location: { lat: 0, lng: 0 } }, roadName: 'Jalan Ampang', atSignal }) as RouteStep;
+  it('names the lights, on screen and in speech', () => {
+    expect(turnAtSignal(at('turn', 'right'))).toBe(true);
+    expect(displayInstruction(at('turn', 'right'), 'ms')).toBe('Di lampu isyarat, belok kanan ke Jalan Ampang');
+    expect(displayInstruction(at('turn', 'right'), 'en')).toBe('At the traffic lights, turn right onto Jalan Ampang');
+    expect(maneuverPhrase(at('turn', 'right'), 300, 'ms', 'near')).toBe('Dalam 300 meter, di lampu isyarat, belok kanan ke Jalan Ampang');
+  });
+  it('leaves other maneuvers and unlit junctions alone', () => {
+    expect(turnAtSignal(at('roundabout', 'right'))).toBe(false);
+    expect(turnAtSignal(at('off ramp', 'slight left'))).toBe(false);
+    expect(turnAtSignal(at('new name', 'straight'))).toBe(false);
+    expect(displayInstruction(at('turn', 'right', false), 'ms')).toBe('Belok kanan ke Jalan Ampang');
+    expect(displayInstruction(at('turn', 'right', false), 'en')).toBe('Turn right onto Jalan Ampang.');
   });
 });
