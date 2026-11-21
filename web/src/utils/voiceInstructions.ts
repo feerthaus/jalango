@@ -153,5 +153,7 @@ export function shortInstruction(step: RouteStep, lang: VoiceLang): string {
 
 /** Where the maneuver takes you, for the line under the short action: the road, else the signposted places. */
 export function maneuverTarget(step: RouteStep): string | null {
-  return road(step) ?? towards(step);
+  if (step.roadName) return step.roadName;
+  // No name: the signposted places, else the road numbers ("142; M1" → "142 / M1")
+  return towards(step) ?? (step.roadRef ? step.roadRef.split(/\s*;\s*/).join(' / ') : null);
 }

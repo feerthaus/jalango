@@ -1,4 +1,4 @@
-import { ChevronDown, ChevronUp, Flag, ListOrdered, Loader2, SunDim, Volume2, VolumeX, X } from 'lucide-react';
+import { ChevronDown, ChevronUp, Flag, Loader2, SunDim, X } from 'lucide-react';
 import { useRouteAlerts } from '@/hooks/useRouteAlerts';
 import { useAccidentAlerts } from '@/hooks/useAccidentAlerts';
 import { useTollAlerts } from '@/hooks/useTollAlerts';
@@ -14,6 +14,7 @@ import { LaneView3D } from './LaneView3D';
 import { useWakeLock } from '@/hooks/useWakeLock';
 import { useVoiceGuidance } from '@/hooks/useVoiceGuidance';
 import { ResumeToast } from './ResumeToast';
+import { TripSheet } from './TripSheet';
 import { RouteAlerts } from './RouteAlerts';
 import { OncomingBanner } from './OncomingBanner';
 import { useOncomingAlerts } from '@/hooks/useOncomingAlerts';
@@ -26,18 +27,14 @@ import { AlongLayerChip } from '@/components/along/AlongMarkers';
 import { AlongRouteSheet } from '@/components/along/AlongRouteSheet';
 import { useItinerary } from '@/contexts/ItineraryContext';
 import { ShareLiveSheet } from '@/components/live/ShareLiveSheet';
-import { Radio } from 'lucide-react';
 import { RateTrip } from '@/components/trips/RateTrip';
 import { useTrips } from '@/contexts/TripsContext';
 import { useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { DemoBadge } from '@/components/ui/DemoBadge';
-import { IconButton } from '@/components/ui/IconButton';
 import { useRouting } from '@/contexts/RoutingContext';
 import { cn } from '@/lib/cn';
-import { formatDuration } from '@/utils/format';
 import { formatDistance } from '@/utils/geo';
-import { arrivalClock } from '@/utils/time';
 import { ManeuverIcon } from './ManeuverIcon';
 import { useT } from '@/lib/i18n';
 
@@ -180,29 +177,17 @@ export function NavigationHud() {
 
       {/* Trip bar */}
       <div className="absolute inset-x-0 bottom-0 z-30 space-y-3 p-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem+var(--host-badge-h))] md:w-[420px] md:p-4 short:w-[400px] short:p-2 short:pb-[calc(env(safe-area-inset-bottom)+0.5rem)] short:pl-[calc(env(safe-area-inset-left)+0.5rem)]">
-        <div className="glass pointer-events-auto flex items-center gap-2 rounded-3xl p-3 pl-4 short:py-2 shadow-float ring-1 ring-ink-900/5 dark:ring-white/10">
-          <div className="min-w-0 flex-1 overflow-hidden">
-            <p className="whitespace-nowrap text-xl font-black tabular-nums leading-tight text-jade-600 min-[400px]:text-2xl dark:text-jade-400">
-              {demo && '~'}
-              {formatDuration(remainingSeconds)}
-            </p>
-            <p className="whitespace-nowrap text-sm text-ink-500 dark:text-ink-300">
-              {formatDistance(remainingMeters)} · {arrivalClock(remainingSeconds)}
-            </p>
-          </div>
-          <IconButton label={t('Kongsi lokasi live', 'Share live location')} onClick={() => setShareOpen(true)}>
-            <Radio className="size-5 text-jade-600 dark:text-jade-400" />
-          </IconButton>
-          <IconButton label={voiceOn ? t('Senyapkan panduan suara', 'Mute voice guidance') : t('Hidupkan panduan suara', 'Unmute voice guidance')} onClick={() => setVoiceOn(!voiceOn)}>
-            {voiceOn ? <Volume2 className="size-5" /> : <VolumeX className="size-5 text-ink-400" />}
-          </IconButton>
-          <IconButton label={showSteps ? t('Sembunyi senarai arahan', 'Hide directions list') : t('Tunjuk senarai arahan', 'Show directions list')} active={showSteps} onClick={() => setShowSteps((s) => !s)}>
-            <ListOrdered className="size-5" />
-          </IconButton>
-          <Button variant="danger" className="h-11 shrink-0 px-3" onClick={endNavigation} aria-label={t('Tamatkan navigasi', 'End navigation')}>
-            <X className="size-5 min-[420px]:size-4 short:size-5" /> <span className="hidden min-[420px]:inline short:hidden">{lang === 'ms' ? 'Tamat' : 'End'}</span>
-          </Button>
-        </div>
+        <TripSheet
+          remainingSeconds={remainingSeconds}
+          remainingMeters={remainingMeters}
+          demo={demo}
+          showSteps={showSteps}
+          onToggleSteps={() => setShowSteps((s) => !s)}
+          voiceOn={voiceOn}
+          onToggleVoice={() => setVoiceOn(!voiceOn)}
+          onShare={() => setShareOpen(true)}
+          onAlong={() => setAlongOpen(true)}
+        />
       </div>
       {shareOpen && <ShareLiveSheet onClose={() => setShareOpen(false)} />}
       {alongOpen && <AlongRouteSheet onClose={() => setAlongOpen(false)} />}

@@ -55,6 +55,18 @@ Untuk pemandu yang tak sempat membaca skrin (maklum balas pengguna, Nov 2026):
 
 **Kod:** `web/src/components/map/ManeuverArrow.tsx`, `routeSegment()` dalam `web/src/utils/routeProgress.ts`, `web/src/utils/turnFocus.ts` (`isRealTurn`, `cameraZoom`), `shortInstruction()` dan `maneuverTarget()` dalam `web/src/utils/voiceInstructions.ts`, `web/src/components/map/NavigationCamera.tsx`. Ujian: `turnFocus.test.ts`, `routeProgress.test.ts`, `voiceInstructions.test.ts`, `laneSentence.test.ts`.
 
+## Butiran perjalanan (bar bawah boleh ditarik ke atas)
+
+Seperti Waze (permintaan pemilik, Nov 2026): semasa memandu, **tarik bar bawah ke atas** (atau tekan masa / pemegang) untuk melihat seluruh perjalanan:
+- **Tiba** (jam besar, hijau jade) dengan baki masa dan jarak di kanan.
+- Kad laluan gaya JalanGo: destinasi, "melalui" jalan utama, cip yang sama seperti pilihan laluan (tol, lebuh raya, laporan di depan), dan jalur laluan.
+- **Jalur laluan:** satu garisan dari anda ke destinasi. Kesesakan diwarnakan (oren/merah), laporan komuniti (polis, kemalangan, bahaya…) dan plaza tol diletakkan di tempatnya. Ikon yang terlalu rapat digabung dengan lencana "+n". Laporan dimuatkan dalam lingkungan ~25 km dari pemandu.
+- **Singgah di laluan:** cip kategori yang sama seperti "Sepanjang laluan" (Minyak, Makan, R&R, Kafe, Lagi).
+- **Kongsi** (lokasi live) dan **Seluruh laluan** (peta zum keluar menunjukkan baki laluan; tekan "Tengah" untuk kembali ke paparan memandu).
+- Bila dibuka, bar bawah menjadi **Tamat** dan **Teruskan**. Tarik ke bawah atau tekan Teruskan untuk tutup.
+
+**Kod:** `web/src/components/navigation/TripSheet.tsx`, `web/src/utils/routeStrip.ts` (`routeStrip`, `clusterMarkers`). Ujian: `routeStrip.test.ts`.
+
 ---
 
 ## Marketplace: kedai makan (restoran, warung, gerai)
