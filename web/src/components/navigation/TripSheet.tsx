@@ -201,7 +201,7 @@ export function TripSheet({ remainingSeconds, remainingMeters, demo, showSteps, 
               {QUICK_STOPS.map((id) => {
                 const c = ALONG_CATEGORIES.find((x) => x.id === id)!;
                 return (
-                  <button key={id} type="button" onClick={() => stopAt(id)} className="flex shrink-0 items-center gap-1.5 rounded-full px-3 py-2 text-sm font-semibold text-white" style={{ background: c.color }}>
+                  <button key={id} type="button" onClick={() => stopAt(id)} className="flex shrink-0 items-center gap-1.5 rounded-full px-3 py-2 text-sm font-semibold text-[color-mix(in_srgb,var(--c)_70%,black)] ring-1 ring-inset dark:text-[color-mix(in_srgb,var(--c)_50%,white)]" style={pastel(c.color)}>
                     <c.icon className="size-4" /> {t(c.label)}
                   </button>
                 );
@@ -213,10 +213,10 @@ export function TripSheet({ remainingSeconds, remainingMeters, demo, showSteps, 
           </div>
 
           <div className="grid grid-cols-2 gap-2">
-            <Button variant="secondary" className="whitespace-nowrap px-2 py-2.5 text-sm" onClick={() => { onShare(); setOpen(false); }}>
+            <Button variant="secondary" className="whitespace-nowrap bg-jade-500/15 px-2 py-2.5 text-sm text-jade-800 ring-1 ring-inset ring-jade-500/25 hover:bg-jade-500/20 dark:bg-jade-500/15 dark:text-jade-200" onClick={() => { onShare(); setOpen(false); }}>
               <Radio className="size-4" /> {t('Kongsi', 'Share drive')}
             </Button>
-            <Button variant="secondary" className="whitespace-nowrap px-2 py-2.5 text-sm" onClick={overview}>
+            <Button variant="secondary" className="whitespace-nowrap bg-sky-500/15 px-2 py-2.5 text-sm text-sky-800 ring-1 ring-inset ring-sky-500/25 hover:bg-sky-500/20 dark:bg-sky-500/15 dark:text-sky-200" onClick={overview}>
               <MapIcon className="size-4" /> {t('Seluruh laluan', 'Overview')}
             </Button>
           </div>
@@ -229,7 +229,7 @@ export function TripSheet({ remainingSeconds, remainingMeters, demo, showSteps, 
           <Button variant="danger" className="px-5 py-3" onClick={endNavigation}>
             <X className="size-4" /> {t('Tamat', 'End')}
           </Button>
-          <Button className="py-3" onClick={() => setOpen(false)}>
+          <Button variant="secondary" className="bg-jade-400/30 py-3 text-jade-900 ring-1 ring-inset ring-jade-500/40 hover:bg-jade-400/40 dark:bg-jade-500/25 dark:text-jade-100" onClick={() => setOpen(false)}>
             <Navigation className="size-4" /> {t('Teruskan', 'Resume')}
           </Button>
         </div>
@@ -302,6 +302,11 @@ function RouteStripView({ strip, lang }: { strip: ReturnType<typeof routeStrip>;
 function More({ n }: { n: number }) {
   if (n <= 0) return null;
   return <span className="absolute -right-2 -top-1.5 rounded-full bg-ink-950 px-1 text-[10px] font-bold leading-4 text-white">+{n}</span>;
+}
+
+/** A pastel button in a category's colour: a light tint behind and a soft outline; the text is a deeper (dark mode: lighter) shade of it, for contrast. */
+function pastel(color: string): React.CSSProperties {
+  return { background: `${color}1f`, ['--c' as string]: color, ['--tw-ring-color' as string]: `${color}40` };
 }
 
 function Chip({ className, children }: { className: string; children: React.ReactNode }) {
