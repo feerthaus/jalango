@@ -1,5 +1,6 @@
 import { usePageMeta } from '@/hooks/usePageMeta';
 import { GrowthPanel } from '@/components/admin/GrowthPanel';
+import { PoiPanel } from '@/components/admin/poi/PoiPanel';
 import { ArrowLeft, Ban, Bell, Check, EyeOff, Loader2, RefreshCw, RotateCcw, Send, ShieldAlert, X } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router';
@@ -33,7 +34,7 @@ import {
 import { formatRelativeTime } from '@/utils/format';
 import type { ReportType } from '@/types';
 
-const ADMIN_TABS = ['stats', 'growth', 'operators', 'listings', 'flags', 'photos', 'feedback', 'search'] as const;
+const ADMIN_TABS = ['stats', 'growth', 'poi', 'operators', 'listings', 'flags', 'photos', 'feedback', 'search'] as const;
 type AdminTab = (typeof ADMIN_TABS)[number];
 
 const TAB_COUNT = { operators: 'operators', listings: 'listings', flags: 'flags', photos: 'photos', feedback: 'feedback', search: 'search' } as const;
@@ -95,12 +96,12 @@ export function AdminPage() {
             <div role="tablist" className="mb-4 grid grid-cols-4 gap-1 rounded-2xl sm:grid-cols-7 bg-ink-100 p-1 dark:bg-ink-900">
               {ADMIN_TABS.map((t) => (
                 <button key={t} type="button" role="tab" aria-selected={tab === t} onClick={() => setTab(t)} className={cn('flex items-center justify-center gap-1 rounded-xl px-1 py-2 text-xs font-semibold sm:text-sm', tab === t ? 'bg-white shadow-sm dark:bg-ink-700' : 'text-ink-500')}>
-                  {t === 'stats' ? 'Statistik' : t === 'growth' ? 'Pertumbuhan' : t === 'operators' ? 'Operator' : t === 'listings' ? 'Listing' : t === 'flags' ? 'Laporan' : t === 'photos' ? 'Gambar kemalangan' : t === 'feedback' ? 'Mesej' : 'Carian'}
-                  {t !== 'stats' && t !== 'growth' && <CountBadge n={counts?.[TAB_COUNT[t]] ?? 0} />}
+                  {t === 'stats' ? 'Statistik' : t === 'growth' ? 'Pertumbuhan' : t === 'poi' ? 'POI (ujian)' : t === 'operators' ? 'Operator' : t === 'listings' ? 'Listing' : t === 'flags' ? 'Laporan' : t === 'photos' ? 'Gambar kemalangan' : t === 'feedback' ? 'Mesej' : 'Carian'}
+                  {t !== 'stats' && t !== 'growth' && t !== 'poi' && <CountBadge n={counts?.[TAB_COUNT[t]] ?? 0} />}
                 </button>
               ))}
             </div>
-            {tab === 'stats' ? <StatsPanel /> : tab === 'growth' ? <GrowthPanel /> : tab === 'operators' ? <OperatorReview /> : tab === 'listings' ? <ListingReview /> : tab === 'flags' ? <FlagQueue /> : tab === 'photos' ? <PhotoReviewQueue /> : tab === 'feedback' ? <FeedbackInbox /> : <SearchMissReview />}
+            {tab === 'stats' ? <StatsPanel /> : tab === 'growth' ? <GrowthPanel /> : tab === 'poi' ? <PoiPanel /> : tab === 'operators' ? <OperatorReview /> : tab === 'listings' ? <ListingReview /> : tab === 'flags' ? <FlagQueue /> : tab === 'photos' ? <PhotoReviewQueue /> : tab === 'feedback' ? <FeedbackInbox /> : <SearchMissReview />}
           </>
         )}
       </main>

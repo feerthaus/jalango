@@ -468,6 +468,32 @@ Diluluskan pemilik selepas Laporan Impak Migrasi (Nov 2026). Matlamatnya: tahu *
 
 **Kod:** `web/src/utils/attribution.ts` (pengelasan, `withUtm`), `web/src/lib/activity.ts` (`recordFirstVisit`, `recordConversion`, `statsOptedOut`), `web/src/services/growthService.ts`, `web/src/components/admin/GrowthPanel.tsx`. Ujian: `attribution.test.ts`, `shareLinks.test.ts`, `growthService.test.ts`, serta ujian PGlite untuk migrasi (24 semakan).
 
+## Admin → POI (POI-2A, data ujian sahaja)
+
+Keputusan pemilik (Nov 2026): skrin semakan dan aliran kerja POI Intelligence Engine dibina **selari** dengan POI-1. **Migrasi dan data sebenar menunggu POI-1** (liputan OSM Kuala Langat) dan **POI-2B**.
+
+- **Tab Admin → "POI (ujian)":** admin sahaja, perlu 2FA.
+- **Banner "DATA UJIAN" sentiasa dipaparkan.** Semua rekod rekaan, nama bermula "Contoh", tersebar secara rawak di sekitar Kuala Langat. **Bukan data OSM sebenar, bukan premis sebenar, dan tiada apa disimpan.** Semua tindakan hilang bila halaman dimuat semula. Butang "Set semula" mengembalikan data ujian asal.
+- **Semakan:**
+  - Penapis kategori (8 kategori pilot), isu dan status.
+  - Rekod disusun dari kualiti paling rendah.
+  - **Butiran rekod:** peta kecil dengan pin merah untuk rekod, dan pin biru untuk POI sedia ada yang mungkin pendua. Turut dipaparkan: koordinat (pautan ke osm.org), sumber, alamat, telefon dan skor kualiti.
+  - **Tindakan:** Lulus (boleh tukar nama dan kategori), Tolak (dengan sebab), dan Gabung dengan pendua (POI sedia ada dikekalkan; hanya alamat atau telefon yang kosong diisi).
+- **Peraturan keselamatan:** rekod tanpa nama, koordinat di luar kawasan, atau **nama generik** ("Surau", "Kedai") tidak boleh diluluskan. Nama generik perlu diganti dengan nama sebenar dahulu. Rekod yang sudah diputuskan, atau daripada larian yang sudah di-rollback, tidak boleh diputuskan semula.
+- **Larian import:**
+  - kiraan setiap larian: diterima, lulus automatik, diluluskan, semakan, pendua, digabung, ditolak;
+  - larian "Ditahan" (contohnya akan menyembunyikan > 5% POI aktif);
+  - **Rollback larian** dengan pengesahan: perubahan dikembalikan dari yang terbaru, dan rekodnya ditutup.
+- **Metrik kualiti:** POI aktif, baki semakan (dan tarikh larian tertua), % lulus automatik, % ditolak, % pendua, % ada alamat atau telefon, dan pecahan setiap kategori.
+- **Log audit:** lulus, tolak, gabung, tukar nama, tukar kategori dan rollback, dengan masa dan pelaku. Dalam POI-2B, log ini akan ke `admin_actions`.
+- **Seni bina:**
+  - Skrin bercakap dengan `poiAdminService`. Sekarang pelaksanaannya ujian dalam memori.
+  - POI-2B menukarnya kepada fungsi Supabase dengan bentuk yang sama, jadi skrin tidak perlu diubah.
+  - Peraturan keputusan berada dalam fungsi tulen yang diuji.
+  - **Data ujian tidak digunakan untuk keputusan indeks, prestasi carian atau kapasiti pangkalan data.**
+
+**Kod:** `web/src/utils/poiReview.ts` (peraturan, diuji dalam `poiReview.test.ts`), `web/src/services/poiAdminService.ts` (antara muka dan pelaksanaan ujian, diuji dalam `poiAdminService.test.ts`), `web/src/components/admin/poi/` (`PoiPanel`, `PoiMapPreview`, `mockPoiData`).
+
 ## Lain-lain
 
 - **Harga minyak mingguan:** dari data.gov.my.
