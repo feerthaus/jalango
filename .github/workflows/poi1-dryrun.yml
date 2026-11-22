@@ -29,8 +29,19 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Download OpenStreetMap extract (Malaysia, Singapore, Brunei) from Geofabrik
-        run: curl -sSfL --retry 3 -o region.osm.pbf https://download.geofabrik.de/asia/malaysia-singapore-brunei-latest.osm.pbf
+      - name: Download OpenStreetMap extract from Geofabrik (find the current Malaysia file first)
+        run: |
+          curl -sSfL --retry 3 https://download.geofabrik.de/asia.html -o asia.html || true
+          echo "Malaysia links on the Geofabrik Asia page:"; grep -oE 'asia/[a-z-]*malaysia[a-z-]*-latest\.osm\.pbf' asia.html | sort -u || true
+          FILE=$(grep -oE 'asia/[a-z-]*malaysia[a-z-]*-latest\.osm\.pbf' asia.html | sort -u | head -1)
+          FILE=${FILE:-asia/malaysia-singapore-brunei-latest.osm.pbf}
+          echo "Using: $FILE"
+          for i in 1 2 3 4 5; do
+            curl -sSfL -o region.osm.pbf "https://download.geofabrik.de/$FILE" && break
+            echo "attempt $i failed, retrying in 60 s"; sleep 60
+          done
+          test -s region.osm.pbf
+          echo "SOURCE_FILE=https://download.geofabrik.de/$FILE" >> "$GITHUB_ENV"
       - name: Tools and extract metadata
         run: |
           sudo apt-get update -qq && sudo apt-get install -y -qq osmium-tool postgresql-client
@@ -56,6 +67,13 @@ jobs:
           wc -l poi.geojsonseq
       - name: Analyse (classify, clean, validate, duplicates, sample, size estimate)
         run: node poi1-dryrun/analyse.mjs poi.geojsonseq out/boundary.json out
+      - name: Coverage by town, suburb, village and coast (item 8)
+        run: |
+          osmium tags-filter area.osm.pbf n/place=city,town,suburb,quarter,neighbourhood,village,hamlet,isolated_dwelling -o places.osm.pbf --overwrite
+          osmium export places.osm.pbf -f geojsonseq -o places.geojsonseq --overwrite
+          osmium tags-filter area.osm.pbf w/natural=coastline -o coast.osm.pbf --overwrite
+          osmium export coast.osm.pbf -f geojsonseq -o coast.geojsonseq --overwrite || true
+          node poi1-dryrun/coverage.mjs out/records.json places.geojsonseq coast.geojsonseq out/boundary.json out
       - name: Measure real table size in a throwaway PostgreSQL (not Supabase)
         env:
           PGPASSWORD: dryrun
@@ -64,7 +82,9 @@ jobs:
           psql -h localhost -U postgres -v ON_ERROR_STOP=1 -f poi1-dryrun/size.sql
       - name: Print results
         run: |
+          echo "SOURCE: $SOURCE_FILE"
           echo "=====SUMMARY====="; cat out/summary.json
+          echo "=====COVERAGE====="; cat out/coverage.json
           echo "=====SAMPLE50====="; cat out/sample50.csv
           echo "=====END====="
       - uses: actions/upload-artifact@v4
