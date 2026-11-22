@@ -29,25 +29,17 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Download OpenStreetMap extract from Geofabrik (find the current Malaysia file first)
-        run: |
-          curl -sSfL --retry 3 https://download.geofabrik.de/asia.html -o asia.html || true
-          echo "Malaysia links on the Geofabrik Asia page:"; grep -oE 'asia/[a-z-]*malaysia[a-z-]*-latest\.osm\.pbf' asia.html | sort -u || true
-          FILE=$(grep -oE 'asia/[a-z-]*malaysia[a-z-]*-latest\.osm\.pbf' asia.html | sort -u | head -1)
-          FILE=${FILE:-asia/malaysia-singapore-brunei-latest.osm.pbf}
-          echo "Using: $FILE"
-          for i in 1 2 3 4 5; do
-            curl -sSfL -o region.osm.pbf "https://download.geofabrik.de/$FILE" && break
-            echo "attempt $i failed, retrying in 60 s"; sleep 60
-          done
-          test -s region.osm.pbf
-          echo "SOURCE_FILE=https://download.geofabrik.de/$FILE" >> "$GITHUB_ENV"
+      - name: Download OpenStreetMap extract from Geofabrik (bounded retries, MD5, source recorded)
+        run: bash poi1-dryrun/download.sh
       - name: Tools and extract metadata
         run: |
           sudo apt-get update -qq && sudo apt-get install -y -qq osmium-tool postgresql-client
           ls -l region.osm.pbf
-          osmium fileinfo -e -g header.option.osmosis_replication_timestamp region.osm.pbf || true
           osmium fileinfo region.osm.pbf | sed -n '1,30p'
+          TS=$(osmium fileinfo -g header.option.osmosis_replication_timestamp region.osm.pbf || true)
+          echo "OSM data timestamp: $TS"
+          node -e 'const f="out/source.json",j=JSON.parse(require("fs").readFileSync(f));j.osm_replication_timestamp=process.argv[1]||null;j.area_bbox="101.20,2.50,101.85,3.10 (osmium extract, smart, boundaries kept complete)";require("fs").writeFileSync(f,JSON.stringify(j,null,2))' "$TS"
+          cat out/source.json
       - name: Cut the Kuala Langat area (boundaries kept complete)
         run: |
           osmium extract -s smart -S types=multipolygon,boundary -b 101.20,2.50,101.85,3.10 region.osm.pbf -o area.osm.pbf --overwrite
@@ -82,7 +74,7 @@ jobs:
           psql -h localhost -U postgres -v ON_ERROR_STOP=1 -f poi1-dryrun/size.sql
       - name: Print results
         run: |
-          echo "SOURCE: $SOURCE_FILE"
+          echo "=====SOURCE====="; cat out/source.json
           echo "=====SUMMARY====="; cat out/summary.json
           echo "=====COVERAGE====="; cat out/coverage.json
           echo "=====SAMPLE50====="; cat out/sample50.csv
