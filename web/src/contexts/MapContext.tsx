@@ -4,8 +4,15 @@ import { readMapMode, saveMapMode, type MapMode } from '@/lib/map3d';
 import type { Coordinates, Place } from '@/types';
 
 interface MapContextValue {
+  /** The Mapbox map, set once its style has loaded (null before, or if it never loads) */
   map: MapboxMap | null;
   setMap: (map: MapboxMap | null) => void;
+  /**
+   * The app shell that shows the map is mounted (MapView, always rendered by AppLayout). Unlike `map`, this
+   * does not wait for the Mapbox style, so it stays true when the basemap fails.
+   */
+  mapShell: boolean;
+  setMapShell: (mounted: boolean) => void;
   /** Camera follows the GPS fix until the user pans the map */
   following: boolean;
   setFollowing: (on: boolean) => void;
@@ -26,6 +33,7 @@ const MapContext = createContext<MapContextValue | null>(null);
 
 export function MapProvider({ children }: { children: ReactNode }) {
   const [map, setMap] = useState<MapboxMap | null>(null);
+  const [mapShell, setMapShell] = useState(false);
   const [following, setFollowing] = useState(false);
   const [selectedPlace, setSelectedPlace] = useState<Place | null>(null);
   const [tileError, setTileError] = useState(false);
@@ -57,8 +65,8 @@ export function MapProvider({ children }: { children: ReactNode }) {
   const clearSelection = useCallback(() => setSelectedPlace(null), []);
 
   const value = useMemo(
-    () => ({ map, setMap, following, setFollowing, selectedPlace, selectPlace, clearSelection, flyTo, tileError, setTileError, mapMode, setMapMode }),
-    [map, following, selectedPlace, selectPlace, clearSelection, flyTo, tileError, mapMode, setMapMode],
+    () => ({ map, setMap, mapShell, setMapShell, following, setFollowing, selectedPlace, selectPlace, clearSelection, flyTo, tileError, setTileError, mapMode, setMapMode }),
+    [map, mapShell, following, selectedPlace, selectPlace, clearSelection, flyTo, tileError, mapMode, setMapMode],
   );
   return <MapContext.Provider value={value}>{children}</MapContext.Provider>;
 }

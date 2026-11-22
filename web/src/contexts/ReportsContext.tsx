@@ -46,7 +46,7 @@ const contains = (b: Bounds, lat: number, lng: number) => lat >= b.minLat && lat
 export function ReportsProvider({ children }: { children: ReactNode }) {
   const available = features.supabase;
   const { user } = useAuth();
-  const { map, flyTo, clearSelection, selectedPlace } = useMapContext();
+  const { map, mapShell, flyTo, clearSelection, selectedPlace } = useMapContext();
   const { fix } = useLocation();
 
   const [byId, setById] = useState<Record<string, TrafficReport>>({});
@@ -91,13 +91,14 @@ export function ReportsProvider({ children }: { children: ReactNode }) {
     return () => controller.abort();
   }, [available, area, nonce]);
 
-  // Realtime updates, only while the map is on screen. The map lives in the app
-  // shell (the map, Explore, Reports, Saved, Profile… tabs), where reports are
-  // shown or used for route alerts. Pages without it (/home, /privacy, /terms,
-  // /admin, /live/…) show no reports, so they open no channel.
+  // Realtime updates, only while the map shell is on screen (the map, Explore,
+  // Reports, Saved, Profile… tabs), where reports are shown or used for route
+  // alerts. Pages without it (/home, /privacy, /terms, /admin, /live/…) show no
+  // reports, so they open no channel. Keyed on the shell, not on `map`: if the
+  // Mapbox style fails to load, live reports (and route alerts) keep working.
   const subscribedBefore = useRef(false);
   useEffect(() => {
-    if (!available || !map) return;
+    if (!available || !mapShell) return;
     // Back on the map after a page without it: changes made meanwhile were not
     // received, so reload the area
     if (subscribedBefore.current) setNonce((n) => n + 1);
@@ -117,7 +118,7 @@ export function ReportsProvider({ children }: { children: ReactNode }) {
       unsubscribe();
       setLive(false);
     };
-  }, [available, map]);
+  }, [available, mapShell]);
 
   // Drop reports as they expire
   useEffect(() => {
