@@ -91,10 +91,18 @@ export function ReportsProvider({ children }: { children: ReactNode }) {
     return () => controller.abort();
   }, [available, area, nonce]);
 
-  // Realtime updates
+  // Realtime updates, only while the map is on screen. The map lives in the app
+  // shell (the map, Explore, Reports, Saved, Profile… tabs), where reports are
+  // shown or used for route alerts. Pages without it (/home, /privacy, /terms,
+  // /admin, /live/…) show no reports, so they open no channel.
+  const subscribedBefore = useRef(false);
   useEffect(() => {
-    if (!available) return;
-    return subscribeToReports((change) => {
+    if (!available || !map) return;
+    // Back on the map after a page without it: changes made meanwhile were not
+    // received, so reload the area
+    if (subscribedBefore.current) setNonce((n) => n + 1);
+    subscribedBefore.current = true;
+    const unsubscribe = subscribeToReports((change) => {
       setById((prev) => {
         if (change.kind === 'delete') {
           if (!(change.id in prev)) return prev;
@@ -105,7 +113,11 @@ export function ReportsProvider({ children }: { children: ReactNode }) {
         return { ...prev, [change.report.id]: change.report };
       });
     }, setLive);
-  }, [available]);
+    return () => {
+      unsubscribe();
+      setLive(false);
+    };
+  }, [available, map]);
 
   // Drop reports as they expire
   useEffect(() => {

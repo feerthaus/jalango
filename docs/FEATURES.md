@@ -301,6 +301,7 @@ Pelan penuh ada dalam `docs/MARKETPLACE.md`. Fasa 0 hanya pendaftaran dan penges
   - Tempat JalanGo keluar paling atas dengan tanda **Disahkan**. Peraturan dimuat semula setiap 5 minit.
   - Privasi: hanya teks carian dan kiraan, tanpa akaun, IP atau lokasi; dipadam 90 hari selepas kali terakhir dicari.
 - **Laporan jalan raya:** kemalangan, sesak, **Polis** (speed trap / peronda), **Sekatan jalan (SJR)**, jalan ditutup, bahaya, banjir, kenderaan rosak, kerja jalan dan kamera AWAS. Polis dan SJR luput selepas 2 jam (kecuali disahkan semula), dan diumumkan dengan suara bila di laluan hadapan. Pengguna boleh undi "masih ada / dah tiada".
+  - **Kemas kini live (Supabase Realtime)** hanya dilanggan bila peta ada di skrin, iaitu dalam tab app (Peta, Teroka, Laporan, Simpan, Profil…). Halaman tanpa peta (`/home`, `/privacy`, `/terms`, `/admin`, `/live/…`) tidak membuka saluran laporan. Bila kembali ke peta, kawasan dimuat semula supaya laporan yang berubah semasa di halaman lain tidak terlepas (Realtime-1, `ReportsContext.tsx`).
 - **Jalan pintas komuniti:** laluan pendek (≤60 km) yang dikongsi dari sejarah perjalanan.
 - **Laluan komuniti:** laluan jauh alternatif untuk elak jem, contohnya ke Kelantan melalui Gua Musang. Termasuk laluan yang masuk semula ke jalan utama di tengah perjalanan, seperti Kuala Pilah → exit Gambang (`web/src/components/communityRoutes/`).
 - **Tempat disyorkan komuniti.**
