@@ -1,0 +1,74 @@
+# TEMPORARY (POI-1 dry run, owner-approved): runs only on pushes to the
+# claude/poi1-dryrun branch, never on main. No secrets, no Supabase, no
+# production endpoints: downloads the Geofabrik extract (same as the speed
+# camera workflow), analyses Kuala Langat, and measures table size in a
+# throwaway PostgreSQL inside the runner. Branch is deleted afterwards.
+name: POI-1 dry run (Kuala Langat)
+
+on:
+  push:
+    branches: [claude/poi1-dryrun]
+
+permissions:
+  contents: read
+
+jobs:
+  dryrun:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: dryrun
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Download OpenStreetMap extract (Malaysia, Singapore, Brunei) from Geofabrik
+        run: curl -sSfL --retry 3 -o region.osm.pbf https://download.geofabrik.de/asia/malaysia-singapore-brunei-latest.osm.pbf
+      - name: Tools and extract metadata
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq osmium-tool postgresql-client
+          ls -l region.osm.pbf
+          osmium fileinfo -e -g header.option.osmosis_replication_timestamp region.osm.pbf || true
+          osmium fileinfo region.osm.pbf | sed -n '1,30p'
+      - name: Cut the Kuala Langat area (boundaries kept complete)
+        run: |
+          osmium extract -s smart -S types=multipolygon,boundary -b 101.20,2.50,101.85,3.10 region.osm.pbf -o area.osm.pbf --overwrite
+          osmium tags-filter area.osm.pbf r/boundary=administrative -o adm.osm.pbf --overwrite
+          osmium export adm.osm.pbf -f geojsonseq --add-unique-id=type_id -o adm.geojsonseq --overwrite
+          mkdir -p out
+          node poi1-dryrun/boundary.mjs adm.geojsonseq out/boundary
+      - name: Keep the 8 POI categories
+        run: |
+          osmium tags-filter area.osm.pbf \
+            nwr/amenity=restaurant,fast_food,cafe,food_court,fuel,car_wash,marketplace,clinic,doctors,dentist,pharmacy,hospital,place_of_worship \
+            nwr/shop=bakery,car_repair,tyres,motorcycle_repair,motorcycle,convenience,supermarket,general,grocery,department_store,chemist \
+            nwr/tourism=hotel,motel,guest_house,hostel,chalet,apartment,attraction,museum,viewpoint,theme_park,zoo,gallery \
+            nwr/leisure=resort,park nwr/historic nwr/natural=beach nwr/healthcare \
+            -o poi.osm.pbf --overwrite
+          osmium export poi.osm.pbf -f geojsonseq --add-unique-id=type_id -a version,timestamp -o poi.geojsonseq --overwrite
+          wc -l poi.geojsonseq
+      - name: Analyse (classify, clean, validate, duplicates, sample, size estimate)
+        run: node poi1-dryrun/analyse.mjs poi.geojsonseq out/boundary.json out
+      - name: Measure real table size in a throwaway PostgreSQL (not Supabase)
+        env:
+          PGPASSWORD: dryrun
+        run: |
+          node poi1-dryrun/pgload.mjs out/records.json pois.csv
+          psql -h localhost -U postgres -v ON_ERROR_STOP=1 -f poi1-dryrun/size.sql
+      - name: Print results
+        run: |
+          echo "=====SUMMARY====="; cat out/summary.json
+          echo "=====SAMPLE50====="; cat out/sample50.csv
+          echo "=====END====="
+      - uses: actions/upload-artifact@v4
+        with:
+          name: poi1-kuala-langat
+          path: out/
+          retention-days: 7
