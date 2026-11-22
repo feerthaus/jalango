@@ -36,7 +36,7 @@ if (env.mapboxToken) mapboxgl.accessToken = env.mapboxToken;
 export function MapView() {
   const [t] = useT();
   const containerRef = useRef<HTMLDivElement>(null);
-  const { map, setMap, following, setFollowing, selectedPlace, tileError, setTileError } = useMapContext();
+  const { map, setMap, setMapShell, following, setFollowing, selectedPlace, tileError, setTileError } = useMapContext();
   const { theme } = useTheme();
   const { fix } = useLocation();
   const { destination } = useRouting();
@@ -48,6 +48,14 @@ export function MapView() {
   const initialTheme = useRef(theme);
   const appliedTheme = useRef(theme);
   const centeredOnUser = useRef(false);
+
+  // The map shell is on screen. Its own effect, independent of creating the map
+  // and of 'style.load': it stays set if WebGL or the Mapbox style fails, so live
+  // reports and route alerts don't depend on the basemap.
+  useEffect(() => {
+    setMapShell(true);
+    return () => setMapShell(false);
+  }, [setMapShell]);
 
   // Create the map once
   useEffect(() => {
