@@ -1,0 +1,80 @@
+# POI import, Kuala Langat pilot (POI-2B). Manual only: no schedule until the
+# owner approves one after 2–3 good manual runs.
+#
+# "send" off (default): dry run. Downloads OpenStreetMap, applies the import rules
+# and uploads the would-be rows as an artifact. Nothing reaches the database.
+# "send" on: also sends the rows to the JalanGo API (needs the POI_INGEST_TOKEN
+# secret here and POI_IMPORT_ENABLED=true + the same token on Netlify).
+name: POI import (Kuala Langat)
+
+on:
+  workflow_dispatch:
+    inputs:
+      send:
+        description: 'Send to the database (off = dry run)'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: poi-import
+  cancel-in-progress: false
+
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Download the Geofabrik extract (bounded retries, MD5, source recorded)
+        run: bash scripts/poi/download.sh
+      - name: Tools and extract timestamp
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq osmium-tool
+          TS=$(osmium fileinfo -g header.option.osmosis_replication_timestamp region.osm.pbf || true)
+          echo "OSM data timestamp: $TS"
+          test -n "$TS"
+          node -e 'const f="out/source.json",j=JSON.parse(require("fs").readFileSync(f));j.osm_replication_timestamp=process.argv[1];require("fs").writeFileSync(f,JSON.stringify(j,null,2))' "$TS"
+          cat out/source.json
+      - name: Cut Kuala Langat and export what the rules need
+        run: |
+          osmium extract -s smart -S types=multipolygon,boundary -b 101.20,2.50,101.85,3.10 region.osm.pbf -o area.osm.pbf --overwrite
+          osmium tags-filter area.osm.pbf r/boundary=administrative -o adm.osm.pbf --overwrite
+          osmium export adm.osm.pbf -f geojsonseq --add-unique-id=type_id -o adm.geojsonseq --overwrite
+          # The real district boundary from OSM, never the rough fallback box
+          node scripts/poi/boundary.mjs adm.geojsonseq out/boundary | tee boundary.log
+          grep -q '"boundary": "OSM ' boundary.log || { echo "Kuala Langat boundary not found in OSM: stopping"; exit 1; }
+          osmium tags-filter area.osm.pbf \
+            nwr/amenity=restaurant,fast_food,cafe,food_court,fuel,car_wash,marketplace,clinic,doctors,dentist,pharmacy,hospital,place_of_worship \
+            nwr/shop=bakery,car_repair,tyres,motorcycle_repair,motorcycle,convenience,supermarket,general,grocery,department_store,chemist \
+            nwr/tourism=hotel,motel,guest_house,hostel,chalet,apartment,attraction,museum,viewpoint,theme_park,zoo,gallery \
+            nwr/leisure=resort,park nwr/historic nwr/natural=beach nwr/healthcare \
+            -o poi.osm.pbf --overwrite
+          osmium export poi.osm.pbf -f geojsonseq --add-unique-id=type_id -a version,timestamp -o poi.geojsonseq --overwrite
+          osmium tags-filter area.osm.pbf n/place=city,town,suburb,quarter,neighbourhood,village,hamlet,isolated_dwelling -o places.osm.pbf --overwrite
+          osmium export places.osm.pbf -f geojsonseq -o places.geojsonseq --overwrite
+          osmium tags-filter area.osm.pbf w/natural=coastline -o coast.osm.pbf --overwrite
+          osmium export coast.osm.pbf -f geojsonseq -o coast.geojsonseq --overwrite || true
+          osmium tags-filter area.osm.pbf wr/amenity=school,college,university,kindergarten,prison wr/landuse=military,education wr/office=government wr/military -o ctx.osm.pbf --overwrite
+          osmium export ctx.osm.pbf -f geojsonseq -o ctx.geojsonseq --overwrite
+          node scripts/poi/extract.mjs poi.geojsonseq out/boundary.json places.geojsonseq coast.geojsonseq ctx.geojsonseq features.json
+      - name: Apply the import rules (dry run)
+        if: ${{ !inputs.send }}
+        run: node scripts/poi/import.ts features.json out/source.json
+      - name: Apply the import rules and send to the database
+        if: ${{ inputs.send }}
+        env:
+          POI_INGEST_TOKEN: ${{ secrets.POI_INGEST_TOKEN }}
+        run: node scripts/poi/import.ts features.json out/source.json --send
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: poi-import-kuala-langat
+          path: |
+            out/
+          retention-days: 90

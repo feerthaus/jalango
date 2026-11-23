@@ -17,6 +17,9 @@ export const config = {
   supabaseServiceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY?.trim() || null,
   /** Claude API (smart search, trip assistant); features stay off without it */
   anthropicKey: process.env.ANTHROPIC_API_KEY?.trim() || null,
+  /** POI import from GitHub Actions (POI-2B): off unless POI_IMPORT_ENABLED=true and a token of 32+ characters is set */
+  poiImportEnabled: process.env.POI_IMPORT_ENABLED?.trim() === 'true',
+  poiIngestToken: process.env.POI_INGEST_TOKEN?.trim() || null,
 } as const;
 
 export const integrations = {

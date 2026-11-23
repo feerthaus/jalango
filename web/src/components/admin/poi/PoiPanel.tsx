@@ -89,6 +89,19 @@ export function PoiPanel() {
         </div>
       )}
 
+      {!poiAdminService.testData && (
+        <div role="note" className="rounded-2xl bg-ink-100 p-3 text-xs text-ink-600 dark:bg-ink-800 dark:text-ink-300">
+          <p>
+            <strong>Data sebenar</strong> daripada OpenStreetMap (© penyumbang OpenStreetMap, ODbL), pilot Kuala Langat. Setiap tindakan direkod dan setiap larian boleh di-rollback.
+          </p>
+          {state.runs.length === 0 && (
+            <p className="mt-1">
+              Belum ada import. Import dijalankan secara manual melalui GitHub Actions ("POI import (Kuala Langat)"), hanya dengan kebenaran pemilik.
+            </p>
+          )}
+        </div>
+      )}
+
       <div role="tablist" aria-label="Bahagian POI" className="flex gap-1 overflow-x-auto rounded-2xl bg-ink-100 p-1 text-sm font-semibold dark:bg-ink-800">
         {VIEWS.map((v) => (
           <button key={v.id} type="button" role="tab" aria-selected={view === v.id} onClick={() => setView(v.id)} className={cn('shrink-0 rounded-xl px-3 py-2', view === v.id ? 'bg-white shadow dark:bg-ink-900' : 'text-ink-500')}>
@@ -410,7 +423,7 @@ function QualityBadge({ q }: { q: number }) {
 }
 
 function RunStatusChip({ status }: { status: PoiAdminState['runs'][number]['status'] }) {
-  const map = { processed: ['Diproses', 'bg-jade-500/15 text-jade-700 dark:text-jade-300'], held: ['Ditahan', 'bg-amber-400/20 text-amber-800 dark:text-amber-200'], rolled_back: ['Di-rollback', 'bg-ink-200 text-ink-700 dark:bg-ink-700 dark:text-ink-200'], failed: ['Gagal', 'bg-red-500/15 text-red-700 dark:text-red-300'] } as const;
+  const map = { running: ['Sedang berjalan', 'bg-sky-500/15 text-sky-700 dark:text-sky-300'], processed: ['Diproses', 'bg-jade-500/15 text-jade-700 dark:text-jade-300'], held: ['Ditahan', 'bg-amber-400/20 text-amber-800 dark:text-amber-200'], rolled_back: ['Di-rollback', 'bg-ink-200 text-ink-700 dark:bg-ink-700 dark:text-ink-200'], failed: ['Gagal', 'bg-red-500/15 text-red-700 dark:text-red-300'] } as const;
   const [label, tone] = map[status];
   return <span className={cn('rounded-full px-2 py-0.5 text-[11px] font-semibold', tone)}>{label}</span>;
 }

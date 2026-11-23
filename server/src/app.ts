@@ -12,6 +12,7 @@ import { transitRouter } from './routes/transit.js';
 import { fuelRouter } from './routes/fuel.js';
 import { probesRouter } from './routes/probes.js';
 import { accountRouter, feedbackRouter } from './routes/account.js';
+import { poiRouter } from './routes/poi.js';
 
 export function createApp() {
   const app = express();
@@ -19,6 +20,8 @@ export function createApp() {
   app.set('trust proxy', 1);
   app.use(helmet());
   app.use(cors({ origin: config.corsOrigins }));
+  // POI import batches (token only, off by default) need a bigger body than the rest of the API
+  app.use('/api/poi', rateLimit({ name: 'poi-import', windowMs: 60_000, max: 30 }), poiRouter);
   app.use(express.json({ limit: '32kb' }));
 
   // Friendly landing for anyone who opens the API port in a browser
