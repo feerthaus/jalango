@@ -31,6 +31,14 @@ describe('classify: audit cases', () => {
     expect(r.reject_reason).toBe('institusi');
   });
 
+  it('a heritage attraction inside a school goes to review, not rejection (Istana Bandar Jugra)', () => {
+    const r = classify(f({ osm_ref: 'way/1387806344', tags: { historic: 'palace', name: 'Istana Bandar Jugra' }, inside_institution: 'Maahad Integrasi Tahfiz Sains Istana Bandar · amenity=school' }), NOW)!;
+    expect(r.category).toBe('tarikan');
+    expect(r.decision).toBe('needs_review');
+    expect(r.reject_reason).toBeNull();
+    expect(r.issues).toContain('institusi');
+  });
+
   it('an unnamed mosque goes to review so an admin can name it, and is not guessed as masjid', () => {
     const r = classify(f({ osm_ref: 'way/1064287471', tags: { amenity: 'place_of_worship', religion: 'muslim', building: 'yes' } }), NOW)!;
     expect(r.decision).toBe('needs_review');
