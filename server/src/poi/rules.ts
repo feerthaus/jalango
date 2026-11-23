@@ -198,7 +198,9 @@ export function classify(f: OsmFeature, now = new Date()): StagingRow | null {
   let reject_reason: string | null = null;
   if (!f.inside_boundary) [decision, reject_reason] = ['rejected', 'luar_kawasan'];
   else if (f.inside_institution) [decision, reject_reason] = ['rejected', 'institusi'];
-  else if (!name) [decision, reject_reason] = ['rejected', 'nama_kosong'];
+  // Unnamed masjid/surau go to review so an admin can name them (owner, 23 Nov 2026);
+  // approving still needs a name. Other unnamed places are rejected.
+  else if (!name && category !== 'ibadah') [decision, reject_reason] = ['rejected', 'nama_kosong'];
   else if (faults.length === 0 && quality >= 60) decision = 'auto_approved';
   else decision = 'needs_review';
 
