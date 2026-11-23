@@ -494,6 +494,22 @@ Keputusan pemilik (Nov 2026): skrin semakan dan aliran kerja POI Intelligence En
 
 **Kod:** `web/src/utils/poiReview.ts` (peraturan, diuji dalam `poiReview.test.ts`), `web/src/services/poiAdminService.ts` (antara muka dan pelaksanaan ujian, diuji dalam `poiAdminService.test.ts`), `web/src/components/admin/poi/` (`PoiPanel`, `PoiMapPreview`, `mockPoiData`).
 
+## Enjin POI: pangkalan data (POI-2B, migrasi sahaja)
+
+Pemilik meluluskan reka bentuk POI-2B dan mengarahkan "migrate" (23 Nov 2026), selepas audit 50 sampel OSM sebenar Kuala Langat. Migrasi `20261202000000_poi_engine.sql` (aditif). **Belum ada import, carian awam atau paparan kepada pengguna.** Skrin Admin → POI masih menggunakan data ujian sehingga PR seterusnya.
+
+- **Jadual:** `poi_sources` (OSM, ODbL), `poi_import_runs` (URL, MD5 dan tarikh ekstrak setiap larian), `poi_staging` (90 hari), `pois` (**data OSM sahaja**), `poi_changes` (2 tahun, untuk audit dan rollback), `poi_links` (pautan ke tempat JalanGo, tidak digabung) dan `poi_feedback` (pengesahan komuniti; UI dalam POI-3).
+- **Klasifikasi petempatan** (keputusan pemilik): `city` = Bandar, `town` = Pekan, `village` = Kampung, `hamlet` = Penempatan kecil, `suburb`/`quarter`/`neighbourhood` = Bandar (taman/pinggir). Tag asal OSM disimpan dalam `osm_place_tag`.
+- **Dikunci:** RLS, tiada akses terus untuk `anon`/`authenticated`. Import melalui service role sahaja (`poi_start_run`, `poi_ingest` ≤ 500 baris, `poi_process_run`). Admin dengan 2FA: `admin_poi_state`, `poi_review`, `poi_merge`, `poi_rollback_run`, `poi_release_run`.
+- **Peraturan dalam pangkalan data:**
+  - Lulus memerlukan nama, dan nama generik perlu ditukar dahulu.
+  - Data OSM lebih 5 tahun tanpa `check_date` ditanda "perlu pengesahan" (kualiti −10).
+  - Larian **ditahan** jika akan menyembunyikan > 5% atau mengubah > 20% POI aktif.
+  - POI yang hilang daripada OSM disembunyikan (`missing`), bukan dipadam.
+  - Rollback mengembalikan perubahan dari yang terbaru.
+- **Komuniti (`poi_submit_feedback`):** satu jawapan seorang bagi setiap jenis, 30 sehari. "Masih beroperasi" atau "sudah tutup" daripada 2 orang **dalam 300 m** (tanpa jawapan bertentangan) mengemas kini status. **Lokasi tidak disimpan.** Dipadam bersama akaun. Halaman Privasi dikemas kini bila UI dilancarkan (POI-3).
+- **Ujian:** PGlite, 33 semakan (akses, import, proses, tahan, rollback, semakan admin, komuniti, indeks trigram).
+
 ## Lain-lain
 
 - **Harga minyak mingguan:** dari data.gov.my.
