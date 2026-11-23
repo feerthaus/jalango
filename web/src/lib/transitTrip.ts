@@ -40,9 +40,20 @@ let current: TransitTrip | null | undefined;
 const listeners = new Set<() => void>();
 
 function get(): TransitTrip | null {
-  if (current === undefined) current = typeof localStorage === 'undefined' ? null : load();
+  if (current === undefined) {
+    // Even reading `localStorage` throws (SecurityError) where the browser blocks
+    // site data; this runs during render, so it must never throw
+    try {
+      current = typeof localStorage === 'undefined' ? null : load();
+    } catch {
+      current = null;
+    }
+  }
   return current;
 }
+
+/** Current trip (for tests and non-React callers). */
+export const currentTransitTrip = get;
 
 function set(next: TransitTrip | null): void {
   current = next;
