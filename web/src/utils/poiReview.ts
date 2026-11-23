@@ -3,8 +3,9 @@
  * as pure functions over one state object, so they are unit-tested and the
  * same rules can later run against Supabase (POI-2B) without touching the UI.
  *
- * Nothing here talks to a database. Until POI-2B, the state comes from
- * clearly labelled TEST data (components/admin/poi/mockPoiData.ts).
+ * Nothing here talks to a database. The state comes from Supabase
+ * (services/poiAdminService.ts, POI-2B) or, without Supabase, from clearly
+ * labelled TEST data (components/admin/poi/mockPoiData.ts).
  */
 
 export const POI_CATEGORIES = ['restoran', 'penginapan', 'minyak', 'bengkel', 'runcit', 'kesihatan', 'tarikan', 'ibadah'] as const;
@@ -21,7 +22,10 @@ export const CATEGORY_LABEL: Record<PoiCategory, string> = {
   ibadah: 'Masjid & surau',
 };
 
-export type Issue = 'nama_kosong' | 'nama_terlalu_pendek' | 'nama_generik' | 'pelbagai_kategori' | 'telefon_tidak_sah' | 'koordinat_luar_julat' | 'pendua' | 'padanan_jalango';
+export type Issue =
+  | 'nama_kosong' | 'nama_terlalu_pendek' | 'nama_generik' | 'pelbagai_kategori' | 'telefon_tidak_sah' | 'koordinat_luar_julat' | 'pendua' | 'padanan_jalango'
+  // import rules (server/src/poi/rules.ts)
+  | 'nama_jenama_sahaja' | 'kategori_meragukan' | 'institusi' | 'luar_kawasan' | 'data_lapuk';
 export const ISSUE_LABEL: Record<Issue, string> = {
   nama_kosong: 'Nama kosong',
   nama_terlalu_pendek: 'Nama terlalu pendek',
@@ -31,6 +35,11 @@ export const ISSUE_LABEL: Record<Issue, string> = {
   koordinat_luar_julat: 'Koordinat di luar kawasan',
   pendua: 'Mungkin pendua',
   padanan_jalango: 'Mungkin sama dengan tempat JalanGo',
+  nama_jenama_sahaja: 'Nama jenama sahaja',
+  kategori_meragukan: 'Kategori meragukan',
+  institusi: 'Dalam kawasan institusi',
+  luar_kawasan: 'Luar daerah',
+  data_lapuk: 'Data OSM lebih 5 tahun',
 };
 
 export type Decision = 'auto_approved' | 'needs_review' | 'rejected' | 'duplicate' | 'approved' | 'merged' | 'rolled_back';
@@ -78,7 +87,7 @@ export interface Poi {
   lastSeenRun: string;
 }
 
-export type RunStatus = 'processed' | 'held' | 'rolled_back' | 'failed';
+export type RunStatus = 'running' | 'processed' | 'held' | 'rolled_back' | 'failed';
 export interface ImportRun {
   id: string;
   region: string;
@@ -88,6 +97,8 @@ export interface ImportRun {
   finishedAt: string;
   status: RunStatus;
   note?: string;
+  /** counts kept by the database for the whole run (the screen only loads the review queue) */
+  counts?: RunCounts;
 }
 
 export interface PoiChange {
@@ -113,6 +124,8 @@ export interface PoiAdminState {
   pois: Poi[];
   changes: PoiChange[];
   audit: AuditEntry[];
+  /** metrics computed by the database over all POIs (when loaded from Supabase) */
+  metrics?: QualityMetrics;
 }
 
 export class PoiReviewError extends Error {}
@@ -241,6 +254,8 @@ export interface RunCounts {
   merged: number;
 }
 export function runCounts(state: PoiAdminState, runId: string): RunCounts {
+  const known = state.runs.find((r) => r.id === runId)?.counts;
+  if (known) return known;
   const rs = state.staging.filter((r) => r.runId === runId);
   const n = (d: Decision) => rs.filter((r) => r.decision === d).length;
   return { received: rs.length, autoApproved: n('auto_approved'), approved: n('approved'), needsReview: n('needs_review'), duplicates: n('duplicate'), rejected: n('rejected'), merged: n('merged') };
@@ -259,6 +274,7 @@ export interface QualityMetrics {
 const pct = (n: number, d: number) => (d ? Math.round((1000 * n) / d) / 10 : 0);
 
 export function qualityMetrics(state: PoiAdminState): QualityMetrics {
+  if (state.metrics) return state.metrics;
   const live = new Set(state.runs.filter((r) => r.status !== 'rolled_back').map((r) => r.id));
   const staged = state.staging.filter((r) => live.has(r.runId));
   const active = state.pois.filter((p) => p.status === 'active');

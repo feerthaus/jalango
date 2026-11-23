@@ -1,5 +1,6 @@
 import { usePageMeta } from '@/hooks/usePageMeta';
 import { GrowthPanel } from '@/components/admin/GrowthPanel';
+import { poiAdminService } from '@/services/poiAdminService';
 import { PoiPanel } from '@/components/admin/poi/PoiPanel';
 import { ArrowLeft, Ban, Bell, Check, EyeOff, Loader2, RefreshCw, RotateCcw, Send, ShieldAlert, X } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
@@ -96,7 +97,7 @@ export function AdminPage() {
             <div role="tablist" className="mb-4 grid grid-cols-4 gap-1 rounded-2xl sm:grid-cols-7 bg-ink-100 p-1 dark:bg-ink-900">
               {ADMIN_TABS.map((t) => (
                 <button key={t} type="button" role="tab" aria-selected={tab === t} onClick={() => setTab(t)} className={cn('flex items-center justify-center gap-1 rounded-xl px-1 py-2 text-xs font-semibold sm:text-sm', tab === t ? 'bg-white shadow-sm dark:bg-ink-700' : 'text-ink-500')}>
-                  {t === 'stats' ? 'Statistik' : t === 'growth' ? 'Pertumbuhan' : t === 'poi' ? 'POI (ujian)' : t === 'operators' ? 'Operator' : t === 'listings' ? 'Listing' : t === 'flags' ? 'Laporan' : t === 'photos' ? 'Gambar kemalangan' : t === 'feedback' ? 'Mesej' : 'Carian'}
+                  {t === 'stats' ? 'Statistik' : t === 'growth' ? 'Pertumbuhan' : t === 'poi' ? (poiAdminService.testData ? 'POI (ujian)' : 'POI') : t === 'operators' ? 'Operator' : t === 'listings' ? 'Listing' : t === 'flags' ? 'Laporan' : t === 'photos' ? 'Gambar kemalangan' : t === 'feedback' ? 'Mesej' : 'Carian'}
                   {t !== 'stats' && t !== 'growth' && t !== 'poi' && <CountBadge n={counts?.[TAB_COUNT[t]] ?? 0} />}
                 </button>
               ))}
