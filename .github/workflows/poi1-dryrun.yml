@@ -66,6 +66,11 @@ jobs:
           osmium tags-filter area.osm.pbf w/natural=coastline -o coast.osm.pbf --overwrite
           osmium export coast.osm.pbf -f geojsonseq -o coast.geojsonseq --overwrite || true
           node poi1-dryrun/coverage.mjs out/records.json places.geojsonseq coast.geojsonseq out/boundary.json out
+      - name: Audit evidence for the 50 samples (tags, last edit, surroundings, boundary distance)
+        run: |
+          osmium tags-filter area.osm.pbf wr/amenity=school,college,university,kindergarten,prison wr/landuse=military,education wr/office=government wr/military -o ctx.osm.pbf --overwrite
+          osmium export ctx.osm.pbf -f geojsonseq -o ctx.geojsonseq --overwrite
+          node poi1-dryrun/audit.mjs poi1-dryrun/audit-ids.json poi.geojsonseq ctx.geojsonseq out/boundary.json out/records.json out
       - name: Measure real table size in a throwaway PostgreSQL (not Supabase)
         env:
           PGPASSWORD: dryrun
@@ -78,9 +83,12 @@ jobs:
           echo "=====SUMMARY====="; cat out/summary.json
           echo "=====COVERAGE====="; cat out/coverage.json
           echo "=====SAMPLE50====="; cat out/sample50.csv
+          echo "=====AUDIT50====="; cat out/audit50_evidence.csv
+          echo "=====UNNAMED_WORSHIP====="; cat out/audit_unnamed_worship.csv
+          echo "=====INSTITUTIONAL====="; cat out/audit_institutional.csv
           echo "=====END====="
       - uses: actions/upload-artifact@v4
         with:
-          name: poi1-kuala-langat
+          name: poi1-kuala-langat-audit
           path: out/
-          retention-days: 7
+          retention-days: 90

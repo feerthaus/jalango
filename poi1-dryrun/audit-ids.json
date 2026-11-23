@@ -1,0 +1,452 @@
+[
+ {
+  "no": 1,
+  "type": "w",
+  "id": 971658076,
+  "name": "ArcHIVE Food Hall",
+  "category": "restoran",
+  "lat": 2.886071,
+  "lng": 101.617329
+ },
+ {
+  "no": 2,
+  "type": "w",
+  "id": 971658055,
+  "name": "Starbucks",
+  "category": "restoran",
+  "lat": 2.885496,
+  "lng": 101.617412
+ },
+ {
+  "no": 3,
+  "type": "w",
+  "id": 825695388,
+  "name": "McDonald's",
+  "category": "restoran",
+  "lat": 2.812985,
+  "lng": 101.508029
+ },
+ {
+  "no": 4,
+  "type": "w",
+  "id": 1058023518,
+  "name": "McDonald's",
+  "category": "restoran",
+  "lat": 2.947961,
+  "lng": 101.548098
+ },
+ {
+  "no": 5,
+  "type": "w",
+  "id": 1010292542,
+  "name": "Medan Selera Lorong 3",
+  "category": "restoran",
+  "lat": 2.659752,
+  "lng": 101.560706
+ },
+ {
+  "no": 6,
+  "type": "n",
+  "id": 14206494645,
+  "name": "Nasi Kandar Alor Staq Haji Sultan",
+  "category": "restoran",
+  "lat": 2.952639,
+  "lng": 101.580209
+ },
+ {
+  "no": 7,
+  "type": "w",
+  "id": 1566345629,
+  "name": "Asai Gamuda Cove",
+  "category": "penginapan",
+  "lat": 2.87985,
+  "lng": 101.619933
+ },
+ {
+  "no": 8,
+  "type": "w",
+  "id": 682808913,
+  "name": "Asrama IKBN",
+  "category": "penginapan",
+  "lat": 2.82059,
+  "lng": 101.469155
+ },
+ {
+  "no": 9,
+  "type": "w",
+  "id": 1523121294,
+  "name": "天涯海角",
+  "category": "penginapan",
+  "lat": 2.656667,
+  "lng": 101.558437
+ },
+ {
+  "no": 10,
+  "type": "w",
+  "id": 912732520,
+  "name": "Gold Coast Morib International Resort",
+  "category": "penginapan",
+  "lat": 2.714713,
+  "lng": 101.460512
+ },
+ {
+  "no": 11,
+  "type": "w",
+  "id": 912732520,
+  "name": "Gold Coast Morib International Resort",
+  "category": "penginapan",
+  "lat": 2.714755,
+  "lng": 101.460591
+ },
+ {
+  "no": 12,
+  "type": "n",
+  "id": 4716688110,
+  "name": "Paya Indah Wetlands Chalets",
+  "category": "penginapan",
+  "lat": 2.861223,
+  "lng": 101.62904
+ },
+ {
+  "no": 13,
+  "type": "w",
+  "id": 1095401133,
+  "name": "BHPetrol",
+  "category": "minyak",
+  "lat": 2.887788,
+  "lng": 101.554802
+ },
+ {
+  "no": 14,
+  "type": "w",
+  "id": 1509423662,
+  "name": "Petronas",
+  "category": "minyak",
+  "lat": 2.661523,
+  "lng": 101.562395
+ },
+ {
+  "no": 15,
+  "type": "w",
+  "id": 864131689,
+  "name": "Petronas",
+  "category": "minyak",
+  "lat": 2.790494,
+  "lng": 101.485836
+ },
+ {
+  "no": 16,
+  "type": "w",
+  "id": 888201342,
+  "name": "Petron",
+  "category": "minyak",
+  "lat": 2.940891,
+  "lng": 101.471601
+ },
+ {
+  "no": 17,
+  "type": "w",
+  "id": 1197086108,
+  "name": "Caltex",
+  "category": "minyak",
+  "lat": 2.951161,
+  "lng": 101.547989
+ },
+ {
+  "no": 18,
+  "type": "w",
+  "id": 1009998639,
+  "name": "Petronas",
+  "category": "minyak",
+  "lat": 2.661556,
+  "lng": 101.562423
+ },
+ {
+  "no": 19,
+  "type": "w",
+  "id": 391124336,
+  "name": "Toyota Body Repair",
+  "category": "bengkel",
+  "lat": 2.932838,
+  "lng": 101.478539
+ },
+ {
+  "no": 20,
+  "type": "n",
+  "id": 5301785228,
+  "name": "Haiza",
+  "category": "bengkel",
+  "lat": 2.935502,
+  "lng": 101.473533
+ },
+ {
+  "no": 21,
+  "type": "n",
+  "id": 4727003973,
+  "name": "Alat Ganti Lori Toyo Machinery",
+  "category": "bengkel",
+  "lat": 2.829568,
+  "lng": 101.534355
+ },
+ {
+  "no": 22,
+  "type": "n",
+  "id": 12220724764,
+  "name": "Windscreen2U Kedai Cermin Kereta Jenjarom",
+  "category": "bengkel",
+  "lat": 2.875285,
+  "lng": 101.500398
+ },
+ {
+  "no": 23,
+  "type": "n",
+  "id": 12651142842,
+  "name": "Fighter Garage",
+  "category": "bengkel",
+  "lat": 2.800991,
+  "lng": 101.65598
+ },
+ {
+  "no": 24,
+  "type": "n",
+  "id": 4714387733,
+  "name": "Ady Tyre & Service",
+  "category": "bengkel",
+  "lat": 2.829344,
+  "lng": 101.630209
+ },
+ {
+  "no": 25,
+  "type": "n",
+  "id": 7733598047,
+  "name": "myNEWS.com",
+  "category": "runcit",
+  "lat": 2.975754,
+  "lng": 101.577109
+ },
+ {
+  "no": 26,
+  "type": "n",
+  "id": 4727686079,
+  "name": "Pasar Mini Hajjah Yamah",
+  "category": "runcit",
+  "lat": 2.939493,
+  "lng": 101.454588
+ },
+ {
+  "no": 27,
+  "type": "n",
+  "id": 4728732922,
+  "name": "Segi Fresh",
+  "category": "runcit",
+  "lat": 2.918312,
+  "lng": 101.474583
+ },
+ {
+  "no": 28,
+  "type": "n",
+  "id": 2941853032,
+  "name": "99 Speedmart",
+  "category": "runcit",
+  "lat": 2.806005,
+  "lng": 101.494864
+ },
+ {
+  "no": 29,
+  "type": "n",
+  "id": 7706493582,
+  "name": "99 Speedmart",
+  "category": "runcit",
+  "lat": 2.951793,
+  "lng": 101.582282
+ },
+ {
+  "no": 30,
+  "type": "n",
+  "id": 9895169330,
+  "name": "7-Eleven",
+  "category": "runcit",
+  "lat": 2.800458,
+  "lng": 101.49334
+ },
+ {
+  "no": 31,
+  "type": "n",
+  "id": 4728985478,
+  "name": "Klinik Kesihatan Kebun Baru",
+  "category": "kesihatan",
+  "lat": 2.912237,
+  "lng": 101.487729
+ },
+ {
+  "no": 32,
+  "type": "n",
+  "id": 4728732949,
+  "name": "Pusat Rawatan DarusSyifa",
+  "category": "kesihatan",
+  "lat": 2.926,
+  "lng": 101.474643
+ },
+ {
+  "no": 33,
+  "type": "n",
+  "id": 7709396623,
+  "name": "Watsons",
+  "category": "kesihatan",
+  "lat": 2.813191,
+  "lng": 101.500696
+ },
+ {
+  "no": 34,
+  "type": "n",
+  "id": 4727251002,
+  "name": "Klinik Rozita",
+  "category": "kesihatan",
+  "lat": 2.822475,
+  "lng": 101.53094
+ },
+ {
+  "no": 35,
+  "type": "n",
+  "id": 7707712306,
+  "name": "Watsons",
+  "category": "kesihatan",
+  "lat": 2.913318,
+  "lng": 101.476153
+ },
+ {
+  "no": 36,
+  "type": "n",
+  "id": 8881568665,
+  "name": "Watsons",
+  "category": "kesihatan",
+  "lat": 2.812731,
+  "lng": 101.508032
+ },
+ {
+  "no": 37,
+  "type": "w",
+  "id": 620367628,
+  "name": "Makam Almarhum Sultan Abdul Samad",
+  "category": "tarikan",
+  "lat": 2.82968,
+  "lng": 101.421877
+ },
+ {
+  "no": 38,
+  "type": "w",
+  "id": 1226750025,
+  "name": "Banting Waterfront",
+  "category": "tarikan",
+  "lat": 2.813829,
+  "lng": 101.509757
+ },
+ {
+  "no": 39,
+  "type": "n",
+  "id": 5860160003,
+  "name": "Sungai Langat Lookout Point & Fishing Area",
+  "category": "tarikan",
+  "lat": 2.838154,
+  "lng": 101.412918
+ },
+ {
+  "no": 40,
+  "type": "w",
+  "id": 628260885,
+  "name": "EcoWorld Gallery @ Eco Sanctuary",
+  "category": "tarikan",
+  "lat": 2.945674,
+  "lng": 101.541188
+ },
+ {
+  "no": 41,
+  "type": "w",
+  "id": 742758231,
+  "name": "Taman Sari Park",
+  "category": "tarikan",
+  "lat": 2.81557,
+  "lng": 101.504402
+ },
+ {
+  "no": 42,
+  "type": "w",
+  "id": 971658077,
+  "name": "Discovery Park",
+  "category": "tarikan",
+  "lat": 2.884785,
+  "lng": 101.61705
+ },
+ {
+  "no": 43,
+  "type": "w",
+  "id": 1064287474,
+  "name": "Masjid Diraja Sultan Alaeddin",
+  "category": "ibadah",
+  "lat": 2.863264,
+  "lng": 101.439809
+ },
+ {
+  "no": 44,
+  "type": "w",
+  "id": 1064287471,
+  "name": "",
+  "category": "ibadah",
+  "lat": 2.846878,
+  "lng": 101.461084
+ },
+ {
+  "no": 45,
+  "type": "w",
+  "id": 1573432646,
+  "name": "Surau Haji Saliman",
+  "category": "ibadah",
+  "lat": 2.950179,
+  "lng": 101.441726
+ },
+ {
+  "no": 46,
+  "type": "w",
+  "id": 1064287478,
+  "name": "",
+  "category": "ibadah",
+  "lat": 2.837437,
+  "lng": 101.429684
+ },
+ {
+  "no": 47,
+  "type": "w",
+  "id": 1064229817,
+  "name": "",
+  "category": "ibadah",
+  "lat": 2.732949,
+  "lng": 101.469808
+ },
+ {
+  "no": 48,
+  "type": "w",
+  "id": 952013873,
+  "name": "Masjid Al-Khairat",
+  "category": "ibadah",
+  "lat": 2.837719,
+  "lng": 101.572111
+ },
+ {
+  "no": 49,
+  "type": "w",
+  "id": 621457423,
+  "name": "",
+  "category": "ibadah",
+  "lat": 2.802399,
+  "lng": 101.662205
+ },
+ {
+  "no": 50,
+  "type": "w",
+  "id": 305526685,
+  "name": "Caltex R&R Dengkil",
+  "category": "minyak",
+  "lat": 2.910412,
+  "lng": 101.608666
+ }
+]

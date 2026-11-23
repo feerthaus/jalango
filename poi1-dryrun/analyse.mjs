@@ -67,6 +67,13 @@ function cleanPhone(p) {
   const m = d.replace(/^\+?60/, '0');
   return /^0\d{8,10}$/.test(m) ? `+60${m.slice(1)}` : 'invalid';
 }
+// osmium ids: n/w/r + number, or a + (2 × way id) / (2 × relation id + 1) for areas
+const osmUrlOf = (id) => {
+  const m = id.match(/^([nwra])(\d+)$/); if (!m) return null;
+  if (m[1] !== 'a') return `https://www.openstreetmap.org/${{ n: 'node', w: 'way', r: 'relation' }[m[1]]}/${m[2]}`;
+  const a = BigInt(m[2]);
+  return a % 2n === 0n ? `https://www.openstreetmap.org/way/${a / 2n}` : `https://www.openstreetmap.org/relation/${(a - 1n) / 2n}`;
+};
 const address = (t) => [t['addr:housenumber'], t['addr:street'], t['addr:city'] ?? t['addr:place'], t['addr:postcode']].filter(Boolean).join(', ') || null;
 
 // ── load ───────────────────────────────────────────────────────────────────
@@ -99,7 +106,7 @@ for (const f of feats) {
   const quality = (name ? 30 : 0) + (matches.length === 1 ? 20 : 0) + (addr ? 15 : 0) + (phone && phone !== 'invalid' ? 10 : 0) + (t.opening_hours ? 10 : 0) + (t.brand ? 5 : 0) + (issues.length === 0 ? 10 : 0);
   recs.push({
     source_ref: `osm:${f.id ?? t['@id']}`,
-    osm_url: `https://www.openstreetmap.org/${String(f.id ?? '').replace(/^([nwr])/, (m) => ({ n: 'node/', w: 'way/', r: 'relation/' })[m])}`,
+    osm_url: osmUrlOf(String(f.id ?? '')),
     version: t['@version'] ?? null, timestamp: t['@timestamp'] ?? null,
     category: cat, subcategory: subcat(cat, t) ?? null, also: matches.slice(1),
     name, name_norm: normName(name), raw_name: t.name ?? null,
