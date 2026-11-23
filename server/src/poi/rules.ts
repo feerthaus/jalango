@@ -197,9 +197,13 @@ export function classify(f: OsmFeature, now = new Date()): StagingRow | null {
   let decision: ImportDecision;
   let reject_reason: string | null = null;
   if (!f.inside_boundary) [decision, reject_reason] = ['rejected', 'luar_kawasan'];
-  else if (f.inside_institution) [decision, reject_reason] = ['rejected', 'institusi'];
-  else if (!name) [decision, reject_reason] = ['rejected', 'nama_kosong'];
-  else if (faults.length === 0 && quality >= 60) decision = 'auto_approved';
+  // Attractions and heritage inside an institution go to review, not rejection
+  // (owner, 23 Nov: Istana Bandar Jugra stands in a school's grounds)
+  else if (f.inside_institution && category !== 'tarikan') [decision, reject_reason] = ['rejected', 'institusi'];
+  // Unnamed masjid/surau go to review so an admin can name them (owner, 23 Nov 2026);
+  // approving still needs a name. Other unnamed places are rejected.
+  else if (!name && category !== 'ibadah') [decision, reject_reason] = ['rejected', 'nama_kosong'];
+  else if (faults.length === 0 && quality >= 60) decision = 'auto_approved'; // 'institusi' is a fault, so tarikan inside one is reviewed
   else decision = 'needs_review';
 
   return {
