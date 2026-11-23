@@ -53,11 +53,13 @@ export function MapPage() {
   const { fix } = useLocation();
   const hereState = fix ? stateAt(fix.coordinates) : null;
   const { selectedPlace, clearSelection, tileError, following, setFollowing } = useMapContext();
-  const { status } = useRouting();
+  const { status, destination } = useRouting();
   const { selectedReport, selectReport } = useReports();
   const { selectedShortcut, selectShortcut } = useShortcuts();
   const navigating = useIsNavigating();
-  const planning = !navigating && status !== 'idle';
+  // Planning needs a destination: without one the route panel shows nothing, so
+  // never hide the search bar for it
+  const planning = !navigating && status !== 'idle' && Boolean(destination);
   // Following a train/bus trip (Awam → Mula): its panel takes the bottom of the map
   const transitTrip = useTransitTrip();
   const [searchOpen, setSearchOpen] = useState(false);

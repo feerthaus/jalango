@@ -127,12 +127,14 @@ export function RoutingProvider({ children }: { children: ReactNode }) {
   const selectedRouteRef = useRef<Route | null>(null);
   selectedRouteRef.current = selectedRoute;
 
+  const requestAbortRef = useRef<AbortController | null>(null);
   // Fetch routes whenever a request is made (plan, retry, toggle tolls, reroute)
   useEffect(() => {
     if (!destination || requestId === 0) return;
     const origin = originRef.current;
     if (!origin) return;
     const controller = new AbortController();
+    requestAbortRef.current = controller;
     const isReroute = navigatingRef.current;
     if (isReroute) setRerouting(true);
     else setStatus('loading');
@@ -163,6 +165,8 @@ export function RoutingProvider({ children }: { children: ReactNode }) {
         }),
       )
       .then((res) => {
+        // Cancelled (back / end / new destination) while it was on its way: drop it
+        if (controller.signal.aborted) return;
         // A reroute that hit a network blip must not swap a real road route for a straight line
         if (isReroute && res.mode === 'demo' && selectedRouteRef.current && selectedRouteRef.current.source !== 'demo') return;
         // Reopened with no signal: carry on with the road route we were following, if we're still on it
@@ -431,6 +435,9 @@ export function RoutingProvider({ children }: { children: ReactNode }) {
   }, [consent]);
 
   const reset = useCallback(() => {
+    // A route still being fetched must not land after this (it would bring back
+    // "planning" with no destination: no search bar and no route panel)
+    requestAbortRef.current?.abort();
     navigatingRef.current = false;
     stopCollector();
     setStatus('idle');
