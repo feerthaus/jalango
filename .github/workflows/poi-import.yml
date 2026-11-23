@@ -65,7 +65,9 @@ jobs:
           node scripts/poi/extract.mjs poi.geojsonseq out/boundary.json places.geojsonseq coast.geojsonseq ctx.geojsonseq features.json
       - name: Apply the import rules (dry run)
         if: ${{ !inputs.send }}
-        run: node scripts/poi/import.ts features.json out/source.json
+        run: |
+          node scripts/poi/import.ts features.json out/source.json
+          node scripts/poi/report.mjs features.json out/staging.json
       - name: Apply the import rules and send to the database
         if: ${{ inputs.send }}
         env:
