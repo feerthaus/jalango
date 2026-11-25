@@ -5,7 +5,7 @@ vi.mock('../config.js', () => ({ config: cfg }));
 const rpc = vi.hoisted(() => vi.fn());
 vi.mock('../lib/supabaseAdmin.js', () => ({ supabaseAdmin: { rpc } }));
 
-import { parsePoiQuery, searchPois, toPlace, withPois } from './poiSearch.js';
+import { keepNameMatches, parsePoiQuery, searchPois, toPlace, withPois } from './poiSearch.js';
 
 const row = { id: 'a1', name: 'Haiza Workshop', category: 'bengkel' as const, subcategory: 'bengkel kereta', lat: 2.81, lng: 101.5, address: null, nearest_place: 'Banting', distance_m: 120 };
 
@@ -60,5 +60,18 @@ describe('POI search', () => {
     const p = [1, 2, 3].map((i) => toPlace({ ...row, id: String(i) }));
     expect(withPois(p, 'bengkel banting').first).toHaveLength(3);
     expect(withPois(p, 'haiza')).toMatchObject({ first: [{ id: 'poi:1' }, { id: 'poi:2' }], after: [{ id: 'poi:3' }] });
+  });
+  it('name search keeps places with the distinctive word (production: "restoran k2" listed 6 other restaurants)', () => {
+    const rows = ['Restoran K2', 'Restoran K2', 'Restoran TWW', 'Restoran Kian Heng', 'Restoran Kak Leha'].map((name) => ({ name }));
+    expect(keepNameMatches(rows, 'restoran k2').map((r) => r.name)).toEqual(['Restoran K2', 'Restoran K2']);
+    expect(keepNameMatches(rows, 'restoren k2').map((r) => r.name)).toEqual(['Restoran K2', 'Restoran K2']);
+    // only kind words: nothing distinctive to filter on
+    expect(keepNameMatches(rows, 'restoran')).toHaveLength(5);
+    // a typo that matches no name keeps the close spellings
+    expect(keepNameMatches([{ name: 'Haiza Workshop' }], 'hazia')).toHaveLength(1);
+  });
+  it('applies the name filter to database rows', async () => {
+    rpc.mockResolvedValue({ data: [row, { ...row, id: 'b2', name: 'Restoran TWW', category: 'restoran' }], error: null });
+    expect((await searchPois('haiza auto', undefined, 8)).map((p) => p.name)).toEqual(['Haiza Workshop']);
   });
 });
