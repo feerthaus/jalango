@@ -5,7 +5,7 @@ vi.mock('../config.js', () => ({ config: cfg }));
 const rpc = vi.hoisted(() => vi.fn());
 vi.mock('../lib/supabaseAdmin.js', () => ({ supabaseAdmin: { rpc } }));
 
-import { keepNameMatches, parsePoiQuery, searchPois, toPlace, withPois } from './poiSearch.js';
+import { keepNameMatches, parsePoiQuery, searchPois, settleWithin, toPlace, withPois } from './poiSearch.js';
 
 const row = { id: 'a1', name: 'Haiza Workshop', category: 'bengkel' as const, subcategory: 'bengkel kereta', lat: 2.81, lng: 101.5, address: null, nearest_place: 'Banting', distance_m: 120 };
 
@@ -53,7 +53,7 @@ describe('POI search', () => {
     vi.useFakeTimers();
     rpc.mockReturnValue(new Promise(() => {}));
     const slow = searchPois('restoran k2', undefined, 8);
-    await vi.advanceTimersByTimeAsync(301);
+    await vi.advanceTimersByTimeAsync(1501);
     expect(await slow).toEqual([]);
   });
   it('category searches list POIs first; name searches only the best two', () => {
@@ -73,5 +73,16 @@ describe('POI search', () => {
   it('applies the name filter to database rows', async () => {
     rpc.mockResolvedValue({ data: [row, { ...row, id: 'b2', name: 'Restoran TWW', category: 'restoran' }], error: null });
     expect((await searchPois('haiza auto', undefined, 8)).map((p) => p.name)).toEqual(['Haiza Workshop']);
+  });
+  it('waits for POIs only a short grace after Mapbox (production: the database answered in 330–718 ms)', async () => {
+    vi.useFakeTimers();
+    const at = (ms: number) => new Promise<string[]>((r) => setTimeout(() => r(['poi']), ms));
+    const quick = settleWithin(at(200), 300);
+    await vi.advanceTimersByTimeAsync(200);
+    expect(await quick).toEqual(['poi']);
+    const late = settleWithin(at(900), 300);
+    await vi.advanceTimersByTimeAsync(300);
+    expect(await late).toEqual([]);
+    expect(await settleWithin(Promise.reject(new Error('x')), 300)).toEqual([]);
   });
 });

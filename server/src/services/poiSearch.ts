@@ -5,7 +5,8 @@ import type { Coordinates, Place } from '../types.js';
 /**
  * POI-3: JalanGo's own POIs (OpenStreetMap data, Kuala Langat pilot) in search,
  * next to Mapbox. Off unless POI_SEARCH_ENABLED=true; never slows search down
- * (300 ms budget) and never breaks it (errors give no POIs).
+ * (it waits at most POI_GRACE_MS after Mapbox has answered) and never breaks it
+ * (errors give no POIs).
  */
 
 export type PoiCategory = 'restoran' | 'penginapan' | 'minyak' | 'bengkel' | 'runcit' | 'kesihatan' | 'tarikan' | 'ibadah';
@@ -131,7 +132,23 @@ export function keepNameMatches<T extends { name: string }>(rows: T[], q: string
   return rows.some(hit) ? rows.filter(hit) : rows;
 }
 
-const TIMEOUT_MS = 300;
+/** Hard cap on the database call (the API runs in the US, the database elsewhere: ~0.3–0.7 s seen in production) */
+const TIMEOUT_MS = 1500;
+/** How long search waits for POIs once Mapbox has answered */
+export const POI_GRACE_MS = 300;
+
+/** p's value if it settles within ms, otherwise [] (and never a rejection). */
+export async function settleWithin<T>(p: Promise<T[]>, ms: number): Promise<T[]> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const late = new Promise<T[]>((resolve) => {
+    timer = setTimeout(() => resolve([]), ms);
+  });
+  try {
+    return await Promise.race([p.catch(() => [] as T[]), late]);
+  } finally {
+    clearTimeout(timer);
+  }
+}
 
 /** Live POIs for this search, or [] when switched off, not matched, slow or failing. */
 export async function searchPois(text: string, near: Coordinates | undefined, limit: number): Promise<Place[]> {
