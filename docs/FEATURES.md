@@ -533,6 +533,13 @@ Import pertama Kuala Langat (23 Nov 2026): 494 POI live, 22 diluluskan admin, 13
 - **Selamat:** dimatikan kecuali `POI_SEARCH_ENABLED=true` (Netlify). Bajet 300 ms: jika lambat atau ralat, carian Mapbox tetap seperti biasa.
 - **Atribusi:** "Sebahagian data © penyumbang OpenStreetMap" di bawah hasil carian, dan "Data © penyumbang OpenStreetMap (ODbL)" pada kad tempat. Halaman Privasi dikemas kini (25 Nov 2026).
 
+### Semakan komuniti pada POI (POI-3b)
+
+- **Kad tempat POI JalanGo** (hasil carian dengan id `poi:`): bahagian **"Betul ke maklumat ni?"** dengan butang **Masih buka**, **Sudah tutup**, **Lokasi salah** dan **Cadang nama**. Log masuk sahaja; had 30 jawapan sehari; satu jawapan seorang bagi setiap jenis. Lencana "Disahkan komuniti" atau "Data lama, perlu disahkan".
+- **Automatik:** "Masih buka" atau "Sudah tutup" daripada **2 orang dalam 300 m** (tanpa jawapan bertentangan) mengemas kini status. Tempat yang dilaporkan tutup **tidak lagi muncul dalam carian**.
+- **Admin → POI → "Maklum balas"** (`admin_poi_feedback`, `poi_feedback_resolve`; migrasi `20261205000000_poi_feedback.sql`, aditif): jawapan dikumpul ikut tempat dan jenis, dengan bilangan orang, berapa yang berdekatan dan nama dicadangkan. **Akaun pengguna tidak dipaparkan.** Betulkan dengan tab POI live (tukar nama / sembunyi), kemudian **Terima** atau **Abaikan**.
+- **Privasi:** hanya akaun dan jawapan disimpan; lokasi digunakan untuk semakan 300 m sahaja dan tidak disimpan. Halaman Privasi dikemas kini.
+
 ## Lain-lain
 
 - **Harga minyak mingguan:** dari data.gov.my.
