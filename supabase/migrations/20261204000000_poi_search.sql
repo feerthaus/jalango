@@ -1,9 +1,9 @@
 -- POI-3: JalanGo's own POIs (OpenStreetMap, ODbL) in search.
 --
 -- search_pois is called by the API server only (service role), next to Mapbox, and
--- returns live POIs ("active") only. It is not open to anon / signed-in users, so the
--- table cannot be downloaded in bulk through the REST API, and the server's rate
--- limits apply. Two ways to search:
+-- returns live POIs ("active") only, leaving out places two nearby people reported
+-- closed. It is not open to anon / signed-in users, so the table cannot be
+-- downloaded in bulk through the REST API, and the server's rate limits apply. Two ways to search:
 --   by name:      p_q = "restoran k2"        → name contains the text, or is close to it
 --   by category:  p_category = 'bengkel'     → that category, optionally with a word
 --                 p_word = 'surau'              in the name and a place
@@ -54,7 +54,7 @@ begin
         from public.pois p
         cross join lateral (select case when has_near
           then round(111320 * sqrt(power(p.lat - p_lat, 2) + power((p.lng - p_lng) * cos(radians(p_lat)), 2)))::integer end as dist) d
-       where p.status = 'active'
+       where p.status = 'active' and p.verification <> 'dilapor_tutup'
          and (
            (p_category is null and (p.name_norm like '%' || q || '%' or extensions.similarity(p.name_norm, q) >= 0.4))
            or
