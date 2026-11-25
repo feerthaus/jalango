@@ -233,6 +233,7 @@ function Results({ search, activeIndex, onSelect, onReport, onAsk, onFind, pendi
           <PlaceRow key={p.id} id={optionId(i)} place={p} onSelect={onSelect} active={i === activeIndex} />
         ))}
       </ul>
+      {search.results.some((p) => p.source === 'osm') && <p className="px-2 pb-1 pt-1 text-[11px] text-ink-400">{t('Sebahagian data © penyumbang OpenStreetMap', 'Some data © OpenStreetMap contributors')}</p>}
       {search.mode === 'live' && !looksLikeLinkOrCoords(search.query) && (
         <div className="mt-1 flex items-center gap-2 border-t border-ink-100 px-2 pt-2 text-xs text-ink-500 dark:border-ink-800">
           <span className="min-w-0 flex-1">{t('Tak jumpa tempat yang betul?', 'Not the right place?')}</span>

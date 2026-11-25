@@ -2,6 +2,7 @@ import { supabaseAdmin } from '../lib/supabaseAdmin.js';
 import { rewriteQuery } from './aiSearch.js';
 import type { Coordinates, Place } from '../types.js';
 import { compactName, mergePlaces, nameHasAllTokens, searchPlaces } from './mapbox.js';
+import { searchPois, withPois } from './poiSearch.js';
 
 /**
  * Search that learns. Admins fix searches that went wrong (Admin → Carian)
@@ -125,9 +126,11 @@ export async function smartSearch(q: string, near: Coordinates | undefined, limi
   const learned = await loadLearned();
   const places = matchLearnedPlaces(learned.places, q).map((p) => (near ? { ...p, distanceMeters: Math.round(distance(near, p.coordinates)) } : p));
   const redirects = learned.redirects.filter((r) => coversKeyword(r.keywords, q)).slice(0, 2);
-  const [results, ...followed] = await Promise.all([searchPlaces(q, near, limit, learned.synonyms), ...redirects.map((r) => followRedirect(r, near))]);
+  const [results, pois, ...followed] = await Promise.all([searchPlaces(q, near, limit, learned.synonyms), searchPois(q, near, limit), ...redirects.map((r) => followRedirect(r, near))]);
   const pinned = followed.filter((p): p is Place => p !== null).map((p) => ({ ...p, pinned: true }));
-  const merged = mergePlaces([...pinned, ...places], results, limit);
+  // JalanGo's own POIs (OpenStreetMap, POI-3) next to Mapbox, without duplicates
+  const poi = withPois(pois, q);
+  const merged = mergePlaces(mergePlaces([...pinned, ...places], poi.first, limit), [...results, ...poi.after], limit);
   if (merged.length > 0) return { places: merged };
   if (opts.ai) {
     for (const alt of await rewriteQuery(q)) {

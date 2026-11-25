@@ -72,6 +72,7 @@ export function PlaceCard({ place, onClose }: { place: Place; onClose: () => voi
             )}
           </div>
           {place.address && <p className="mt-0.5 line-clamp-2 text-sm text-ink-500 dark:text-ink-300">{place.address}</p>}
+          {place.source === 'osm' && <p className="mt-0.5 text-[11px] text-ink-400">{t('Data © penyumbang OpenStreetMap (ODbL)', 'Data © OpenStreetMap contributors (ODbL)')}</p>}
           {pick?.description && <p className="mt-1 text-sm">“{pick.description}”</p>}
           {pick && (
             <div className="mt-1">

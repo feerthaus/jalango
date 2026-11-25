@@ -526,6 +526,13 @@ Import pertama Kuala Langat (23 Nov 2026): 494 POI live, 22 diluluskan admin, 13
 - **Tab "POI live"** (Admin → POI): cari POI live (nama atau `node/123`), **tukar nama/kategori** (`poi_rename`), **sembunyi** dengan sebab (`poi_set_hidden`, contohnya pendua) dan **papar semula**. Nama/kategori yang ditetapkan admin dan sembunyi oleh admin **dikekalkan** oleh import seterusnya (`admin_override`, `hidden_by_admin`); POI yang disembunyikan oleh rollback kembali bila diimport semula. Setiap tindakan direkod dalam `poi_changes` dan `admin_actions`, dan dipaparkan dalam Log audit.
 - **Butang Gabung untuk pendua:** rekod pendua kini dipautkan ke POI live yang diulanginya (kategori sama dalam 100 m, nama sama diutamakan).
 
+### Carian POI JalanGo (POI-3)
+
+- **Carian** kini turut mencari pangkalan data POI JalanGo (data OpenStreetMap, perintis Kuala Langat) **bersama Mapbox**, tanpa pendua. Fungsi `search_pois` (migrasi `20261204000000_poi_search.sql`, aditif) hanya dipanggil oleh pelayan JalanGo (service role), hanya POI aktif, maksimum 20.
+- **Dua jenis carian:** nama ("Restoran K2", ejaan hampir pun dijumpai) atau **jenis + tempat** ("bengkel banting", "surau", "masjid jenjarom", "kedai makan dekat morib"); terdekat dahulu bila lokasi diketahui. Carian jenis menyenaraikan POI JalanGo dahulu; carian nama meletakkan 2 POI terbaik dahulu.
+- **Selamat:** dimatikan kecuali `POI_SEARCH_ENABLED=true` (Netlify). Bajet 300 ms: jika lambat atau ralat, carian Mapbox tetap seperti biasa.
+- **Atribusi:** "Sebahagian data © penyumbang OpenStreetMap" di bawah hasil carian, dan "Data © penyumbang OpenStreetMap (ODbL)" pada kad tempat. Halaman Privasi dikemas kini (25 Nov 2026).
+
 ## Lain-lain
 
 - **Harga minyak mingguan:** dari data.gov.my.
