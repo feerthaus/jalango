@@ -19,6 +19,8 @@ import { useSavedPlaces } from '@/contexts/SavedPlacesContext';
 import type { Place } from '@/types';
 import { formatCoordinates, formatDistance, haversineMeters } from '@/utils/geo';
 import { placeIcon } from './placeIcon';
+import { PoiCheck } from './PoiCheck';
+import { poiIdOf } from '@/services/poiFeedbackService';
 import { googleMapsReviewsUrl } from '@/utils/googleMapsLink';
 import { useT } from '@/lib/i18n';
 
@@ -72,6 +74,7 @@ export function PlaceCard({ place, onClose }: { place: Place; onClose: () => voi
             )}
           </div>
           {place.address && <p className="mt-0.5 line-clamp-2 text-sm text-ink-500 dark:text-ink-300">{place.address}</p>}
+          {place.source === 'osm' && <p className="mt-0.5 text-[11px] text-ink-400">{t('Data © penyumbang OpenStreetMap (ODbL)', 'Data © OpenStreetMap contributors (ODbL)')}</p>}
           {pick?.description && <p className="mt-1 text-sm">“{pick.description}”</p>}
           {pick && (
             <div className="mt-1">
@@ -125,6 +128,7 @@ export function PlaceCard({ place, onClose }: { place: Place; onClose: () => voi
           </Button>
         )}
       </div>
+      {poiIdOf(place.id) && <PoiCheck poiId={poiIdOf(place.id)!} />}
       <Button variant="secondary" className="mt-2 w-full" onClick={() => !inItinerary && itinerary.add(place)} disabled={inItinerary} aria-pressed={inItinerary}>
         {inItinerary ? <Check className="size-4" /> : <ListPlus className="size-4" />} {inItinerary ? t('Dalam itinerari', 'In itinerary') : t('+ Itinerari', '+ Itinerary')}
       </Button>

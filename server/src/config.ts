@@ -20,6 +20,8 @@ export const config = {
   /** POI import from GitHub Actions (POI-2B): off unless POI_IMPORT_ENABLED=true and a token of 32+ characters is set */
   poiImportEnabled: process.env.POI_IMPORT_ENABLED?.trim() === 'true',
   poiIngestToken: process.env.POI_INGEST_TOKEN?.trim() || null,
+  /** POI-3: JalanGo's own POIs in search (off unless POI_SEARCH_ENABLED=true) */
+  poiSearchEnabled: process.env.POI_SEARCH_ENABLED?.trim() === 'true',
 } as const;
 
 export const integrations = {

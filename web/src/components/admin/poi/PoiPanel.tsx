@@ -2,7 +2,7 @@ import { AlertTriangle, Check, Eye, EyeOff, ExternalLink, GitMerge, Loader2, Pen
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { cn } from '@/lib/cn';
-import { poiAdminService } from '@/services/poiAdminService';
+import { poiAdminService, type PoiFeedbackGroup } from '@/services/poiAdminService';
 import { formatRelativeTime } from '@/utils/format';
 import {
   CATEGORY_LABEL,
@@ -21,10 +21,11 @@ import {
 } from '@/utils/poiReview';
 import { PoiMapPreview } from './PoiMapPreview';
 
-type View = 'review' | 'live' | 'runs' | 'metrics' | 'audit';
+type View = 'review' | 'live' | 'feedback' | 'runs' | 'metrics' | 'audit';
 const VIEWS: { id: View; label: string }[] = [
   { id: 'review', label: 'Semakan' },
   { id: 'live', label: 'POI live' },
+  { id: 'feedback', label: 'Maklum balas' },
   { id: 'runs', label: 'Larian import' },
   { id: 'metrics', label: 'Metrik kualiti' },
   { id: 'audit', label: 'Log audit' },
@@ -121,6 +122,7 @@ export function PoiPanel() {
 
       {view === 'review' && <ReviewView state={state} busy={busy} act={act} />}
       {view === 'live' && <LiveView busy={busy} act={act} />}
+      {view === 'feedback' && <FeedbackView />}
       {view === 'runs' && <RunsView state={state} busy={busy} act={act} />}
       {view === 'metrics' && <MetricsView state={state} />}
       {view === 'audit' && <AuditView state={state} />}
@@ -524,6 +526,81 @@ function LivePoiDetail({ p, busy, act }: { p: LivePoi; busy: boolean; act: Act }
         )}
       </div>
     </section>
+  );
+}
+
+const FEEDBACK_LABEL: Record<PoiFeedbackGroup['kind'], string> = {
+  masih_beroperasi: 'Masih beroperasi',
+  sudah_tutup: 'Sudah tutup',
+  lokasi_salah: 'Lokasi salah',
+  kategori_salah: 'Kategori salah',
+  nama_salah: 'Nama salah',
+  nama_dicadangkan: 'Cadangan nama',
+};
+
+/** Community answers on live POIs (POI-3b). The fix itself is made in "POI live". */
+function FeedbackView() {
+  const [rows, setRows] = useState<PoiFeedbackGroup[] | null>(null);
+  const [err, setErr] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const load = useCallback(() => {
+    poiAdminService
+      .feedback()
+      .then(setRows)
+      .catch((e: Error) => setErr(e.message));
+  }, []);
+  useEffect(load, [load]);
+  const resolve = async (g: PoiFeedbackGroup, accept: boolean) => {
+    setBusy(true);
+    setErr(null);
+    try {
+      await poiAdminService.resolveFeedback(g.poi_id, g.kind, accept);
+      load();
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : 'Gagal');
+    } finally {
+      setBusy(false);
+    }
+  };
+  if (!rows) return err ? <p role="alert" className="text-sm text-red-600">{err}</p> : <Loader2 className="mx-auto size-6 animate-spin text-ink-400" />;
+  return (
+    <div className="space-y-3">
+      <p className="text-xs text-ink-500">Jawapan pengguna pada POI live. "Masih buka" / "Sudah tutup" daripada 2 orang berdekatan (300 m) diproses sendiri; yang lain menunggu di sini. Untuk betulkan nama atau sembunyikan tempat, guna tab POI live, kemudian tekan Terima. Akaun pengguna tidak dipaparkan.</p>
+      {err && (
+        <p role="alert" className="rounded-xl bg-red-500/10 px-3 py-2 text-sm text-red-700 dark:text-red-300">
+          {err}
+        </p>
+      )}
+      {rows.length === 0 && <p className="rounded-2xl bg-white p-4 text-center text-sm text-ink-500 dark:bg-ink-900">Tiada maklum balas baharu.</p>}
+      <ul className="space-y-2" aria-label="Maklum balas komuniti">
+        {rows.map((g) => (
+          <li key={`${g.poi_id}:${g.kind}`} className="space-y-2 rounded-2xl bg-white p-3 text-sm shadow-sm ring-1 ring-ink-200 dark:bg-ink-900 dark:ring-ink-800">
+            <div className="flex flex-wrap items-baseline gap-x-2">
+              <span className="font-semibold">{g.name}</span>
+              <span className="text-xs text-ink-500">
+                {CATEGORY_LABEL[g.category]} · <span className="font-mono">{g.osm_ref}</span>
+              </span>
+            </div>
+            <p className="text-xs">
+              <span className="font-semibold">{FEEDBACK_LABEL[g.kind]}</span> · {g.n} orang ({g.near_n} berdekatan) · {formatRelativeTime(g.first_at, 'ms')}
+            </p>
+            {g.names.length > 0 && <p className="text-xs">Nama dicadangkan: {g.names.map((n) => `“${n}”`).join(', ')}</p>}
+            <div className="flex flex-wrap items-center gap-2">
+              <a className="inline-flex items-center gap-1 text-xs underline" href={`https://www.openstreetmap.org/?mlat=${g.lat}&mlon=${g.lng}#map=19/${g.lat}/${g.lng}`} target="_blank" rel="noopener noreferrer">
+                Lihat lokasi <ExternalLink className="size-3" />
+              </a>
+              <span className="flex-1" />
+              <Button className="px-3 py-1.5 text-xs" disabled={busy} onClick={() => resolve(g, true)}>
+                <Check className="size-3.5" /> Terima
+              </Button>
+              <Button variant="secondary" className="px-3 py-1.5 text-xs" disabled={busy} onClick={() => resolve(g, false)}>
+                <X className="size-3.5" /> Abaikan
+              </Button>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
 
