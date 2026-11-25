@@ -6,11 +6,15 @@ import {
   mergeDuplicate,
   POI_CATEGORIES,
   rejectRecord,
+  renamePoi,
   rollbackRun,
+  searchPois,
+  setPoiHidden,
   type AuditEntry,
   type Decision,
   type ImportRun,
   type Issue,
+  type LivePoi,
   type Poi,
   type PoiAdminState,
   type PoiCategory,
@@ -22,8 +26,8 @@ import {
 
 /**
  * What Admin → POI needs from the back end. With Supabase: the POI-2B database
- * functions (admin_poi_state, poi_review, poi_merge, poi_rollback_run; admins
- * with 2FA only). Without Supabase (local development): an in-memory TEST
+ * functions (admin_poi_state, poi_review, poi_merge, poi_rollback_run, and for
+ * live POIs admin_poi_search, poi_rename, poi_set_hidden; admins with 2FA only). Without Supabase (local development): an in-memory TEST
  * implementation over made-up data, labelled as such on screen.
  */
 export interface PoiAdminService {
@@ -34,12 +38,20 @@ export interface PoiAdminService {
   reject(recordId: string, reason: string): Promise<PoiAdminState>;
   merge(recordId: string, intoPoiId: string): Promise<PoiAdminState>;
   rollback(runId: string): Promise<PoiAdminState>;
+  /** Live POIs by name or OSM ref (hidden ones included) */
+  searchLive(q: string): Promise<LivePoi[]>;
+  /** Rename / change the category of a live POI; later imports keep the admin's choice */
+  rename(poiId: string, name: string, category?: PoiCategory): Promise<PoiAdminState>;
+  /** Hide a live POI (reason needed) or show it again; later imports keep an admin's hide */
+  setHidden(poiId: string, hidden: boolean, reason?: string): Promise<PoiAdminState>;
   /** Test data: start again from the original data. Supabase: reload. */
   reset(): Promise<PoiAdminState>;
 }
 
 export function createMockPoiAdminService(actor = 'admin (ujian)', now: () => string = () => new Date().toISOString()): PoiAdminService {
   let state = mockPoiState();
+  const overrides = new Set<string>();
+  const hiddenByAdmin = new Set<string>();
   const apply = async (f: (s: PoiAdminState) => PoiAdminState) => {
     state = f(state);
     return state;
@@ -51,7 +63,25 @@ export function createMockPoiAdminService(actor = 'admin (ujian)', now: () => st
     reject: (id, reason) => apply((s) => rejectRecord(s, id, actor, now(), reason)),
     merge: (id, into) => apply((s) => mergeDuplicate(s, id, into, actor, now())),
     rollback: (runId) => apply((s) => rollbackRun(s, runId, actor, now())),
-    reset: async () => (state = mockPoiState()),
+    searchLive: async (q) => searchPois(state, q, overrides, hiddenByAdmin),
+    rename: (id, name, category) =>
+      apply((s) => {
+        const next = renamePoi(s, id, actor, now(), name, category);
+        if (next !== s) overrides.add(id);
+        return next;
+      }),
+    setHidden: (id, hidden, reason) =>
+      apply((s) => {
+        const next = setPoiHidden(s, id, hidden, actor, now(), reason);
+        if (hidden) hiddenByAdmin.add(id);
+        else hiddenByAdmin.delete(id);
+        return next;
+      }),
+    reset: async () => {
+      overrides.clear();
+      hiddenByAdmin.clear();
+      return (state = mockPoiState());
+    },
   };
 }
 
@@ -64,6 +94,17 @@ export interface AdminPoiStateJson {
   matches: { id: string; osm_ref: string; name: string; category: PoiCategory; subcategory: string | null; lat: number; lng: number; address: string | null; phone: string | null; quality: number; status: 'active' | 'hidden' | 'missing'; first_run: string | null; last_seen_run: string | null }[];
   metrics: { active: number; hidden: number; needs_check: number; with_address: number; with_phone: number; with_hours: number; by_category: Partial<Record<PoiCategory, number>>; open_feedback: number };
   changes: { id: number; run_id: string | null; poi_id: string | null; action: string; reason: string | null; at: string; name: string | null }[];
+}
+
+/** admin_poi_search() rows: a pois snapshot plus the admin flags */
+export type AdminPoiSearchJson = (AdminPoiStateJson['matches'][number] & { admin_override: boolean; hidden_by_admin: boolean })[];
+
+export function livePoiFromAdmin(p: AdminPoiSearchJson[number]): LivePoi {
+  return {
+    id: p.id, sourceRef: p.osm_ref, name: p.name, category: p.category, subcategory: p.subcategory, lat: p.lat, lng: p.lng, address: p.address, phone: p.phone,
+    quality: p.quality, status: p.status === 'active' ? 'active' : 'hidden', firstRun: p.first_run ?? '', lastSeenRun: p.last_seen_run ?? '',
+    liveStatus: p.status, adminOverride: Boolean(p.admin_override), hiddenByAdmin: Boolean(p.hidden_by_admin),
+  };
 }
 
 const pct = (n: number, d: number) => (d ? Math.round((1000 * n) / d) / 10 : 0);
@@ -95,10 +136,17 @@ export function stateFromAdmin(j: AdminPoiStateJson): PoiAdminState {
   const changes: PoiChange[] = j.changes
     .filter((c) => c.run_id && c.poi_id)
     .map((c) => ({ runId: c.run_id!, poiId: c.poi_id!, action: c.action === 'insert' ? 'insert' : c.action === 'missing' || c.action === 'hide' ? 'hide' : 'update', before: null, after: null, at: c.at }));
-  const AUDIT: Record<string, AuditEntry['action']> = { approve: 'approve', merge: 'merge', rollback: 'rollback' };
+  const AUDIT: Partial<Record<string, AuditEntry['action']>> = { approve: 'approve', merge: 'merge', rollback: 'rollback', hide: 'hide' };
+  // Admin edits of live POIs (poi_rename, poi_set_hidden) are 'update' / 'hide' with an "admin: …" or written reason
+  const auditAction = (c: AdminPoiStateJson['changes'][number]): AuditEntry['action'] | undefined => {
+    if (c.action === 'update') return c.reason === 'admin: nama/kategori' ? 'rename' : c.reason === 'admin: papar semula' ? 'show' : undefined;
+    return AUDIT[c.action];
+  };
   const audit: AuditEntry[] = j.changes
-    .filter((c) => AUDIT[c.action])
-    .map((c) => ({ at: c.at, actor: 'admin', action: AUDIT[c.action], target: c.name ?? c.poi_id ?? '', note: c.reason ?? '' }))
+    .flatMap((c) => {
+      const action = auditAction(c);
+      return action ? [{ at: c.at, actor: 'admin', action, target: c.name ?? c.poi_id ?? '', note: c.reason?.startsWith('admin:') ? '' : (c.reason ?? '') }] : [];
+    })
     .reverse();
   const latest = j.runs.find((r) => r.status === 'processed')?.counts ?? {};
   const backlog = staging.filter((r) => r.decision === 'needs_review' || r.decision === 'duplicate');
@@ -123,6 +171,8 @@ function friendly(e: { message: string; hint?: string | null }): Error {
   if (/Admins only/i.test(e.message)) return new Error('Admin sahaja, dengan 2FA.');
   if (/Already decided/i.test(e.message)) return new Error('Rekod ini sudah diputuskan.');
   if (/rolled back/i.test(e.message)) return new Error('Larian import ini sudah di-rollback.');
+  if (/reason for hiding/i.test(e.message)) return new Error('Nyatakan sebab untuk sembunyikan POI ini.');
+  if (/Record not found/i.test(e.message)) return new Error('Rekod tidak dijumpai (mungkin sudah berubah). Muat semula.');
   if (/Outside the area/i.test(e.message)) return new Error('Rekod di luar kawasan tidak boleh diluluskan.');
   return new Error(e.message);
 }
@@ -145,6 +195,13 @@ export function createSupabasePoiAdminService(db: SupabaseClient): PoiAdminServi
     reject: (id, reason) => run('poi_review', { p_id: id, p_action: 'reject', p_reason: reason }),
     merge: (id, into) => run('poi_merge', { p_id: id, p_into: into }),
     rollback: (runId) => run('poi_rollback_run', { p_run: runId }),
+    searchLive: async (q) => {
+      const { data, error } = await db.rpc('admin_poi_search', { p_q: q, p_limit: 30 });
+      if (error) throw friendly(error);
+      return (data as AdminPoiSearchJson).map(livePoiFromAdmin);
+    },
+    rename: (id, name, category) => run('poi_rename', { p_poi: id, p_name: name, p_category: category ?? null }),
+    setHidden: (id, hidden, reason) => run('poi_set_hidden', { p_poi: id, p_hidden: hidden, p_reason: reason?.trim() || null }),
     reset: load,
   };
 }

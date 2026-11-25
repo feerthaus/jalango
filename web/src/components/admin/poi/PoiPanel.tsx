@@ -1,4 +1,4 @@
-import { AlertTriangle, Check, ExternalLink, GitMerge, Loader2, RotateCcw, X } from 'lucide-react';
+import { AlertTriangle, Check, Eye, EyeOff, ExternalLink, GitMerge, Loader2, Pencil, RotateCcw, Search, X } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { cn } from '@/lib/cn';
@@ -13,6 +13,7 @@ import {
   runCounts,
   type Decision,
   type Issue,
+  type LivePoi,
   type PoiAdminState,
   type PoiCategory,
   type QueueFilter,
@@ -20,9 +21,10 @@ import {
 } from '@/utils/poiReview';
 import { PoiMapPreview } from './PoiMapPreview';
 
-type View = 'review' | 'runs' | 'metrics' | 'audit';
+type View = 'review' | 'live' | 'runs' | 'metrics' | 'audit';
 const VIEWS: { id: View; label: string }[] = [
   { id: 'review', label: 'Semakan' },
+  { id: 'live', label: 'POI live' },
   { id: 'runs', label: 'Larian import' },
   { id: 'metrics', label: 'Metrik kualiti' },
   { id: 'audit', label: 'Log audit' },
@@ -118,6 +120,7 @@ export function PoiPanel() {
       )}
 
       {view === 'review' && <ReviewView state={state} busy={busy} act={act} />}
+      {view === 'live' && <LiveView busy={busy} act={act} />}
       {view === 'runs' && <RunsView state={state} busy={busy} act={act} />}
       {view === 'metrics' && <MetricsView state={state} />}
       {view === 'audit' && <AuditView state={state} />}
@@ -386,7 +389,7 @@ function MetricsView({ state }: { state: PoiAdminState }) {
 function AuditView({ state }: { state: PoiAdminState }) {
   const rows = [...state.audit].reverse();
   if (rows.length === 0) return <p className="rounded-2xl bg-white p-4 text-sm text-ink-500 dark:bg-ink-900">Belum ada tindakan. Lulus, tolak, gabung atau rollback akan direkod di sini (dalam POI-2B: dalam admin_actions).</p>;
-  const ACTION: Record<string, string> = { approve: 'Lulus', reject: 'Tolak', merge: 'Gabung', rollback: 'Rollback', recategorise: 'Tukar kategori', rename: 'Tukar nama' };
+  const ACTION: Record<string, string> = { approve: 'Lulus', reject: 'Tolak', merge: 'Gabung', rollback: 'Rollback', recategorise: 'Tukar kategori', rename: 'Tukar nama', hide: 'Sembunyi', show: 'Papar semula' };
   return (
     <ul className="divide-y divide-ink-100 rounded-2xl bg-white text-sm shadow-sm ring-1 ring-ink-200 dark:divide-ink-800 dark:bg-ink-900 dark:ring-ink-800">
       {rows.map((a, i) => (
@@ -400,6 +403,127 @@ function AuditView({ state }: { state: PoiAdminState }) {
         </li>
       ))}
     </ul>
+  );
+}
+
+/** Live POIs: find one, rename / change its category, hide it (e.g. a duplicate) or show it again. */
+function LiveView({ busy, act }: { busy: boolean; act: Act }) {
+  const [q, setQ] = useState('');
+  const [results, setResults] = useState<LivePoi[] | null>(null);
+  const [searching, setSearching] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const [selected, setSelected] = useState<string | null>(null);
+  const search = useCallback(async (text: string) => {
+    if (text.trim().length < 2) return;
+    setSearching(true);
+    setErr(null);
+    try {
+      setResults(await poiAdminService.searchLive(text.trim()));
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : 'Gagal');
+    } finally {
+      setSearching(false);
+    }
+  }, []);
+  // After a change: refresh the screen state (act) and these results
+  const change: Act = async (f) => {
+    const done = await act(f);
+    if (done) await search(q);
+    return done;
+  };
+
+  return (
+    <div className="space-y-3">
+      <p className="text-xs text-ink-500">Cari POI yang sudah live untuk tukar nama atau kategori, atau sembunyikan (contoh: pendua). Import seterusnya mengekalkan keputusan admin. Setiap tindakan direkod.</p>
+      <form
+        className="flex gap-2"
+        onSubmit={(e) => {
+          e.preventDefault();
+          void search(q);
+        }}
+      >
+        <input type="search" value={q} onChange={(e) => setQ(e.target.value.slice(0, 80))} placeholder="Nama atau node/123" aria-label="Cari POI live" className="min-w-0 flex-1 rounded-xl bg-white px-3 py-2 text-sm ring-1 ring-ink-200 dark:bg-ink-900 dark:ring-ink-800" />
+        <Button type="submit" className="px-3 py-2" disabled={searching || q.trim().length < 2}>
+          {searching ? <Loader2 className="size-4 animate-spin" /> : <Search className="size-4" />} Cari
+        </Button>
+      </form>
+      {err && (
+        <p role="alert" className="rounded-xl bg-red-500/10 px-3 py-2 text-sm text-red-700 dark:text-red-300">
+          {err}
+        </p>
+      )}
+      {results && results.length === 0 && <p className="rounded-2xl bg-white p-4 text-center text-sm text-ink-500 dark:bg-ink-900">Tiada POI sepadan.</p>}
+      {results && results.length > 0 && (
+        <ul className="space-y-2" aria-label="POI live">
+          {results.map((p) => (
+            <li key={p.id}>
+              <button type="button" onClick={() => setSelected((x) => (x === p.id ? null : p.id))} aria-expanded={selected === p.id} className={cn('w-full rounded-2xl bg-white p-3 text-left text-sm shadow-sm ring-1 dark:bg-ink-900', selected === p.id ? 'ring-2 ring-jade-500' : 'ring-ink-200 dark:ring-ink-800')}>
+                <p className="truncate font-semibold">{p.name}</p>
+                <p className="text-xs text-ink-500">
+                  {CATEGORY_LABEL[p.category]} · <span className="font-mono">{p.sourceRef}</span>
+                  {p.liveStatus !== 'active' && <span className="ml-1 rounded-full bg-red-500/10 px-1.5 font-semibold text-red-700 dark:text-red-300">{p.liveStatus === 'missing' ? 'Tiada lagi di OSM' : 'Disembunyikan'}</span>}
+                  {p.adminOverride && <span className="ml-1 rounded-full bg-sky-500/10 px-1.5 font-semibold text-sky-800 dark:text-sky-200">Disunting admin</span>}
+                </p>
+              </button>
+              {selected === p.id && (
+                <div className="mt-2">
+                  <LivePoiDetail key={`${p.id}:${p.name}:${p.category}:${p.liveStatus}`} p={p} busy={busy} act={change} />
+                </div>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+function LivePoiDetail({ p, busy, act }: { p: LivePoi; busy: boolean; act: Act }) {
+  const [name, setName] = useState(p.name);
+  const [category, setCategory] = useState<PoiCategory>(p.category);
+  const [hiding, setHiding] = useState(false);
+  const [reason, setReason] = useState('Pendua');
+  const [other, setOther] = useState('');
+  const edited = name.replace(/\s+/g, ' ').trim() !== p.name || category !== p.category;
+  const why = reason === 'Lain-lain' ? other.trim() : reason;
+
+  return (
+    <section aria-label="Butiran POI live" className="space-y-3 rounded-2xl bg-white p-3 text-sm shadow-sm ring-1 ring-ink-200 dark:bg-ink-900 dark:ring-ink-800">
+      <PoiMapPreview pins={[{ lat: p.lat, lng: p.lng, color: '#e11d48', label: p.name }]} />
+      <a className="inline-flex items-center gap-1 text-xs underline" href={`https://www.openstreetmap.org/?mlat=${p.lat}&mlon=${p.lng}#map=19/${p.lat}/${p.lng}`} target="_blank" rel="noopener noreferrer">
+        {p.lat.toFixed(5)}, {p.lng.toFixed(5)} <ExternalLink className="size-3" />
+      </a>
+      <div className="space-y-2 border-t border-ink-100 pt-3 dark:border-ink-800">
+        <label className="block text-xs font-semibold text-ink-500">
+          Nama
+          <input value={name} onChange={(e) => setName(e.target.value.slice(0, 120))} className="mt-1 w-full rounded-xl bg-ink-100 px-3 py-2 text-sm font-normal text-ink-900 dark:bg-ink-800 dark:text-ink-50" />
+        </label>
+        <Select label="Kategori" value={category} onChange={(v) => setCategory(v as PoiCategory)} options={POI_CATEGORIES.map((c) => [c, CATEGORY_LABEL[c]] as [string, string])} />
+        <div className="flex flex-wrap gap-2">
+          <Button className="px-3 py-1.5 text-xs" disabled={busy || !edited} onClick={() => act(() => poiAdminService.rename(p.id, name, category))}>
+            <Pencil className="size-3.5" /> Simpan
+          </Button>
+          {p.liveStatus === 'active' ? (
+            <Button variant="danger" className="px-3 py-1.5 text-xs" disabled={busy} onClick={() => setHiding((x) => !x)}>
+              <EyeOff className="size-3.5" /> Sembunyi
+            </Button>
+          ) : p.liveStatus === 'hidden' ? (
+            <Button variant="secondary" className="px-3 py-1.5 text-xs" disabled={busy} onClick={() => act(() => poiAdminService.setHidden(p.id, false))}>
+              <Eye className="size-3.5" /> Papar semula
+            </Button>
+          ) : null}
+        </div>
+        {hiding && p.liveStatus === 'active' && (
+          <div className="space-y-2 rounded-xl bg-red-500/5 p-2">
+            <Select label="Sebab" value={reason} onChange={setReason} options={REJECT_REASONS.map((x) => [x, x] as [string, string])} />
+            {reason === 'Lain-lain' && <input value={other} onChange={(e) => setOther(e.target.value.slice(0, 120))} placeholder="Nyatakan sebab" aria-label="Sebab lain" className="w-full rounded-xl bg-ink-100 px-3 py-2 text-sm dark:bg-ink-800" />}
+            <Button variant="danger" className="px-3 py-1.5 text-xs" disabled={busy || !why} onClick={() => act(() => poiAdminService.setHidden(p.id, true, why))}>
+              Sahkan sembunyi
+            </Button>
+          </div>
+        )}
+      </div>
+    </section>
   );
 }
 

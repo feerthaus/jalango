@@ -113,7 +113,7 @@ export interface PoiChange {
 export interface AuditEntry {
   at: string;
   actor: string;
-  action: 'approve' | 'reject' | 'merge' | 'rollback' | 'recategorise' | 'rename';
+  action: 'approve' | 'reject' | 'merge' | 'rollback' | 'recategorise' | 'rename' | 'hide' | 'show';
   target: string;
   note: string;
 }
@@ -289,5 +289,72 @@ export function qualityMetrics(state: PoiAdminState): QualityMetrics {
     duplicatePct: pct(staged.filter((r) => r.issues.includes('pendua')).length, staged.length),
     completeness: { address: pct(active.filter((p) => p.address).length, active.length), phone: pct(active.filter((p) => p.phone).length, active.length) },
     byCategory: POI_CATEGORIES.map((c) => ({ category: c, active: active.filter((p) => p.category === c).length, backlog: backlog.filter((r) => r.category === c).length })),
+  };
+}
+
+// ── Live POIs (admin tools: search, rename / change category, hide, show again) ──
+
+/** A live POI as the admin search returns it */
+export interface LivePoi extends Poi {
+  /** 'missing' = no longer in OpenStreetMap */
+  liveStatus: 'active' | 'hidden' | 'missing';
+  /** name / category set by an admin: imports keep them */
+  adminOverride: boolean;
+  /** hidden by an admin: imports keep it hidden */
+  hiddenByAdmin: boolean;
+}
+
+/** Same list as the import rules (server/src/poi/rules.ts) and the database (poi_is_generic). */
+const GENERIC_NAME = /^(kedai|restoran|restaurant|masjid|surau|musolla|klinik|farmasi|shop|cafe|kafe|hotel|kantin|canteen|warung|bengkel|pasar|stesen minyak|homestay|chalet)$/i;
+export const isGenericName = (name: string) => GENERIC_NAME.test(name.replace(/\s+/g, ' ').trim());
+
+function findPoi(state: PoiAdminState, poiId: string): Poi {
+  const p = state.pois.find((x) => x.id === poiId);
+  if (!p) throw new PoiReviewError('POI tidak dijumpai.');
+  return p;
+}
+
+/** Live POIs whose name contains the text (or with that OSM ref), hidden ones included. */
+export function searchPois(state: PoiAdminState, q: string, overrides: ReadonlySet<string> = new Set(), hiddenByAdmin: ReadonlySet<string> = new Set()): LivePoi[] {
+  const t = q.toLowerCase().replace(/\s+/g, ' ').trim();
+  if (t.length < 2) return [];
+  return state.pois
+    .filter((p) => p.sourceRef.replace(/^osm:/, '') === q.trim().replace(/^osm:/, '') || p.name.toLowerCase().includes(t))
+    .sort((a, b) => a.name.localeCompare(b.name))
+    .slice(0, 30)
+    .map((p) => ({ ...p, liveStatus: p.status, adminOverride: overrides.has(p.id), hiddenByAdmin: hiddenByAdmin.has(p.id) }));
+}
+
+/** Rename and/or change the category of a live POI (same rules as the database's poi_rename). */
+export function renamePoi(state: PoiAdminState, poiId: string, actor: string, at: string, name: string, category?: PoiCategory): PoiAdminState {
+  const p = findPoi(state, poiId);
+  const n = name.replace(/\s+/g, ' ').trim();
+  if (n.length < 2) throw new PoiReviewError('Nama terlalu pendek.');
+  if (isGenericName(n)) throw new PoiReviewError('Nama generik: beri nama sebenar tempat ini.');
+  const cat = category ?? p.category;
+  const after: Poi = { ...p, name: n, category: cat };
+  const audit: AuditEntry[] = [];
+  if (n !== p.name) audit.push({ at, actor, action: 'rename', target: p.sourceRef, note: `${p.name} → ${n}` });
+  if (cat !== p.category) audit.push({ at, actor, action: 'recategorise', target: p.sourceRef, note: `${CATEGORY_LABEL[p.category]} → ${CATEGORY_LABEL[cat]}` });
+  if (!audit.length) return state;
+  return {
+    ...state,
+    pois: state.pois.map((x) => (x.id === poiId ? after : x)),
+    changes: [...state.changes, { runId: p.lastSeenRun, poiId, action: 'update', before: p, after, at }],
+    audit: [...state.audit, ...audit],
+  };
+}
+
+/** Hide a live POI (a reason is needed) or show it again. */
+export function setPoiHidden(state: PoiAdminState, poiId: string, hidden: boolean, actor: string, at: string, reason?: string): PoiAdminState {
+  const p = findPoi(state, poiId);
+  const why = reason?.trim();
+  if (hidden && !why) throw new PoiReviewError('Nyatakan sebab untuk sembunyikan POI ini.');
+  const after: Poi = { ...p, status: hidden ? 'hidden' : 'active' };
+  return {
+    ...state,
+    pois: state.pois.map((x) => (x.id === poiId ? after : x)),
+    changes: [...state.changes, { runId: p.lastSeenRun, poiId, action: hidden ? 'hide' : 'update', before: p, after, at }],
+    audit: [...state.audit, { at, actor, action: hidden ? 'hide' : 'show', target: p.sourceRef, note: why || p.name }],
   };
 }

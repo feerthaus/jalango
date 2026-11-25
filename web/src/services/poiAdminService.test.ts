@@ -61,11 +61,36 @@ describe('Supabase POI admin service (POI-2B)', () => {
     await svc.approve('s1', 'ibadah', 'Surau Haji Saliman');
     await svc.merge('s2', 'p1');
     await svc.rollback('r1');
+    await svc.rename('p1', 'Restoran K2 Banting', 'restoran');
+    await svc.setHidden('p1', true, ' Pendua ');
+    await svc.setHidden('p1', false);
     expect(calls.filter(([fn]) => fn !== 'admin_poi_state')).toEqual([
       ['poi_review', { p_id: 's1', p_action: 'approve', p_category: null, p_name: null }],
       ['poi_review', { p_id: 's1', p_action: 'approve', p_category: 'ibadah', p_name: 'Surau Haji Saliman' }],
       ['poi_merge', { p_id: 's2', p_into: 'p1' }],
       ['poi_rollback_run', { p_run: 'r1' }],
+      ['poi_rename', { p_poi: 'p1', p_name: 'Restoran K2 Banting', p_category: 'restoran' }],
+      ['poi_set_hidden', { p_poi: 'p1', p_hidden: true, p_reason: 'Pendua' }],
+      ['poi_set_hidden', { p_poi: 'p1', p_hidden: false, p_reason: null }],
     ]);
+  });
+
+  it('searches live POIs and maps the admin flags', async () => {
+    const row = { ...json.matches[0], status: 'hidden' as const, admin_override: true, hidden_by_admin: true };
+    const db = { rpc: async (fn: string) => (fn === 'admin_poi_search' ? { data: [row], error: null } : { data: json, error: null }) } as unknown as SupabaseClient;
+    const [p] = await createSupabasePoiAdminService(db).searchLive('k2');
+    expect(p).toMatchObject({ id: 'p1', name: 'Restoran K2', liveStatus: 'hidden', status: 'hidden', adminOverride: true, hiddenByAdmin: true });
+  });
+
+  it('shows admin edits of live POIs in the audit log', () => {
+    const s = stateFromAdmin({
+      ...json,
+      changes: [
+        { id: 5, run_id: null, poi_id: 'p1', action: 'update', reason: 'admin: papar semula', at: '2026-11-25T12:00:00Z', name: 'Restoran K2' },
+        { id: 4, run_id: null, poi_id: 'p1', action: 'hide', reason: 'Pendua', at: '2026-11-25T11:00:00Z', name: 'Restoran K2' },
+        { id: 3, run_id: null, poi_id: 'p1', action: 'update', reason: 'admin: nama/kategori', at: '2026-11-25T10:00:00Z', name: 'Restoran K2' },
+      ],
+    });
+    expect(s.audit.map((a) => [a.action, a.note])).toEqual([['rename', ''], ['hide', 'Pendua'], ['show', '']]);
   });
 });
