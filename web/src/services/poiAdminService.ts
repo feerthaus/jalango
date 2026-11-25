@@ -44,6 +44,10 @@ export interface PoiAdminService {
   rename(poiId: string, name: string, category?: PoiCategory): Promise<PoiAdminState>;
   /** Hide a live POI (reason needed) or show it again; later imports keep an admin's hide */
   setHidden(poiId: string, hidden: boolean, reason?: string): Promise<PoiAdminState>;
+  /** Community answers waiting for an admin, grouped by POI and kind */
+  feedback(): Promise<PoiFeedbackGroup[]>;
+  /** Accept or dismiss one group of answers (the fix itself: rename / hide in POI live) */
+  resolveFeedback(poiId: string, kind: string, accept: boolean): Promise<void>;
   /** Test data: start again from the original data. Supabase: reload. */
   reset(): Promise<PoiAdminState>;
 }
@@ -52,6 +56,12 @@ export function createMockPoiAdminService(actor = 'admin (ujian)', now: () => st
   let state = mockPoiState();
   const overrides = new Set<string>();
   const hiddenByAdmin = new Set<string>();
+  const resolved = new Set<string>();
+  // Test data: one made-up community answer
+  const firstPoi = state.pois[0];
+  const feedbackGroups: PoiFeedbackGroup[] = firstPoi
+    ? [{ poi_id: firstPoi.id, name: firstPoi.name, osm_ref: firstPoi.sourceRef, category: firstPoi.category, lat: firstPoi.lat, lng: firstPoi.lng, status: 'active', verification: 'belum', kind: 'nama_dicadangkan', n: 1, near_n: 1, first_at: now(), names: ['Contoh nama dicadangkan'], categories: [] }]
+    : [];
   const apply = async (f: (s: PoiAdminState) => PoiAdminState) => {
     state = f(state);
     return state;
@@ -77,7 +87,12 @@ export function createMockPoiAdminService(actor = 'admin (ujian)', now: () => st
         else hiddenByAdmin.delete(id);
         return next;
       }),
+    feedback: async () => feedbackGroups.filter((g) => !resolved.has(`${g.poi_id}:${g.kind}`)),
+    resolveFeedback: async (poiId, kind) => {
+      resolved.add(`${poiId}:${kind}`);
+    },
     reset: async () => {
+      resolved.clear();
       overrides.clear();
       hiddenByAdmin.clear();
       return (state = mockPoiState());
@@ -94,6 +109,24 @@ export interface AdminPoiStateJson {
   matches: { id: string; osm_ref: string; name: string; category: PoiCategory; subcategory: string | null; lat: number; lng: number; address: string | null; phone: string | null; quality: number; status: 'active' | 'hidden' | 'missing'; first_run: string | null; last_seen_run: string | null }[];
   metrics: { active: number; hidden: number; needs_check: number; with_address: number; with_phone: number; with_hours: number; by_category: Partial<Record<PoiCategory, number>>; open_feedback: number };
   changes: { id: number; run_id: string | null; poi_id: string | null; action: string; reason: string | null; at: string; name: string | null }[];
+}
+
+/** admin_poi_feedback() rows: no account ids, only counts and suggestions */
+export interface PoiFeedbackGroup {
+  poi_id: string;
+  name: string;
+  osm_ref: string;
+  category: PoiCategory;
+  lat: number;
+  lng: number;
+  status: 'active' | 'hidden' | 'missing';
+  verification: string;
+  kind: 'masih_beroperasi' | 'sudah_tutup' | 'lokasi_salah' | 'kategori_salah' | 'nama_salah' | 'nama_dicadangkan';
+  n: number;
+  near_n: number;
+  first_at: string;
+  names: string[];
+  categories: PoiCategory[];
 }
 
 /** admin_poi_search() rows: a pois snapshot plus the admin flags */
@@ -202,6 +235,15 @@ export function createSupabasePoiAdminService(db: SupabaseClient): PoiAdminServi
     },
     rename: (id, name, category) => run('poi_rename', { p_poi: id, p_name: name, p_category: category ?? null }),
     setHidden: (id, hidden, reason) => run('poi_set_hidden', { p_poi: id, p_hidden: hidden, p_reason: reason?.trim() || null }),
+    feedback: async () => {
+      const { data, error } = await db.rpc('admin_poi_feedback', { p_limit: 100 });
+      if (error) throw friendly(error);
+      return (data as PoiFeedbackGroup[] | null) ?? [];
+    },
+    resolveFeedback: async (poiId, kind, accept) => {
+      const { error } = await db.rpc('poi_feedback_resolve', { p_poi: poiId, p_kind: kind, p_accept: accept });
+      if (error) throw friendly(error);
+    },
     reset: load,
   };
 }

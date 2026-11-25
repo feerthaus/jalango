@@ -64,6 +64,7 @@ describe('Supabase POI admin service (POI-2B)', () => {
     await svc.rename('p1', 'Restoran K2 Banting', 'restoran');
     await svc.setHidden('p1', true, ' Pendua ');
     await svc.setHidden('p1', false);
+    await svc.resolveFeedback('p1', 'nama_dicadangkan', true);
     expect(calls.filter(([fn]) => fn !== 'admin_poi_state')).toEqual([
       ['poi_review', { p_id: 's1', p_action: 'approve', p_category: null, p_name: null }],
       ['poi_review', { p_id: 's1', p_action: 'approve', p_category: 'ibadah', p_name: 'Surau Haji Saliman' }],
@@ -72,6 +73,7 @@ describe('Supabase POI admin service (POI-2B)', () => {
       ['poi_rename', { p_poi: 'p1', p_name: 'Restoran K2 Banting', p_category: 'restoran' }],
       ['poi_set_hidden', { p_poi: 'p1', p_hidden: true, p_reason: 'Pendua' }],
       ['poi_set_hidden', { p_poi: 'p1', p_hidden: false, p_reason: null }],
+      ['poi_feedback_resolve', { p_poi: 'p1', p_kind: 'nama_dicadangkan', p_accept: true }],
     ]);
   });
 
