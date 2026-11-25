@@ -2,7 +2,7 @@ import { supabaseAdmin } from '../lib/supabaseAdmin.js';
 import { rewriteQuery } from './aiSearch.js';
 import type { Coordinates, Place } from '../types.js';
 import { compactName, mergePlaces, nameHasAllTokens, searchPlaces } from './mapbox.js';
-import { searchPois, withPois } from './poiSearch.js';
+import { POI_GRACE_MS, searchPois, settleWithin, withPois } from './poiSearch.js';
 
 /**
  * Search that learns. Admins fix searches that went wrong (Admin → Carian)
@@ -126,7 +126,10 @@ export async function smartSearch(q: string, near: Coordinates | undefined, limi
   const learned = await loadLearned();
   const places = matchLearnedPlaces(learned.places, q).map((p) => (near ? { ...p, distanceMeters: Math.round(distance(near, p.coordinates)) } : p));
   const redirects = learned.redirects.filter((r) => coversKeyword(r.keywords, q)).slice(0, 2);
-  const [results, pois, ...followed] = await Promise.all([searchPlaces(q, near, limit, learned.synonyms), searchPois(q, near, limit), ...redirects.map((r) => followRedirect(r, near))]);
+  // JalanGo POIs start together with Mapbox; once Mapbox has answered they get a short grace, never longer
+  const poisCall = searchPois(q, near, limit);
+  const [results, ...followed] = await Promise.all([searchPlaces(q, near, limit, learned.synonyms), ...redirects.map((r) => followRedirect(r, near))]);
+  const pois = await settleWithin(poisCall, POI_GRACE_MS);
   const pinned = followed.filter((p): p is Place => p !== null).map((p) => ({ ...p, pinned: true }));
   // JalanGo's own POIs (OpenStreetMap, POI-3) next to Mapbox, without duplicates
   const poi = withPois(pois, q);

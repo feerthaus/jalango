@@ -530,7 +530,7 @@ Import pertama Kuala Langat (23 Nov 2026): 494 POI live, 22 diluluskan admin, 13
 
 - **Carian** kini turut mencari pangkalan data POI JalanGo (data OpenStreetMap, perintis Kuala Langat) **bersama Mapbox**, tanpa pendua. Fungsi `search_pois` (migrasi `20261204000000_poi_search.sql`, aditif) hanya dipanggil oleh pelayan JalanGo (service role), hanya POI aktif (tidak termasuk tempat yang dilaporkan tutup oleh 2 orang berdekatan), maksimum 20.
 - **Dua jenis carian:** nama ("Restoran K2", ejaan hampir pun dijumpai) atau **jenis + tempat** ("bengkel banting", "surau", "masjid jenjarom", "kedai makan dekat morib"); terdekat dahulu bila lokasi diketahui. Carian jenis menyenaraikan POI JalanGo dahulu; carian nama meletakkan 2 POI terbaik dahulu. Carian nama hanya menyimpan tempat yang ada perkataan khusus carian itu (contohnya "k2" dalam "restoran k2"), supaya restoran lain yang cuma serupa ejaan tidak ikut keluar; jika tiada yang sepadan (salah eja), ejaan hampir dikekalkan.
-- **Selamat:** dimatikan kecuali `POI_SEARCH_ENABLED=true` (Netlify). Bajet 300 ms: jika lambat atau ralat, carian Mapbox tetap seperti biasa.
+- **Selamat:** dimatikan kecuali `POI_SEARCH_ENABLED=true` (Netlify). Carian POI bermula serentak dengan Mapbox; selepas Mapbox menjawab, ia ditunggu paling lama **0.3 saat** lagi (pelayan API di AS, pangkalan data di rantau lain: 0.3–0.7 s dilihat dalam production). Jika lambat atau ralat, hasil Mapbox dipaparkan seperti biasa.
 - **Atribusi:** "Sebahagian data © penyumbang OpenStreetMap" di bawah hasil carian, dan "Data © penyumbang OpenStreetMap (ODbL)" pada kad tempat. Halaman Privasi dikemas kini (25 Nov 2026).
 
 ### Semakan komuniti pada POI (POI-3b)
