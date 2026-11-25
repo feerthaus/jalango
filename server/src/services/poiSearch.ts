@@ -113,6 +113,24 @@ export function toPlace(r: PoiRow): Place {
   };
 }
 
+/** Words that say what kind of place it is: they match too many names to count on their own. */
+const KIND_WORDS = new Set(['restoran', 'restaurant', 'kedai', 'makan', 'cafe', 'kafe', 'warung', 'gerai', 'klinik', 'clinic', 'farmasi', 'pharmacy', 'masjid', 'surau', 'hotel', 'homestay', 'bengkel', 'workshop', 'stesen', 'minyak', 'pasar', 'mini', 'market', 'the']);
+
+/**
+ * Name search: "restoran k2" should not list every "Restoran …" that only looks
+ * alike. When some places hold a distinctive word of the search ("k2"), only
+ * those are kept; when none do (a typo such as "hazia"), close spellings stay.
+ */
+export function keepNameMatches<T extends { name: string }>(rows: T[], q: string): T[] {
+  const words = q.split(' ').filter((w) => w.length >= 2 && !KIND_WORDS.has(w));
+  if (!words.length) return rows;
+  const hit = (r: T) => {
+    const n = r.name.toLowerCase();
+    return words.some((w) => n.includes(w));
+  };
+  return rows.some(hit) ? rows.filter(hit) : rows;
+}
+
 const TIMEOUT_MS = 300;
 
 /** Live POIs for this search, or [] when switched off, not matched, slow or failing. */
@@ -132,7 +150,8 @@ export async function searchPois(text: string, near: Coordinates | undefined, li
     })
     .then(({ data, error }) => {
       if (error) throw new Error(error.message);
-      return ((data as PoiRow[] | null) ?? []).map(toPlace);
+      const rows = (data as PoiRow[] | null) ?? [];
+      return (pq.q ? keepNameMatches(rows, pq.q) : rows).map(toPlace);
     });
   let timer: ReturnType<typeof setTimeout> | undefined;
   const timeout = new Promise<Place[]>((resolve) => {
