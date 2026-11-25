@@ -129,8 +129,13 @@ export function cleanName(raw: string | null | undefined): string | null {
   return s.slice(0, 160);
 }
 
+// Only filler words are dropped. Words that say what the place is (klinik, farmasi,
+// restoran…) are kept: "U.N.I. Klinik" and "U.n.i. Farmasi" 50 m apart are two places.
 export const normName = (s: string | null | undefined) =>
-  (s ?? '').toLowerCase().normalize('NFKD').replace(/[^a-z0-9 ]/g, ' ').replace(/\b(restoran|kedai|makan|cafe|kafe|masjid|surau|klinik|farmasi|hotel|the|sdn|bhd)\b/g, ' ').replace(/\s+/g, ' ').trim();
+  (s ?? '').toLowerCase().normalize('NFKD').replace(/[^a-z0-9 ]/g, ' ').replace(/\b(the|sdn|bhd)\b/g, ' ').replace(/\s+/g, ' ').trim();
+
+/** Same name and category closer than this are duplicates (owner, 25 Nov 2026: 100 m). */
+export const DUPLICATE_METRES = 100;
 
 /** Malaysian number as +60…, or 'invalid'. */
 export function cleanPhone(p: string | null | undefined): string | null | 'invalid' {
@@ -238,7 +243,7 @@ const metres = (a: { lat: number; lng: number }, b: { lat: number; lng: number }
   Math.hypot((a.lng - b.lng) * 111320 * Math.cos((a.lat * Math.PI) / 180), (a.lat - b.lat) * 110574);
 
 /**
- * Duplicates: same normalised name and category within 50 m. Branches of a chain
+ * Duplicates: same normalised name and category within DUPLICATE_METRES (100 m). Branches of a chain
  * are not duplicates (different `branch`, or further apart: 99 Speedmart, Watsons).
  * The better record stays; the other becomes 'duplicate'. Rejected rows are ignored.
  */
@@ -253,7 +258,7 @@ export function markDuplicates(rows: StagingRow[]): StagingRow[] {
       if (b.decision === 'duplicate' || a.category !== b.category) continue;
       if (!normName(a.name) || normName(a.name) !== normName(b.name)) continue;
       if (a.branch && b.branch && a.branch.toLowerCase() !== b.branch.toLowerCase()) continue;
-      if (metres(a, b) > 50) continue;
+      if (metres(a, b) > DUPLICATE_METRES) continue;
       const [keep, drop] = b.quality > a.quality ? [b, a] : [a, b];
       drop.decision = 'duplicate';
       if (!drop.issues.includes('pendua')) drop.issues.push('pendua');

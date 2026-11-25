@@ -171,6 +171,30 @@ describe('duplicates', () => {
     expect(out.every((r) => r.decision !== 'duplicate')).toBe(true);
   });
 
+  it('within 100 m is a duplicate (Klinik Dr. Care Banting, node and building 59 m apart)', () => {
+    const out = markDuplicates([
+      row({ osm_ref: 'node/12525741957', tags: { amenity: 'clinic', name: 'Klinik Dr. Care Banting' } }),
+      row({ osm_ref: 'way/825695386', lat: 2.81053, tags: { amenity: 'clinic', name: 'Klinik Dr. Care Banting', phone: '0123456789' } }),
+    ]);
+    expect(out.filter((r) => r.decision === 'duplicate')).toHaveLength(1);
+  });
+
+  it('more than 100 m apart is not a duplicate', () => {
+    const out = markDuplicates([
+      row({ osm_ref: 'node/1', tags: { amenity: 'restaurant', name: 'Restoran K2' } }),
+      row({ osm_ref: 'node/2', lat: 2.811, tags: { amenity: 'restaurant', name: 'Restoran K2' } }),
+    ]);
+    expect(out.every((r) => r.decision !== 'duplicate')).toBe(true);
+  });
+
+  it('a clinic and a pharmacy with the same brand are two places (U.N.I. Klinik, U.n.i. Farmasi)', () => {
+    const out = markDuplicates([
+      row({ osm_ref: 'node/12651142829', tags: { amenity: 'pharmacy', name: 'U.n.i. Farmasi' } }),
+      row({ osm_ref: 'node/12651142851', lat: 2.81045, tags: { amenity: 'clinic', name: 'U.N.I. Klinik' } }),
+    ]);
+    expect(out.every((r) => r.decision !== 'duplicate')).toBe(true);
+  });
+
   it('one record per OSM object in a run', () => {
     const rows = buildStaging([f({ osm_ref: 'way/9', tags: { amenity: 'fuel', brand: 'Caltex' } }), f({ osm_ref: 'way/9', tags: { amenity: 'fuel', brand: 'Caltex' } })], NOW);
     expect(rows).toHaveLength(1);

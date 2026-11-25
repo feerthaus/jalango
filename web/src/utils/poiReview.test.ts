@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { approveRecord, mergeDuplicate, PoiReviewError, qualityMetrics, rejectRecord, reviewQueue, rollbackRun, runCounts, type PoiAdminState, type StagingRecord } from './poiReview';
+import { approveRecord, isGenericName, mergeDuplicate, PoiReviewError, qualityMetrics, rejectRecord, renamePoi, reviewQueue, rollbackRun, runCounts, searchPois, setPoiHidden, type PoiAdminState, type StagingRecord } from './poiReview';
 
 const AT = '2026-11-22T10:00:00Z';
 const rec = (id: string, over: Partial<StagingRecord> = {}): StagingRecord => ({
@@ -85,5 +85,35 @@ describe('POI review workflow', () => {
     expect(m).toMatchObject({ activePois: 2, backlog: 2, autoApprovePct: 20, rejectPct: 20, duplicatePct: 20 });
     expect(m.completeness.address).toBe(50);
     expect(m.byCategory.find((c) => c.category === 'bengkel')).toEqual({ category: 'bengkel', active: 0, backlog: 1 });
+  });
+});
+
+describe('live POI tools', () => {
+  it('generic names are recognised as in the import rules and the database', () => {
+    expect(isGenericName('Surau')).toBe(true);
+    expect(isGenericName('  surau ')).toBe(true);
+    expect(isGenericName('Surau Taman Sijangkang Permai')).toBe(false);
+  });
+  it('finds live POIs by name or OSM ref', () => {
+    expect(searchPois(base(), 'lama').map((p) => p.id)).toEqual(['poi:old']);
+    expect(searchPois(base(), 'osm:nold')).toHaveLength(1);
+    expect(searchPois(base(), 'l')).toEqual([]);
+  });
+  it('renames / re-categorises a live POI with change and audit, and refuses generic names', () => {
+    const s = renamePoi(base(), 'poi:old', 'admin', AT, 'Kedai Runcit Pak Ali', 'runcit');
+    expect(s.pois[0]).toMatchObject({ name: 'Kedai Runcit Pak Ali', category: 'runcit' });
+    expect(s.audit.map((a) => a.action)).toEqual(['rename', 'recategorise']);
+    expect(s.changes).toHaveLength(1);
+    expect(() => renamePoi(base(), 'poi:old', 'admin', AT, 'Kedai')).toThrow(/generik/);
+    expect(renamePoi(base(), 'poi:old', 'admin', AT, 'Kedai Lama')).toEqual(base()); // nothing changed
+  });
+  it('hides a live POI only with a reason, and shows it again', () => {
+    expect(() => setPoiHidden(base(), 'poi:old', true, 'admin', AT)).toThrow(/sebab/);
+    const s = setPoiHidden(base(), 'poi:old', true, 'admin', AT, 'Pendua');
+    expect(s.pois[0].status).toBe('hidden');
+    expect(s.audit[0]).toMatchObject({ action: 'hide', note: 'Pendua' });
+    const back = setPoiHidden(s, 'poi:old', false, 'admin', AT);
+    expect(back.pois[0].status).toBe('active');
+    expect(back.audit.map((a) => a.action)).toEqual(['hide', 'show']);
   });
 });
