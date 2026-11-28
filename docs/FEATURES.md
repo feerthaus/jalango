@@ -554,6 +554,13 @@ Import pertama Kuala Langat (23 Nov 2026): 494 POI live, 22 diluluskan admin, 13
 - **Pilihan B:** tempat Selangor masuk ke carian dengan label **"Belum disahkan"** (juga untuk Kuala Langat) sehingga pengguna berdekatan mengesahkannya. Kad tempat memaparkan lencana yang sama.
 - **"Adakah … di sini?"** (kad di peta, log masuk sahaja): bila pengguna **berhenti** (bukan navigasi, kelajuan < ~11 km/j, GPS ≤ 100 m), app bertanya tentang tempat belum disahkan dalam 500 m: **Ya, ada / Sudah tiada / Lokasi salah / Tak pasti**. Menjawab perlu dalam 300 m. 2 orang berdekatan bersetuju = disahkan atau dilaporkan tutup. Tak pasti/langkau diingat dalam peranti. Lokasi tidak disimpan.
 - **Import** (migrasi `20261207000000_poi_selangor.sql`, aditif): proses dalam satu pernyataan set (~13,000 baris; ~1.7 s dalam ujian), wilayah ikut larian (POI Kuala Langat menjadi milik Selangor), larian Kuala Langat ditolak selepas Selangor diimport, baris staging lulus automatik disimpan 14 hari (bukan 90) untuk jimat storan. API menerima `kuala-langat` dan `selangor` sahaja. Import Selangor sebenar menunggu "GO" pemilik.
+
+## Deploy dan versi live
+
+- **Versi live:** setiap build menulis `/version.json` (commit dan masa build, daripada `COMMIT_REF` Netlify). Admin memaparkan "Versi app" di bawah halaman, dan pautan muat semula bila laman sudah ada versi lebih baharu.
+- **Live check** (workflow GitHub, selepas setiap push ke `main`): menunggu sehingga `/version.json` menunjukkan commit itu (atau yang lebih baharu), paling lama 20 minit; gagal jika tidak, supaya pemilik diberitahu. Perubahan yang di-merge **belum dikira live** sehingga semakan ini lulus.
+- **Jimat kredit Netlify:** build dilangkau bila tiada fail app berubah sejak build terakhir (hanya dokumen, migrasi, skrip import POI, workflow atau ujian). Deploy manual commit yang sama (contohnya selepas menukar pembolehubah Netlify) tetap dibina.
+
 ## Lain-lain
 
 - **Harga minyak mingguan:** dari data.gov.my.

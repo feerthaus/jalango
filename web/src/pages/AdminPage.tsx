@@ -1,3 +1,4 @@
+import { AppVersion } from '@/components/admin/AppVersion';
 import { usePageMeta } from '@/hooks/usePageMeta';
 import { GrowthPanel } from '@/components/admin/GrowthPanel';
 import { poiAdminService } from '@/services/poiAdminService';
@@ -105,6 +106,7 @@ export function AdminPage() {
             {tab === 'stats' ? <StatsPanel /> : tab === 'growth' ? <GrowthPanel /> : tab === 'poi' ? <PoiPanel /> : tab === 'operators' ? <OperatorReview /> : tab === 'listings' ? <ListingReview /> : tab === 'flags' ? <FlagQueue /> : tab === 'photos' ? <PhotoReviewQueue /> : tab === 'feedback' ? <FeedbackInbox /> : <SearchMissReview />}
           </>
         )}
+        <AppVersion />
       </main>
     </div>
   );
