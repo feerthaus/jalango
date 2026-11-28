@@ -4,6 +4,7 @@ import { getDirections } from '../directions.js';
 import { getFuelPrices } from '../fuel.js';
 import { smartSearch } from '../searchLearning.js';
 import { getTransitNetwork } from '../transit/feeds.js';
+import { placesAround } from '../around.js';
 import { accessLeg, haversineKm, planTransit, type TransitOption } from '../transit/raptor.js';
 
 /**
@@ -67,6 +68,18 @@ export const TOOLS: Anthropic.Beta.BetaTool[] = [
       type: 'object',
       properties: { ...coords, avoid_tolls: { type: 'boolean' } },
       required: [...coordKeys, 'avoid_tolls'],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: 'places_around',
+    description:
+      'Places to eat (kind "makan") or things to see (kind "menarik") around a point, from JalanGo\'s own data: community picks with how many people recommend them, and JalanGo places with how many people confirmed they are still there. There are NO reviews, ratings or opening hours. Up to 10, most recommended first, then nearest. Use the person\'s location when they say "sini"/"dekat sini"/"here".',
+    strict: true,
+    input_schema: {
+      type: 'object',
+      properties: { lat: point, lng: point, kind: { type: 'string', enum: ['makan', 'menarik'] }, radius_km: { type: 'number', description: 'Search radius in km, 1 to 10 (default 3)' } },
+      required: ['lat', 'lng', 'kind', 'radius_km'],
       additionalProperties: false,
     },
   },
@@ -152,6 +165,25 @@ export async function runTool(name: string, input: Record<string, unknown>, ctx:
       const { from, to } = pair(input);
       const leg = accessLeg(Math.max(haversineKm(from, to), 2));
       return { km: leg.km, minutes: leg.minutes, fare_rm: `${leg.costMin}-${leg.costMax}`, note: 'Rough estimate without surge; check the Grab app.' };
+    }
+    case 'places_around': {
+      const at = { lat: Number(input.lat), lng: Number(input.lng) };
+      if (!inMalaysia(at)) throw new Error('The point must be in Malaysia (use search_place or the person\'s location).');
+      const kind = input.kind === 'menarik' ? 'menarik' : 'makan';
+      const km = Math.min(10, Math.max(1, Number(input.radius_km) || 3));
+      const found = await placesAround(at, kind, Math.round(km * 1000), 10);
+      for (const p of found) ctx.places.set(p.id, { id: p.id, name: p.name, address: p.note ?? '', lat: p.lat, lng: p.lng });
+      return found.map((p) => ({
+        id: p.id,
+        name: p.name,
+        note: p.note,
+        km: r1(p.distanceMeters / 1000),
+        recommended_by: p.recommends,
+        confirmed_by: p.confirmations,
+        source: p.source === 'komuniti' ? 'JalanGo community pick' : p.unverified ? 'map data, not confirmed yet' : 'map data, confirmed by people',
+        lat: p.lat,
+        lng: p.lng,
+      }));
     }
     default:
       throw new Error(`unknown tool ${name}`);

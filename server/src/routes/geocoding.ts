@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { withUsagePolicy } from '../lib/usageGuard.js';
 import { placeFromMapsLink } from '../services/mapsLink.js';
 import { searchRentals } from '../services/rentals.js';
+import { placesAround } from '../services/around.js';
 import { logMiss, smartSearch } from '../services/searchLearning.js';
 import { CATEGORY_MAP, reverseGeocode, searchAlong, searchCategory } from '../services/mapbox.js';
 
@@ -86,6 +87,19 @@ geocodingRouter.get('/along', async (req, res) => {
   const { category, points } = alongQuery.parse(req.query);
   // Nice-to-have and fans out to many calls: fail closed if usage can't be counted
   res.json({ results: await withUsagePolicy('optional', () => searchAlong(category, points)) });
+});
+
+export const aroundQuery = z.object({
+  kind: z.enum(['makan', 'menarik']),
+  lng: z.coerce.number().min(99).max(120),
+  lat: z.coerce.number().min(0).max(8),
+  radius: z.coerce.number().int().min(300).max(10_000).default(3000),
+});
+
+/** "Sekitar sini": community picks and JalanGo POIs around a point (our own data, no paid call) */
+geocodingRouter.get('/around', async (req, res) => {
+  const { kind, lng, lat, radius } = aroundQuery.parse(req.query);
+  res.json({ results: await placesAround({ lat, lng }, kind, radius, 12) });
 });
 
 geocodingRouter.get('/category', async (req, res) => {

@@ -5,6 +5,7 @@ import { useLocation } from '@/contexts/LocationContext';
 import { useMapContext } from '@/contexts/MapContext';
 import { useT } from '@/lib/i18n';
 import { fetchNearbyQueue, fetchNearbyUnverified, sendPoiFeedback, type NearbyPoi, type NearbyQueueRecord, type PoiFeedbackKind } from '@/services/poiFeedbackService';
+import { AroundCard } from './AroundCard';
 import { NearbyQueueQuestion } from './NearbyQueueQuestion';
 import { areaFor, loadAreas } from '@/utils/myAreas';
 import { formatDistance, haversineMeters } from '@/utils/geo';
@@ -76,7 +77,9 @@ export function NearbyPoiCheckCard() {
   }
   const p = items[0];
   const r = queue[0];
-  if (!user || !good) return null;
+  if (!good) return null;
+  // Nothing to check here (or signed out): offer what's around instead ("Sekitar sini")
+  if (!user || (!p && !r)) return <AroundCard at={good} />;
   if (!p && r) {
     const nextQ = () => setQueue((l) => l.slice(1));
     return (
@@ -143,7 +146,7 @@ export function NearbyPoiCheckCard() {
             <Check className="size-4" /> {t('Ya, ada', 'Yes, it’s here')}
           </button>
           <button type="button" disabled={busy} onClick={() => void answer('sudah_tutup')} className="flex items-center justify-center gap-1 rounded-xl bg-red-600 py-2 text-sm font-bold text-white">
-            <Store className="size-4" /> {t('Sudah tiada', 'Gone')}
+            <Store className="size-4" /> {t('Sudah tutup terus', 'Closed for good')}
           </button>
           <button type="button" disabled={busy} onClick={() => void answer('lokasi_salah')} className="flex items-center justify-center gap-1 rounded-xl bg-ink-100 py-2 text-sm font-semibold dark:bg-ink-700">
             <MapPinOff className="size-4" /> {t('Lokasi salah', 'Wrong place')}
