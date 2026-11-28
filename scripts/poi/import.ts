@@ -52,7 +52,13 @@ async function call(path: string, body: unknown): Promise<any> {
       });
       const j = await r.json().catch(() => ({}));
       if (r.ok) return j;
-      // 4xx: our request is wrong, retrying won't help
+      // 429: the API's rate limit (30 a minute): wait the minute out and try again
+      if (r.status === 429) {
+        console.log(`${path}: rate limited, waiting 65 s (try ${i}/3)`);
+        await new Promise((res) => setTimeout(res, 65_000));
+        continue;
+      }
+      // other 4xx: our request is wrong, retrying won't help
       if (r.status < 500) throw new Error(`${path}: HTTP ${r.status} ${JSON.stringify(j)}`);
       console.log(`${path}: HTTP ${r.status}, try ${i}/3`);
     } catch (e) {
@@ -72,9 +78,13 @@ const { run } = await call('/api/poi/runs', {
 });
 console.log(`Run ${run}`);
 let staged = 0;
-for (let i = 0; i < rows.length; i += 200) {
-  const { staged: n } = await call(`/api/poi/runs/${run}/rows`, { rows: rows.slice(i, i + 200) });
+// Bigger batches and a steady pace keep a whole state (~15,000 rows, ~38 calls)
+// under the API's limit of 30 calls a minute
+const BATCH = 400;
+for (let i = 0; i < rows.length; i += BATCH) {
+  const { staged: n } = await call(`/api/poi/runs/${run}/rows`, { rows: rows.slice(i, i + BATCH) });
   staged += n;
+  if (i + BATCH < rows.length) await new Promise((res) => setTimeout(res, 2_500));
 }
 console.log(`Staged ${staged} of ${rows.length}`);
 const { result } = await call(`/api/poi/runs/${run}/process`, {});
