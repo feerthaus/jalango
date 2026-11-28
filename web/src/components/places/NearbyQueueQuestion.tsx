@@ -21,19 +21,28 @@ const KIND: Record<string, Msg> = {
  * option A): its real name, whether its kind is right, or whether the public can
  * go in. Two nearby people giving the same answer settle it.
  */
-export function NearbyQueueQuestion({ r, at, onDone, onSkip }: { r: NearbyQueueRecord; at: Coordinates; onDone: (settled: boolean) => void; onSkip: () => void }) {
+export function NearbyQueueQuestion({ r, at, area = null, onDone, onSkip }: {
+  r: NearbyQueueRecord;
+  /** where I am (on the spot), or null when answering about one of my areas */
+  at: Coordinates | null;
+  /** my area this record is in, rounded (utils/myAreas) */
+  area?: Coordinates | null;
+  onDone: (settled: boolean) => void;
+  onSkip: () => void;
+}) {
   const [t] = useT();
   const [busy, setBusy] = useState(false);
   const [name, setName] = useState('');
   const [error, setError] = useState<string | null>(null);
   const kind = t(KIND[r.category] ?? { ms: 'tempat', en: 'place' });
-  const near = r.distance_m <= 300;
+  // On the spot within 300 m, or someone who lives / works around
+  const near = r.distance_m <= 300 || (at === null && area !== null);
 
   const send = async (answer: QueueAnswer) => {
     setBusy(true);
     setError(null);
     try {
-      const res = await answerQueue(r.id, answer, at, answer === 'nama' ? name : undefined);
+      const res = await answerQueue(r.id, answer, at, answer === 'nama' ? name : undefined, area);
       onDone(res === 'approved' || res === 'rejected');
     } catch (e) {
       const m = e instanceof Error ? e.message : '';
@@ -61,7 +70,7 @@ export function NearbyQueueQuestion({ r, at, onDone, onSkip }: { r: NearbyQueueR
         <div className="min-w-0 flex-1">
           <p className="text-sm font-bold">{title}</p>
           <p className="text-xs text-ink-500">
-            {formatDistance(r.distance_m)} {t('dari anda · bantu sahkan tempat dalam JalanGo', 'from you · help confirm places in JalanGo')}
+            {at ? `${formatDistance(r.distance_m)} ${t('dari anda', 'from you')}` : `${formatDistance(r.distance_m)} ${t('dari kawasan anda', 'from your area')}`} · {t('bantu sahkan tempat dalam JalanGo', 'help confirm places in JalanGo')}
           </p>
         </div>
         <button type="button" onClick={onSkip} aria-label={t('Langkau', 'Skip')} className="grid size-8 shrink-0 place-items-center rounded-full text-ink-400 hover:bg-ink-100 dark:hover:bg-ink-700">

@@ -536,7 +536,7 @@ Import pertama Kuala Langat (23 Nov 2026): 494 POI live, 22 diluluskan admin, 13
 ### Semakan komuniti pada POI (POI-3b)
 
 - **Kad tempat POI JalanGo** (hasil carian dengan id `poi:`): bahagian **"Betul ke maklumat ni?"** dengan butang **Masih buka**, **Sudah tutup**, **Lokasi salah** dan **Cadang nama**. Log masuk sahaja; had 30 jawapan sehari; satu jawapan seorang bagi setiap jenis. Lencana "Disahkan komuniti" atau "Data lama, perlu disahkan".
-- **Automatik:** "Masih buka" atau "Sudah tutup" daripada **2 orang dalam 300 m** (tanpa jawapan bertentangan) mengemas kini status. Tempat yang dilaporkan tutup **tidak lagi muncul dalam carian**.
+- **Automatik:** "Masih buka" atau "Sudah tutup" daripada **3 orang, sekurang-kurangnya seorang dalam 300 m** (yang lain boleh penduduk kawasan, lihat "Kawasan saya"; sejak 28 Nov, dahulu 2 orang dalam 300 m) (tanpa jawapan bertentangan) mengemas kini status. Tempat yang dilaporkan tutup **tidak lagi muncul dalam carian**.
 - **Admin → POI → "Maklum balas"** (`admin_poi_feedback`, `poi_feedback_resolve`; migrasi `20261205000000_poi_feedback.sql`, aditif): jawapan dikumpul ikut tempat dan jenis, dengan bilangan orang, berapa yang berdekatan dan nama dicadangkan. **Akaun pengguna tidak dipaparkan.** Betulkan dengan tab POI live (tukar nama / sembunyi), kemudian **Terima** atau **Abaikan**.
 - **Privasi:** hanya akaun dan jawapan disimpan; lokasi digunakan untuk semakan 300 m sahaja dan tidak disimpan. Halaman Privasi dikemas kini.
 
@@ -555,12 +555,16 @@ Import pertama Kuala Langat (23 Nov 2026): 494 POI live, 22 diluluskan admin, 13
 - **"Adakah … di sini?"** (kad di peta, log masuk sahaja): bila pengguna **berhenti** (bukan navigasi, kelajuan < ~11 km/j, GPS ≤ 100 m), app bertanya tentang tempat belum disahkan dalam 500 m: **Ya, ada / Sudah tiada / Lokasi salah / Tak pasti**. Menjawab perlu dalam 300 m. 2 orang berdekatan bersetuju = disahkan atau dilaporkan tutup. Tak pasti/langkau diingat dalam peranti. Lokasi tidak disimpan.
 - **Import** (migrasi `20261207000000_poi_selangor.sql`, aditif): proses dalam satu pernyataan set (~13,000 baris; ~1.7 s dalam ujian), wilayah ikut larian (POI Kuala Langat menjadi milik Selangor), larian Kuala Langat ditolak selepas Selangor diimport, baris staging lulus automatik disimpan 14 hari (bukan 90) untuk jimat storan. API menerima `kuala-langat` dan `selangor` sahaja. Import Selangor sebenar menunggu "GO" pemilik.
 
-### Komuniti bantu barisan semakan (pilihan A pemilik)
+### Pengesahan komuniti dan "Kawasan saya" (keputusan pemilik 28 Nov)
 
-- Bila tiada tempat live yang perlu disahkan berdekatan, kad di peta bertanya tentang **rekod yang menunggu semakan** dalam 500 m (log masuk, berhenti, bukan navigasi): **nama** (masjid/surau tanpa nama, nama generik), **kategori** ("Adakah X sebuah klinik?") atau **orang awam boleh masuk?** (dalam institusi). Pendua tidak ditanya. Menjawab perlu dalam 300 m.
-- **Lulus/tolak automatik** (migrasi `20261209000000_poi_queue_answers.sql`): 2 orang berdekatan beri **nama yang sama** → lulus dengan nama itu (dilindungi daripada import, "Disahkan komuniti"); 2 "ya" kategori tanpa "tidak" → lulus; 2 "tidak" tanpa "ya" → tolak; 2 "tiada di sini" → tolak. Jawapan "orang awam" dan jawapan bercanggah menunggu admin.
-- **Admin → POI → Semakan** memaparkan jawapan komuniti pada rekod (nama dan bilangan, ya/tidak, tiada), tanpa nama pengguna; nama paling kerap diisi terlebih dahulu dalam kotak nama.
-- Had 30 jawapan sehari (bersama semakan tempat). Lokasi tidak disimpan. Privasi dan Terma dikemas kini (sumbangan nama diterbitkan di bawah ODbL).
+- **Siapa dikira:** jawapan **di lokasi** (dalam 300 m semasa menjawab) atau daripada **penduduk kawasan** (tempat itu dalam 1.5 km dari salah satu "Kawasan saya" pengguna). Jawapan dari tempat lain disimpan tetapi tidak dikira.
+- **Peraturan:** keputusan perlukan **3 orang berbeza** memberi jawapan yang sama, **sekurang-kurangnya seorang di lokasi**, tanpa jawapan dikira yang bertentangan. Kad tempat memaparkan **"Disahkan oleh N orang"**.
+- **"Kawasan saya"** (Profil): sehingga 5 kawasan (Rumah, Tempat kerja, Rumah ibu bapa, Rumah mentua, Lain-lain) dari lokasi semasa atau tempat disimpan. **Disimpan dalam telefon sahaja**; kawasan dihantar dibundarkan ~1 km semasa bertanya/menjawab dan tidak disimpan. Butang **"Bantu sahkan tempat di kawasan saya"** memaparkan soalan sekitar kawasan itu (dari mana-mana).
+- **Rekod menunggu semakan** (migrasi `20261209000000_poi_queue_answers.sql`): soalan **nama** (masjid/surau tanpa nama, nama generik), **kategori** ("Adakah X sebuah klinik?") atau **orang awam boleh masuk?** (dalam institusi, admin memutuskan). Pendua tidak ditanya. 3 × nama yang sama → lulus dengan nama itu (dilindungi daripada import, "Disahkan komuniti"); 3 × kategori ya → lulus; 3 × tidak → tolak; 3 × tiada di sini → tolak. Jawapan bertentangan menunggu admin.
+- **POI live:** "Masih buka"/"Sudah tutup" ikut peraturan 3 orang yang sama (`poi_submit_feedback_v2`; fungsi lama memanggilnya).
+- **Kad di peta** (bila berhenti): tempat belum disahkan dahulu, kemudian rekod menunggu semakan dalam 500 m.
+- **Admin → POI → Semakan:** jawapan komuniti pada rekod (nama dan bilangan, ya/tidak, tiada; berapa di lokasi / penduduk kawasan), tanpa nama pengguna; nama paling kerap diisi dahulu.
+- Had 30 jawapan sehari (semua jenis). Privasi dan Terma dikemas kini (sumbangan nama diterbitkan di bawah ODbL).
 
 ## Deploy dan versi live
 

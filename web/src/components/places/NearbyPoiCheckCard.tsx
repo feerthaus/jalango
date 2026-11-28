@@ -6,6 +6,7 @@ import { useMapContext } from '@/contexts/MapContext';
 import { useT } from '@/lib/i18n';
 import { fetchNearbyQueue, fetchNearbyUnverified, sendPoiFeedback, type NearbyPoi, type NearbyQueueRecord, type PoiFeedbackKind } from '@/services/poiFeedbackService';
 import { NearbyQueueQuestion } from './NearbyQueueQuestion';
+import { areaFor, loadAreas } from '@/utils/myAreas';
 import { formatDistance, haversineMeters } from '@/utils/geo';
 
 const KEY = 'jalango:poi-checks-skipped';
@@ -83,6 +84,7 @@ export function NearbyPoiCheckCard() {
         key={r.id}
         r={{ ...r, distance_m: Math.round(haversineMeters(good, { lat: r.lat, lng: r.lng })) }}
         at={good}
+        area={areaFor({ lat: r.lat, lng: r.lng }, loadAreas())}
         onDone={() => {
           remember(`q:${r.id}`);
           setThanks(true);
@@ -106,7 +108,7 @@ export function NearbyPoiCheckCard() {
   const answer = async (kind: PoiFeedbackKind) => {
     setBusy(true);
     try {
-      await sendPoiFeedback(p.id, kind, good);
+      await sendPoiFeedback(p.id, kind, good, undefined, areaFor({ lat: p.lat, lng: p.lng }, loadAreas()));
       remember(p.id);
       setThanks(true);
       next();
