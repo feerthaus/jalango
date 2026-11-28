@@ -46,6 +46,8 @@ export interface PoiAdminService {
   setHidden(poiId: string, hidden: boolean, reason?: string): Promise<PoiAdminState>;
   /** Community answers waiting for an admin, grouped by POI and kind */
   feedback(): Promise<PoiFeedbackGroup[]>;
+  /** What people nearby answered on open review records, by staging id (never who) */
+  queueAnswers(): Promise<Record<string, QueueAnswers>>;
   /** Accept or dismiss one group of answers (the fix itself: rename / hide in POI live) */
   resolveFeedback(poiId: string, kind: string, accept: boolean): Promise<void>;
   /** Test data: start again from the original data. Supabase: reload. */
@@ -87,6 +89,7 @@ export function createMockPoiAdminService(actor = 'admin (ujian)', now: () => st
         else hiddenByAdmin.delete(id);
         return next;
       }),
+    queueAnswers: async () => ({}),
     feedback: async () => feedbackGroups.filter((g) => !resolved.has(`${g.poi_id}:${g.kind}`)),
     resolveFeedback: async (poiId, kind) => {
       resolved.add(`${poiId}:${kind}`);
@@ -109,6 +112,17 @@ export interface AdminPoiStateJson {
   matches: { id: string; osm_ref: string; name: string; category: PoiCategory; subcategory: string | null; lat: number; lng: number; address: string | null; phone: string | null; quality: number; status: 'active' | 'hidden' | 'missing'; first_run: string | null; last_seen_run: string | null }[];
   metrics: { active: number; hidden: number; needs_check: number; with_address: number; with_phone: number; with_hours: number; by_category: Partial<Record<PoiCategory, number>>; open_feedback: number };
   changes: { id: number; run_id: string | null; poi_id: string | null; action: string; reason: string | null; at: string; name: string | null }[];
+}
+
+/** admin_queue_answers(): answers from people nearby on one open review record */
+export interface QueueAnswers {
+  names: { name: string; n: number }[];
+  kategori_ya: number;
+  kategori_tidak: number;
+  awam_ya: number;
+  awam_tidak: number;
+  tiada: number;
+  near: number;
 }
 
 /** admin_poi_feedback() rows: no account ids, only counts and suggestions */
@@ -239,6 +253,11 @@ export function createSupabasePoiAdminService(db: SupabaseClient): PoiAdminServi
       const { data, error } = await db.rpc('admin_poi_feedback', { p_limit: 100 });
       if (error) throw friendly(error);
       return (data as PoiFeedbackGroup[] | null) ?? [];
+    },
+    queueAnswers: async () => {
+      const { data, error } = await db.rpc('admin_queue_answers');
+      if (error) throw friendly(error);
+      return (data as Record<string, QueueAnswers> | null) ?? {};
     },
     resolveFeedback: async (poiId, kind, accept) => {
       const { error } = await db.rpc('poi_feedback_resolve', { p_poi: poiId, p_kind: kind, p_accept: accept });

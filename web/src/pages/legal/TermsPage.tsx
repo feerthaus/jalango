@@ -48,7 +48,7 @@ const ms: LegalSection[] = [
         <p>
           Dengan berkongsi kandungan, anda memberi kami lesen bukan eksklusif dan bebas royalti untuk menyimpan, memaparkan dan menggunakan kandungan itu bagi menyediakan dan
           menambah baik JalanGo. Kami boleh membuang kandungan dan menggantung akaun yang melanggar terma ini.
-        </p>
+         Nama dan maklumat tempat yang anda sumbangkan kepada pangkalan data tempat JalanGo (data OpenStreetMap) boleh diterbitkan sebagai sebahagian daripada pangkalan data itu di bawah Open Database License (ODbL).</p>
       </>
     ),
   },
@@ -167,7 +167,7 @@ const en: LegalSection[] = [
         <p>
           By sharing content you give us a non-exclusive, royalty-free licence to store, display and use it to provide and improve JalanGo. We may remove content and suspend accounts
           that break these terms.
-        </p>
+         Place names and details you contribute to the JalanGo place database (OpenStreetMap data) may be published as part of that database under the Open Database License (ODbL).</p>
       </>
     ),
   },

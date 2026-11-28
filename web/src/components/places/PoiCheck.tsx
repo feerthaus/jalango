@@ -5,13 +5,14 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useLocation } from '@/contexts/LocationContext';
 import { useT } from '@/lib/i18n';
 import { myPoiFeedback, sendPoiFeedback, type MyPoiFeedback, type PoiFeedbackKind } from '@/services/poiFeedbackService';
+import { areaFor, loadAreas } from '@/utils/myAreas';
 
 /**
  * "Betul ke maklumat ni?" on a JalanGo POI (OpenStreetMap place). Signed-in people
  * say whether it is still open, closed, in the wrong place, or suggest its name.
  * Two nearby people agreeing on open / closed settles it; the rest goes to an admin.
  */
-export function PoiCheck({ poiId, unverified = false }: { poiId: string; unverified?: boolean }) {
+export function PoiCheck({ poiId, unverified = false, at = null }: { poiId: string; unverified?: boolean; at?: { lat: number; lng: number } | null }) {
   const [t] = useT();
   const { user } = useAuth();
   const { fix } = useLocation();
@@ -26,7 +27,7 @@ export function PoiCheck({ poiId, unverified = false }: { poiId: string; unverif
     let alive = true;
     myPoiFeedback(poiId)
       .then((m) => alive && setMine(m))
-      .catch(() => alive && setMine({ answered: [], verification: null }));
+      .catch(() => alive && setMine({ answered: [], verification: null, confirmations: 0 }));
     return () => {
       alive = false;
     };
@@ -36,8 +37,8 @@ export function PoiCheck({ poiId, unverified = false }: { poiId: string; unverif
     setBusy(true);
     setMsg(null);
     try {
-      await sendPoiFeedback(poiId, kind, fix?.coordinates ?? null, suggested);
-      setMine((m) => ({ answered: [...(m?.answered ?? []), kind], verification: m?.verification ?? null }));
+      await sendPoiFeedback(poiId, kind, fix?.coordinates ?? null, suggested, at ? areaFor(at, loadAreas()) : null);
+      setMine((m) => ({ answered: [...(m?.answered ?? []), kind], verification: m?.verification ?? null, confirmations: m?.confirmations ?? 0 }));
       setNaming(false);
       setMsg(t('Terima kasih! Jawapan anda membantu orang lain.', 'Thank you! Your answer helps others.'));
     } catch (e) {
@@ -55,7 +56,11 @@ export function PoiCheck({ poiId, unverified = false }: { poiId: string; unverif
     <section aria-label={t('Semak maklumat tempat', 'Check this place')} className="mt-3 rounded-2xl bg-ink-100/70 p-3 text-sm dark:bg-ink-800/60">
       <div className="flex flex-wrap items-center gap-2">
         <p className="min-w-0 flex-1 font-semibold">{t('Betul ke maklumat ni?', 'Is this right?')}</p>
-        {v === 'disahkan_komuniti' && <span className="rounded-full bg-jade-500/15 px-2 py-0.5 text-[11px] font-semibold text-jade-700 dark:text-jade-300">{t('Disahkan komuniti', 'Confirmed by the community')}</span>}
+        {v === 'disahkan_komuniti' && (
+          <span className="rounded-full bg-jade-500/15 px-2 py-0.5 text-[11px] font-semibold text-jade-700 dark:text-jade-300">
+            {mine && mine.confirmations > 0 ? t(`Disahkan oleh ${mine.confirmations} orang`, `Confirmed by ${mine.confirmations} people`) : t('Disahkan komuniti', 'Confirmed by the community')}
+          </span>
+        )}
         {v === 'belum' && <span className="rounded-full bg-amber-400/15 px-2 py-0.5 text-[11px] font-semibold text-amber-800 dark:text-amber-200">{t('Belum disahkan', 'Not confirmed yet')}</span>}
         {v === 'perlu_pengesahan' && <span className="rounded-full bg-amber-400/15 px-2 py-0.5 text-[11px] font-semibold text-amber-800 dark:text-amber-200">{t('Data lama, perlu disahkan', 'Old data, needs checking')}</span>}
       </div>

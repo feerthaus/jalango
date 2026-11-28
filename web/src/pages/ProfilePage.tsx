@@ -1,3 +1,4 @@
+import { MyAreasCard } from '@/components/profile/MyAreasCard';
 import { setStatsOptOut, statsOptedOut } from '@/lib/activity';
 import { usePageMeta } from '@/hooks/usePageMeta';
 import { AdminCard } from '@/components/admin/AdminCard';
@@ -66,6 +67,7 @@ export function ProfilePage() {
     <PagePanel title={t('Profil', 'Profile')}>
       <AccountCard favourites={favourites.length} recents={recents.length} />
       <AdminCard />
+      <MyAreasCard />
 
       <ShareAppCard />
       <BusinessCard />
