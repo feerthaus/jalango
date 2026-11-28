@@ -2,7 +2,7 @@ import { AlertTriangle, Check, Eye, EyeOff, ExternalLink, GitMerge, Loader2, Pen
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { cn } from '@/lib/cn';
-import { poiAdminService, type PoiFeedbackGroup } from '@/services/poiAdminService';
+import { poiAdminService, type PoiFeedbackGroup, type QueueAnswers } from '@/services/poiAdminService';
 import { formatRelativeTime } from '@/utils/format';
 import {
   CATEGORY_LABEL,
@@ -137,6 +137,11 @@ function ReviewView({ state, busy, act }: { state: PoiAdminState; busy: boolean;
   const rows = useMemo(() => reviewQueue(state, filter), [state, filter]);
   const [selected, setSelected] = useState<string | null>(null);
   const current = rows.find((r) => r.id === selected) ?? null;
+  // Answers from people nearby (POI review by the community); reloaded with the queue
+  const [answers, setAnswers] = useState<Record<string, QueueAnswers>>({});
+  useEffect(() => {
+    poiAdminService.queueAnswers().then(setAnswers).catch(() => setAnswers({}));
+  }, [state]);
   const matchAt = (r: StagingRecord) => {
     const p = r.match ? state.pois.find((x) => x.id === r.match!.poiId) : undefined;
     return p ? { lat: p.lat, lng: p.lng } : null;
@@ -183,23 +188,24 @@ function ReviewView({ state, busy, act }: { state: PoiAdminState; busy: boolean;
               {/* On phones the detail opens under the record */}
               {current?.id === r.id && (
                 <div className="mt-2 lg:hidden">
-                  <RecordDetail key={r.id} r={r} matchAt={matchAt(r)} busy={busy} act={act} onDone={() => setSelected(null)} />
+                  <RecordDetail key={`${r.id}:${answers[r.id] ? 1 : 0}`} r={r} answers={answers[r.id]} matchAt={matchAt(r)} busy={busy} act={act} onDone={() => setSelected(null)} />
                 </div>
               )}
             </li>
           ))}
         </ul>
         <div className="hidden lg:block">
-          {current ? <RecordDetail key={current.id} r={current} matchAt={matchAt(current)} busy={busy} act={act} onDone={() => setSelected(null)} /> : <p className="rounded-2xl bg-white p-4 text-sm text-ink-500 dark:bg-ink-900">Pilih satu rekod untuk lihat butiran dan peta.</p>}
+          {current ? <RecordDetail key={`${current.id}:${answers[current.id] ? 1 : 0}`} r={current} answers={answers[current.id]} matchAt={matchAt(current)} busy={busy} act={act} onDone={() => setSelected(null)} /> : <p className="rounded-2xl bg-white p-4 text-sm text-ink-500 dark:bg-ink-900">Pilih satu rekod untuk lihat butiran dan peta.</p>}
         </div>
       </div>
     </div>
   );
 }
 
-function RecordDetail({ r, matchAt, busy, act, onDone }: { r: StagingRecord; matchAt: { lat: number; lng: number } | null; busy: boolean; act: Act; onDone: () => void }) {
+function RecordDetail({ r, answers, matchAt, busy, act, onDone }: { r: StagingRecord; answers?: QueueAnswers; matchAt: { lat: number; lng: number } | null; busy: boolean; act: Act; onDone: () => void }) {
   const [category, setCategory] = useState<PoiCategory>(r.category);
-  const [name, setName] = useState(r.name ?? '');
+  // An unnamed or generic record starts with the name people nearby gave most
+  const [name, setName] = useState(answers?.names[0] && (!r.name || r.issues.includes('nama_generik')) ? answers.names[0].name : (r.name ?? ''));
   const [rejecting, setRejecting] = useState(false);
   const [reason, setReason] = useState(REJECT_REASONS[0]);
   const [other, setOther] = useState('');
@@ -246,6 +252,16 @@ function RecordDetail({ r, matchAt, busy, act, onDone }: { r: StagingRecord; mat
           </>
         )}
       </dl>
+
+      {answers && (
+        <div className="rounded-xl bg-violet-500/10 px-3 py-2 text-xs text-violet-900 dark:text-violet-100">
+          <p className="font-semibold">Jawapan komuniti ({answers.near} berdekatan)</p>
+          {answers.names.length > 0 && <p>Nama: {answers.names.map((x) => `“${x.name}” ×${x.n}`).join(', ')}</p>}
+          {answers.kategori_ya + answers.kategori_tidak > 0 && <p>Kategori betul: ya {answers.kategori_ya} · tidak {answers.kategori_tidak}</p>}
+          {answers.awam_ya + answers.awam_tidak > 0 && <p>Orang awam boleh masuk: ya {answers.awam_ya} · tidak {answers.awam_tidak}</p>}
+          {answers.tiada > 0 && <p>Tiada di lokasi: {answers.tiada}</p>}
+        </div>
+      )}
 
       {r.match && (
         <p className="rounded-xl bg-sky-500/10 px-3 py-2 text-xs text-sky-900 dark:text-sky-100">

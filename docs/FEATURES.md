@@ -555,6 +555,13 @@ Import pertama Kuala Langat (23 Nov 2026): 494 POI live, 22 diluluskan admin, 13
 - **"Adakah … di sini?"** (kad di peta, log masuk sahaja): bila pengguna **berhenti** (bukan navigasi, kelajuan < ~11 km/j, GPS ≤ 100 m), app bertanya tentang tempat belum disahkan dalam 500 m: **Ya, ada / Sudah tiada / Lokasi salah / Tak pasti**. Menjawab perlu dalam 300 m. 2 orang berdekatan bersetuju = disahkan atau dilaporkan tutup. Tak pasti/langkau diingat dalam peranti. Lokasi tidak disimpan.
 - **Import** (migrasi `20261207000000_poi_selangor.sql`, aditif): proses dalam satu pernyataan set (~13,000 baris; ~1.7 s dalam ujian), wilayah ikut larian (POI Kuala Langat menjadi milik Selangor), larian Kuala Langat ditolak selepas Selangor diimport, baris staging lulus automatik disimpan 14 hari (bukan 90) untuk jimat storan. API menerima `kuala-langat` dan `selangor` sahaja. Import Selangor sebenar menunggu "GO" pemilik.
 
+### Komuniti bantu barisan semakan (pilihan A pemilik)
+
+- Bila tiada tempat live yang perlu disahkan berdekatan, kad di peta bertanya tentang **rekod yang menunggu semakan** dalam 500 m (log masuk, berhenti, bukan navigasi): **nama** (masjid/surau tanpa nama, nama generik), **kategori** ("Adakah X sebuah klinik?") atau **orang awam boleh masuk?** (dalam institusi). Pendua tidak ditanya. Menjawab perlu dalam 300 m.
+- **Lulus/tolak automatik** (migrasi `20261209000000_poi_queue_answers.sql`): 2 orang berdekatan beri **nama yang sama** → lulus dengan nama itu (dilindungi daripada import, "Disahkan komuniti"); 2 "ya" kategori tanpa "tidak" → lulus; 2 "tidak" tanpa "ya" → tolak; 2 "tiada di sini" → tolak. Jawapan "orang awam" dan jawapan bercanggah menunggu admin.
+- **Admin → POI → Semakan** memaparkan jawapan komuniti pada rekod (nama dan bilangan, ya/tidak, tiada), tanpa nama pengguna; nama paling kerap diisi terlebih dahulu dalam kotak nama.
+- Had 30 jawapan sehari (bersama semakan tempat). Lokasi tidak disimpan. Privasi dan Terma dikemas kini (sumbangan nama diterbitkan di bawah ODbL).
+
 ## Deploy dan versi live
 
 - **Versi live:** setiap build menulis `/version.json` (commit dan masa build, daripada `COMMIT_REF` Netlify). Admin memaparkan "Versi app" di bawah halaman, dan pautan muat semula bila laman sudah ada versi lebih baharu.

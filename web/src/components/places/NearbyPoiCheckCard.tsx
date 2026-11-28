@@ -4,7 +4,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useLocation } from '@/contexts/LocationContext';
 import { useMapContext } from '@/contexts/MapContext';
 import { useT } from '@/lib/i18n';
-import { fetchNearbyUnverified, sendPoiFeedback, type NearbyPoi, type PoiFeedbackKind } from '@/services/poiFeedbackService';
+import { fetchNearbyQueue, fetchNearbyUnverified, sendPoiFeedback, type NearbyPoi, type NearbyQueueRecord, type PoiFeedbackKind } from '@/services/poiFeedbackService';
+import { NearbyQueueQuestion } from './NearbyQueueQuestion';
 import { formatDistance, haversineMeters } from '@/utils/geo';
 
 const KEY = 'jalango:poi-checks-skipped';
@@ -40,6 +41,8 @@ export function NearbyPoiCheckCard() {
   const { fix } = useLocation();
   const { selectPlace } = useMapContext();
   const [items, setItems] = useState<NearbyPoi[]>([]);
+  // Records waiting for review nearby (asked only when no live place needs checking)
+  const [queue, setQueue] = useState<NearbyQueueRecord[]>([]);
   const [busy, setBusy] = useState(false);
   const [thanks, setThanks] = useState(false);
   const last = useRef<{ at: { lat: number; lng: number }; time: number } | null>(null);
@@ -55,6 +58,9 @@ export function NearbyPoiCheckCard() {
     fetchNearbyUnverified(good)
       .then((list) => setItems(list.filter((p) => !skip.includes(p.id))))
       .catch(() => undefined);
+    fetchNearbyQueue(good)
+      .then((list) => setQueue(list.filter((r) => !skip.includes(`q:${r.id}`))))
+      .catch(() => undefined);
   }, [user, good?.lat, good?.lng]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (thanks) {
@@ -68,7 +74,28 @@ export function NearbyPoiCheckCard() {
     );
   }
   const p = items[0];
-  if (!user || !good || !p) return null;
+  const r = queue[0];
+  if (!user || !good) return null;
+  if (!p && r) {
+    const nextQ = () => setQueue((l) => l.slice(1));
+    return (
+      <NearbyQueueQuestion
+        key={r.id}
+        r={{ ...r, distance_m: Math.round(haversineMeters(good, { lat: r.lat, lng: r.lng })) }}
+        at={good}
+        onDone={() => {
+          remember(`q:${r.id}`);
+          setThanks(true);
+          nextQ();
+        }}
+        onSkip={() => {
+          remember(`q:${r.id}`);
+          nextQ();
+        }}
+      />
+    );
+  }
+  if (!p) return null;
   const away = haversineMeters(good, { lat: p.lat, lng: p.lng });
   const near = away <= 300;
   const next = () => setItems((l) => l.slice(1));
