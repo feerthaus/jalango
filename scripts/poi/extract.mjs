@@ -33,6 +33,9 @@ function centroid(g) {
 const inRing = (pt, ring) => { let c = false; for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) { const [xi, yi] = ring[i], [xj, yj] = ring[j]; if (yi > pt[1] !== yj > pt[1] && pt[0] < ((xj - xi) * (pt[1] - yi)) / (yj - yi) + xi) c = !c; } return c; };
 const polysOf = (g) => (g.type === 'MultiPolygon' ? g.coordinates : [g.coordinates]);
 const inPoly = (pt, g) => polysOf(g).some((p) => inRing(pt, p[0]) && !p.slice(1).some((h) => inRing(pt, h)));
+// Bounding boxes keep point-in-polygon cheap for a whole state (POI-5)
+const bbox = (g) => { const b = [Infinity, Infinity, -Infinity, -Infinity]; const w = (c) => (typeof c[0] === 'number' ? (b[0] = Math.min(b[0], c[0]), b[1] = Math.min(b[1], c[1]), b[2] = Math.max(b[2], c[0]), b[3] = Math.max(b[3], c[1])) : c.forEach(w)); w(g.coordinates); return b; };
+const inBox = (pt, b) => pt[0] >= b[0] && pt[0] <= b[2] && pt[1] >= b[1] && pt[1] <= b[3];
 const metres = (a, b) => Math.hypot((a[0] - b[0]) * 111320 * Math.cos((a[1] * Math.PI) / 180), (a[1] - b[1]) * 110574);
 const segDist = (pt, a, b) => {
   const k = 111320 * Math.cos((pt[1] * Math.PI) / 180), q = 110574;
@@ -61,18 +64,18 @@ export function extract({ poi, boundary, places, coast, ctx }) {
   }
   const institutions = ctx.filter((c) => c.geometry && /Polygon/.test(c.geometry.type)).map((c) => {
     const t = c.properties ?? {};
-    return { g: c.geometry, label: [t.name, t.amenity && `amenity=${t.amenity}`, t.landuse && `landuse=${t.landuse}`, t.office && `office=${t.office}`, t.military && `military=${t.military}`].filter(Boolean).join(' · ') };
+    return { g: c.geometry, box: bbox(c.geometry), label: [t.name, t.amenity && `amenity=${t.amenity}`, t.landuse && `landuse=${t.landuse}`, t.office && `office=${t.office}`, t.military && `military=${t.military}`].filter(Boolean).join(' · ') };
   });
   const out = [];
   for (const [ref, f] of byRef) {
     const pt = centroid(f.geometry);
     if (!pt || !Number.isFinite(pt[0]) || !Number.isFinite(pt[1])) continue;
     const inside = inPoly(pt, boundary);
-    if (!inside) continue; // only the pilot district is staged
+    if (!inside) continue; // only the region is staged
     const tags = Object.fromEntries(Object.entries(f.properties ?? {}).filter(([k]) => !k.startsWith('@')));
     let near = null, nd = Infinity;
     for (const s of settlements) { const d = metres(pt, s.pt); if (d < nd) { nd = d; near = s; } }
-    const inst = institutions.find((i) => inPoly(pt, i.g));
+    const inst = institutions.find((i) => inBox(pt, i.box) && inPoly(pt, i.g));
     const ts = f.properties?.['@timestamp'];
     out.push({
       osm_ref: ref,
