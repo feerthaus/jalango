@@ -540,6 +540,13 @@ Import pertama Kuala Langat (23 Nov 2026): 494 POI live, 22 diluluskan admin, 13
 - **Admin → POI → "Maklum balas"** (`admin_poi_feedback`, `poi_feedback_resolve`; migrasi `20261205000000_poi_feedback.sql`, aditif): jawapan dikumpul ikut tempat dan jenis, dengan bilangan orang, berapa yang berdekatan dan nama dicadangkan. **Akaun pengguna tidak dipaparkan.** Betulkan dengan tab POI live (tukar nama / sembunyi), kemudian **Terima** atau **Abaikan**.
 - **Privasi:** hanya akaun dan jawapan disimpan; lokasi digunakan untuk semakan 300 m sahaja dan tidak disimpan. Halaman Privasi dikemas kini.
 
+
+### Import mingguan (POI-4)
+
+- **Jadual:** workflow "POI import (Kuala Langat)" kini ada jadual mingguan (Ahad 03:41 waktu Malaysia) yang terus menghantar ke pangkalan data, **tetapi hanya berjalan bila pembolehubah repo `POI_SCHEDULE_ENABLED` = `true`**. Tanpanya, run berjadual dilangkau. Pemilik menghidupkannya selepas 2–3 run manual yang baik. Run manual kekal seperti biasa (lalai: mod kering).
+- **Hilang 2 kali berturut-turut** (migrasi `20261206000000_poi_weekly.sql`, aditif): POI live yang tiada dalam satu import **tidak lagi terus disembunyikan**; ia dikira (`missing_runs`) dan hanya ditanda `missing` bila tiada dalam 2 import berturut-turut. Bila ia muncul semula, kiraan bermula semula. Peraturan tahan (> 5% disembunyikan atau > 20% berubah) kini mengira POI yang benar-benar akan disembunyikan; kiraan run ada `absent_once`.
+- **Pemantauan:** setiap run menulis ringkasan (baris, lulus automatik, semakan, ditolak, pendua, keputusan dibawa, akan disembunyikan, akan berubah) dalam *Summary* GitHub Actions. Run yang **ditahan** menjadikan workflow **gagal**, jadi GitHub menghantar notifikasi kepada pemilik; semak di Admin → POI → Larian import.
+- **Kos:** import menggunakan GitHub Actions dan beberapa panggilan API (~4 setiap run), bukan deploy Netlify.
 ## Lain-lain
 
 - **Harga minyak mingguan:** dari data.gov.my.

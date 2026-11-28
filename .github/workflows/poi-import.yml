@@ -1,13 +1,21 @@
-# POI import, Kuala Langat pilot (POI-2B). Manual only: no schedule until the
-# owner approves one after 2–3 good manual runs.
+# POI import, Kuala Langat pilot (POI-2B, weekly in POI-4).
 #
-# "send" off (default): dry run. Downloads OpenStreetMap, applies the import rules
-# and uploads the would-be rows as an artifact. Nothing reaches the database.
-# "send" on: also sends the rows to the JalanGo API (needs the POI_INGEST_TOKEN
-# secret here and POI_IMPORT_ENABLED=true + the same token on Netlify).
+# Manual: "send" off (default) is a dry run. It downloads OpenStreetMap, applies the
+# import rules and uploads the would-be rows as an artifact. Nothing reaches the
+# database. "send" on also sends the rows to the JalanGo API (needs the
+# POI_INGEST_TOKEN secret here and POI_IMPORT_ENABLED=true + the same token on Netlify).
+#
+# Weekly (POI-4): the schedule below sends to the database, but only when the
+# repository variable POI_SCHEDULE_ENABLED is "true" (Settings → Secrets and
+# variables → Actions → Variables). Without it the scheduled job is skipped. The
+# owner turns it on after 2–3 good manual runs. A run that would hide > 5 % or
+# change > 20 % of live POIs is held for an admin and this workflow fails, so
+# GitHub notifies the owner.
 name: POI import (Kuala Langat)
 
 on:
+  schedule:
+    - cron: '41 19 * * 6' # Sundays 03:41 Malaysia time, after Geofabrik's daily extract
   workflow_dispatch:
     inputs:
       send:
@@ -24,6 +32,8 @@ concurrency:
 
 jobs:
   import:
+    # The schedule runs only when the owner has switched it on
+    if: github.event_name != 'schedule' || vars.POI_SCHEDULE_ENABLED == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 40
     steps:
@@ -64,10 +74,10 @@ jobs:
           osmium export ctx.osm.pbf -f geojsonseq -o ctx.geojsonseq --overwrite
           node scripts/poi/extract.mjs poi.geojsonseq out/boundary.json places.geojsonseq coast.geojsonseq ctx.geojsonseq features.json
       - name: Apply the import rules (dry run)
-        if: ${{ !inputs.send }}
+        if: ${{ github.event_name != 'schedule' && !inputs.send }}
         run: node scripts/poi/import.ts features.json out/source.json
       - name: Apply the import rules and send to the database
-        if: ${{ inputs.send }}
+        if: ${{ github.event_name == 'schedule' || inputs.send }}
         env:
           POI_INGEST_TOKEN: ${{ secrets.POI_INGEST_TOKEN }}
         run: node scripts/poi/import.ts features.json out/source.json --send
