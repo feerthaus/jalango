@@ -61,6 +61,14 @@ describe('POI search', () => {
     expect(withPois(p, 'bengkel banting').first).toHaveLength(3);
     expect(withPois(p, 'haiza')).toMatchObject({ first: [{ id: 'poi:1' }, { id: 'poi:2' }], after: [{ id: 'poi:3' }] });
   });
+  it('a name search puts a POI first only when it holds every word (production: "KL Sentral" listed Perodua Sentral first)', () => {
+    const p = ['Perodua Sentral', 'Petronas Klang Sentral Point', 'Restoran K2'].map((name, i) => toPlace({ ...row, id: String(i), name }));
+    // "kl" is not "Klang"; "Perodua Sentral" lacks "kl": both after Mapbox
+    expect(withPois(p.slice(0, 2), 'KL Sentral')).toMatchObject({ first: [], after: [{ name: 'Perodua Sentral' }, { name: 'Petronas Klang Sentral Point' }] });
+    expect(withPois(p, 'restoran k2').first.map((x) => x.name)).toEqual(['Restoran K2']);
+    // most words first
+    expect(keepNameMatches([{ name: 'Perodua Sentral' }, { name: 'KL Sentral' }], 'kl sentral').map((r) => r.name)).toEqual(['KL Sentral', 'Perodua Sentral']);
+  });
   it('name search keeps places with the distinctive word (production: "restoran k2" listed 6 other restaurants)', () => {
     const rows = ['Restoran K2', 'Restoran K2', 'Restoran TWW', 'Restoran Kian Heng', 'Restoran Kak Leha'].map((name) => ({ name }));
     expect(keepNameMatches(rows, 'restoran k2').map((r) => r.name)).toEqual(['Restoran K2', 'Restoran K2']);

@@ -119,19 +119,35 @@ export function toPlace(r: PoiRow): Place {
 /** Words that say what kind of place it is: they match too many names to count on their own. */
 const KIND_WORDS = new Set(['restoran', 'restaurant', 'kedai', 'makan', 'cafe', 'kafe', 'warung', 'gerai', 'klinik', 'clinic', 'farmasi', 'pharmacy', 'masjid', 'surau', 'hotel', 'homestay', 'bengkel', 'workshop', 'stesen', 'minyak', 'pasar', 'mini', 'market', 'the']);
 
+/** The distinctive words of a name search ("kl sentral" → kl, sentral; "restoran k2" → k2). */
+export function distinctWords(q: string): string[] {
+  return q.toLowerCase().split(/[^\p{L}\p{N}]+/u).filter((w) => w.length >= 2 && !KIND_WORDS.has(w));
+}
+
+/**
+ * How many of the words a name holds, as whole words: a short word must be the
+ * whole word ("kl" is not in "Klang"), a longer one may start it ("sentra" in "Sentral").
+ */
+export function wordHits(name: string, words: string[]): number {
+  const tokens = name.toLowerCase().split(/[^\p{L}\p{N}]+/u).filter(Boolean);
+  return words.filter((w) => tokens.some((t) => t === w || (w.length >= 4 && t.startsWith(w)))).length;
+}
+
 /**
  * Name search: "restoran k2" should not list every "Restoran …" that only looks
  * alike. When some places hold a distinctive word of the search ("k2"), only
- * those are kept; when none do (a typo such as "hazia"), close spellings stay.
+ * those are kept, those holding the most words first; when none do (a typo such
+ * as "hazia"), close spellings stay.
  */
 export function keepNameMatches<T extends { name: string }>(rows: T[], q: string): T[] {
-  const words = q.split(' ').filter((w) => w.length >= 2 && !KIND_WORDS.has(w));
+  const words = distinctWords(q);
   if (!words.length) return rows;
-  const hit = (r: T) => {
-    const n = r.name.toLowerCase();
-    return words.some((w) => n.includes(w));
-  };
-  return rows.some(hit) ? rows.filter(hit) : rows;
+  const scored = rows.map((r, i) => ({ r, i, hits: wordHits(r.name, words) }));
+  if (!scored.some((x) => x.hits > 0)) return rows;
+  return scored
+    .filter((x) => x.hits > 0)
+    .sort((a, b) => b.hits - a.hits || a.i - b.i)
+    .map((x) => x.r);
 }
 
 /** Hard cap on the database call (the API runs in the US, the database elsewhere: ~0.3–0.7 s seen in production) */
@@ -188,10 +204,15 @@ export async function searchPois(text: string, near: Coordinates | undefined, li
 
 /**
  * POIs with Mapbox: a category search ("bengkel banting") lists our POIs first (Mapbox
- * knows few of these places); a name search puts the best 2 POIs first, the rest after.
+ * knows few of these places). A name search puts at most 2 POIs first, and only
+ * those that hold every distinctive word: "KL Sentral" must not put "Perodua
+ * Sentral" above the real KL Sentral. The rest come after Mapbox.
  */
 export function withPois(pois: Place[], text: string): { first: Place[]; after: Place[] } {
   if (!pois.length) return { first: [], after: [] };
-  const n = parsePoiQuery(text).category ? pois.length : 2;
-  return { first: pois.slice(0, n), after: pois.slice(n) };
+  if (parsePoiQuery(text).category) return { first: pois, after: [] };
+  const words = distinctWords(text);
+  const full = (p: Place) => !words.length || wordHits(p.name, words) === words.length;
+  const first = pois.filter(full).slice(0, 2);
+  return { first, after: pois.filter((p) => !first.includes(p)) };
 }

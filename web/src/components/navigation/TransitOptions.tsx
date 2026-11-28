@@ -1,4 +1,4 @@
-import { Car, ChevronDown, ChevronUp, ExternalLink, Footprints, Loader2, Navigation, PiggyBank, Play, TrainFront, Users } from 'lucide-react';
+import { CalendarClock, Car, ChevronDown, ChevronUp, ExternalLink, Flag, Footprints, Loader2, Navigation, PiggyBank, Play, TrainFront, Users } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { useLocation } from '@/contexts/LocationContext';
@@ -15,6 +15,7 @@ import { loadFuel } from '@/services/fuelService';
 import { fetchTransitOptions, KTMB_BOOKING_URL, rides, type AccessLeg, type Station, type TransitLeg, type TransitMode, type TransitOption } from '@/services/transitService';
 import type { Place } from '@/types';
 import { formatDuration } from '@/utils/format';
+import { AT_STATION_KM, distText, fare, LATE_MINUTES, rm, waitText } from '@/utils/transitText';
 import { carTripCost, parkingPerDay, pickFuelPrice, trainTripCost } from '@/utils/tripCost';
 
 const clock = (iso: string) => iso.slice(11, 16);
@@ -22,9 +23,6 @@ const dayDiff = (iso: string) => {
   const d = new Date(`${iso.slice(0, 10)}T00:00:00+08:00`).getTime() - new Date(new Date(Date.now() + 8 * 3600_000).toISOString().slice(0, 10) + 'T00:00:00+08:00').getTime();
   return Math.round(d / 86_400_000);
 };
-const rm = (n: number) => `RM${Number.isInteger(n) ? n : n.toFixed(2)}`;
-/** "RM18.30" for a fixed fare, "RM3.60–4.8" for a range. */
-const fare = (min: number, max: number) => (min === max ? rm(min) : `${rm(min)}–${max}`);
 
 /** "LRT", "ETS", … for a line badge. */
 export function modeLabel(m: TransitMode, lang: string): string {
@@ -59,6 +57,7 @@ export function TransitOptions() {
   const [people, setPeople] = useState(1);
   const [days, setDays] = useState(1);
   const [open, setOpen] = useState<number | null>(0);
+  const [showCost, setShowCost] = useState(false);
 
   const from = fix?.coordinates ?? null;
   const to = destination?.coordinates ?? null;
@@ -94,6 +93,20 @@ export function TransitOptions() {
   const best = options?.length ? options.reduce((a, b) => (b.costMax < a.costMax ? b : a)) : null;
   const train = best ? trainTripCost({ fareMin: best.fareMin, fareMax: best.fareMax, rideMin: best.access.costMin + best.egress.costMin, rideMax: best.access.costMax + best.egress.costMax, people }) : null;
 
+  const verdict =
+    car && train
+      ? car.total - train.max > 0
+        ? t(`Naik pengangkutan awam jimat sekurang-kurangnya ${rm(car.total - train.max)}`, `Public transport saves at least ${rm(car.total - train.max)}`)
+        : car.total - train.min > 0
+          ? t('Kos lebih kurang sama', 'About the same cost')
+          : t(`Untuk ${people} orang, memandu lebih murah`, `For ${people} people, driving is cheaper`)
+      : null;
+  // Nothing leaves for hours (late at night): say so first
+  const first = options?.length ? options.reduce((a, b) => (Date.parse(rides(b)[0].depart) < Date.parse(rides(a)[0].depart) ? b : a)) : null;
+  const firstRide = first ? rides(first)[0] : null;
+  const wait = firstRide ? (Date.parse(firstRide.depart) - Date.now()) / 60_000 : 0;
+  const late = wait > LATE_MINUTES ? wait : 0;
+
   if (!from) return <p className="py-6 text-center text-sm text-ink-500">{t('Menunggu lokasi anda…', 'Waiting for your location…')}</p>;
 
   // Walk there when the option says to walk; otherwise drive (or ride) there
@@ -114,53 +127,17 @@ export function TransitOptions() {
 
   return (
     <div className="space-y-3 pb-3">
-      {/* Cost comparison */}
-      <section aria-label={t('Perbandingan kos', 'Cost comparison')} className="rounded-2xl bg-white p-3 text-sm dark:bg-ink-800">
-        <div className="flex flex-wrap items-center gap-2 text-xs">
-          <span className="flex items-center gap-1 font-semibold text-ink-500"><Users className="size-3.5" /> {t('Orang', 'People')}</span>
-          {[1, 2, 3, 4].map((n) => (
-            <Pick key={n} on={people === n} onClick={() => setPeople(n)}>{n}</Pick>
-          ))}
-          <span className="ml-2 font-semibold text-ink-500">{t('Hari di sana', 'Days there')}</span>
-          {[1, 2, 3, 5].map((n) => (
-            <Pick key={n} on={days === n} onClick={() => setDays(n)}>{n}</Pick>
-          ))}
-        </div>
-        <div className="mt-3 grid grid-cols-2 gap-2">
-          <div className="rounded-xl bg-ink-50 p-2.5 dark:bg-ink-900">
-            <p className="flex items-center gap-1 text-xs font-semibold text-ink-500"><Car className="size-3.5" /> {vehicle === 'car' ? t('Kereta', 'Car') : t('Motosikal', 'Motorcycle')}</p>
-            <p className="text-xl font-black tabular-nums">{car ? `~${rm(car.total)}` : '…'}</p>
-            {car && (
-              <p className="text-[11px] leading-snug text-ink-500">
-                {t(`minyak ${rm(car.fuel)} · tol ${rm(car.toll)} · parking ${rm(car.parking)}`, `fuel ${rm(car.fuel)} · toll ${rm(car.toll)} · parking ${rm(car.parking)}`)}
-              </p>
-            )}
-            {route && <p className="text-[11px] text-ink-400">{formatDuration(route.durationSeconds)}</p>}
-          </div>
-          <div className="rounded-xl bg-ink-50 p-2.5 dark:bg-ink-900">
-            <p className="flex items-center gap-1 text-xs font-semibold text-ink-500"><TrainFront className="size-3.5" /> {t('Pengangkutan awam', 'Public transport')}</p>
-            <p className="text-xl font-black tabular-nums">{train ? `~${fare(train.min, train.max)}` : options ? '—' : '…'}</p>
-            {best && <p className="text-[11px] leading-snug text-ink-500">{t(`tambang × ${people} + ke/dari stesen`, `fares × ${people} + to/from station`)}</p>}
-            {best && <p className="text-[11px] text-ink-400">{formatDuration(best.minutes * 60)}</p>}
-          </div>
-        </div>
-        {car && train && (
-          <p className={cn('mt-2 flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-bold', car.total - train.max > 0 ? 'bg-jade-500/15 text-jade-800 dark:text-jade-200' : 'bg-ink-100 text-ink-700 dark:bg-ink-900 dark:text-ink-200')}>
-            <PiggyBank className="size-4 shrink-0" />
-            {car.total - train.max > 0
-              ? t(`Naik pengangkutan awam jimat sekurang-kurangnya ${rm(car.total - train.max)}`, `Public transport saves at least ${rm(car.total - train.max)}`)
-              : car.total - train.min > 0
-                ? t('Kos lebih kurang sama', 'About the same cost')
-                : t(`Untuk ${people} orang, memandu lebih murah`, `For ${people} people, driving is cheaper`)}
-          </p>
-        )}
-        <p className="mt-2 text-[11px] leading-snug text-ink-400">
-          {t(
-            `Anggaran sehala. Minyak ${fuel ? `${fuel.label} ${rm(fuel.price)}/L` : ''}, ${vehicle === 'car' ? '7' : '3'} L/100 km; tol ~RM0.10/km; parking ${parking.zone ? `${parking.zone} ~${rm(parking.perDay)}/hari` : 'biasanya percuma di kawasan ini'}. Tambang ialah anggaran (ETS/Intercity ikut Tambang Fleksi KTMB).`,
-            `One way, estimates. Fuel ${fuel ? `${fuel.label} ${rm(fuel.price)}/L` : ''}, ${vehicle === 'car' ? '7' : '3'} L/100 km; toll ~RM0.10/km; parking ${parking.zone ? `${parking.zone} ~${rm(parking.perDay)}/day` : 'usually free here'}. Fares are estimates (ETS/Intercity prices vary: KTMB Flexi Fare).`,
-          )}
+      {late && firstRide && (
+        <p role="status" className="flex items-start gap-2 rounded-2xl bg-amber-100 p-3 text-sm text-amber-900 dark:bg-amber-900/30 dark:text-amber-100">
+          <CalendarClock className="mt-0.5 size-4 shrink-0" />
+          <span>
+            <strong className="block">{t('Tiada tren atau bas lagi buat masa ini', 'No more trains or buses for now')}</strong>
+            {dayDiff(firstRide.depart) > 0
+              ? t(`Paling awal: ${firstRide.from.name}, esok ${clock(firstRide.depart)} (dalam ${waitText(late, t)})`, `First one: ${firstRide.from.name}, tomorrow ${clock(firstRide.depart)} (in ${waitText(late, t)})`)
+              : t(`Paling awal: ${firstRide.from.name}, ${clock(firstRide.depart)} (dalam ${waitText(late, t)})`, `First one: ${firstRide.from.name}, ${clock(firstRide.depart)} (in ${waitText(late, t)})`)}
+          </span>
         </p>
-      </section>
+      )}
 
       {/* Train options */}
       {error ? (
@@ -192,7 +169,7 @@ export function TransitOptions() {
                     </span>
                   ))}
                 </div>
-                <p className="mt-1 flex items-center justify-between text-xs text-ink-500">
+                <p className="mt-1 flex flex-wrap items-center justify-between gap-x-3 gap-y-0.5 text-xs text-ink-500">
                   <span>{o.transfers === 0 ? t('Terus', 'Direct') : t(`${o.transfers} kali tukar`, `${o.transfers} change${o.transfers > 1 ? 's' : ''}`)} · {t(`keluar ${clock(o.leave)}`, `leave ${clock(o.leave)}`)}</span>
                   <span className="flex items-center gap-1 font-semibold">{t(`tambang ~${fare(o.fareMin, o.fareMax)}`, `fare ~${fare(o.fareMin, o.fareMax)}`)} {open === i ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}</span>
                 </p>
@@ -222,7 +199,7 @@ export function TransitOptions() {
                       </div>
                     ),
                   )}
-                  <Step leg={o.egress} label={t(`ke ${destination?.name ?? 'destinasi'}`, `to ${destination?.name ?? 'the destination'}`)} />
+                  <Step end leg={o.egress} label={t(`ke ${destination?.name ?? 'destinasi'}`, `to ${destination?.name ?? 'the destination'}`)} />
                   <Button className="w-full py-2.5" onClick={() => follow(o)}>
                     <Play className="size-4" /> {t('Mula ikut perjalanan', 'Start this trip')}
                   </Button>
@@ -262,6 +239,62 @@ export function TransitOptions() {
           ))}
         </ul>
       )}
+      {/* Cost comparison: one line, opened on request (the trips come first) */}
+      <section aria-label={t('Perbandingan kos', 'Cost comparison')} className="rounded-2xl bg-white text-sm dark:bg-ink-800">
+        <button type="button" onClick={() => setShowCost(!showCost)} aria-expanded={showCost} className="flex w-full items-center gap-2 p-3 text-left">
+          <PiggyBank className="size-4 shrink-0 text-ink-500" />
+          <span className="min-w-0 flex-1">
+            <span className="block font-semibold">
+              {t('Banding kos', 'Compare costs')}: {vehicle === 'car' ? t('kereta', 'car') : t('motosikal', 'motorcycle')} {car ? `~${rm(car.total)}` : '…'} · {t('awam', 'transit')} {train ? `~${fare(train.min, train.max)}` : options ? '—' : '…'}
+            </span>
+            {verdict && <span className="block text-xs text-ink-500">{verdict}</span>}
+          </span>
+          {showCost ? <ChevronUp className="size-4 shrink-0" /> : <ChevronDown className="size-4 shrink-0" />}
+        </button>
+        {showCost && (
+          <div className="border-t border-ink-100 p-3 pt-2 dark:border-ink-700">
+            <div className="space-y-2 text-xs">
+              <div className="flex items-center gap-2">
+                <span className="flex w-24 shrink-0 items-center gap-1 font-semibold text-ink-500"><Users className="size-3.5" /> {t('Orang', 'People')}</span>
+                {[1, 2, 3, 4].map((n) => (
+                  <Pick key={n} on={people === n} onClick={() => setPeople(n)} label={t(`${n} orang`, `${n} people`)}>{n}</Pick>
+                ))}
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="w-24 shrink-0 font-semibold text-ink-500">{t('Hari di sana', 'Days there')}</span>
+                {[1, 2, 3, 5].map((n) => (
+                  <Pick key={n} on={days === n} onClick={() => setDays(n)} label={t(`${n} hari`, `${n} days`)}>{n}</Pick>
+                ))}
+              </div>
+            </div>
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              <div className="rounded-xl bg-ink-50 p-2.5 dark:bg-ink-900">
+                <p className="flex items-center gap-1 text-xs font-semibold text-ink-500"><Car className="size-3.5" /> {vehicle === 'car' ? t('Kereta', 'Car') : t('Motosikal', 'Motorcycle')}</p>
+                <p className="text-lg font-black leading-tight tabular-nums">{car ? `~${rm(car.total)}` : '…'}</p>
+                {car && (
+                  <p className="text-[11px] leading-snug text-ink-500">
+                    {t(`minyak ${rm(car.fuel)} · tol ${rm(car.toll)} · parking ${rm(car.parking)}`, `fuel ${rm(car.fuel)} · toll ${rm(car.toll)} · parking ${rm(car.parking)}`)}
+                  </p>
+                )}
+                {route && <p className="text-[11px] text-ink-400">{formatDuration(route.durationSeconds)}</p>}
+              </div>
+              <div className="rounded-xl bg-ink-50 p-2.5 dark:bg-ink-900">
+                <p className="flex items-center gap-1 text-xs font-semibold text-ink-500"><TrainFront className="size-3.5" /> {t('Pengangkutan awam', 'Public transport')}</p>
+                <p className="text-lg font-black leading-tight tabular-nums">{train ? `~${fare(train.min, train.max)}` : options ? '—' : '…'}</p>
+                {best && <p className="text-[11px] leading-snug text-ink-500">{t(`tambang × ${people} + ke/dari stesen`, `fares × ${people} + to/from station`)}</p>}
+                {best && <p className="text-[11px] text-ink-400">{formatDuration(best.minutes * 60)}</p>}
+              </div>
+            </div>
+            <p className="mt-2 text-xs leading-snug text-ink-500">
+              {t(
+                `Anggaran sehala. Minyak ${fuel ? `${fuel.label} ${rm(fuel.price)}/L` : ''}, ${vehicle === 'car' ? '7' : '3'} L/100 km; tol ~RM0.10/km; parking ${parking.zone ? `${parking.zone} ~${rm(parking.perDay)}/hari` : 'biasanya percuma di kawasan ini'}. Tambang ialah anggaran (ETS/Intercity ikut Tambang Fleksi KTMB).`,
+                `One way, estimates. Fuel ${fuel ? `${fuel.label} ${rm(fuel.price)}/L` : ''}, ${vehicle === 'car' ? '7' : '3'} L/100 km; toll ~RM0.10/km; parking ${parking.zone ? `${parking.zone} ~${rm(parking.perDay)}/day` : 'usually free here'}. Fares are estimates (ETS/Intercity prices vary: KTMB Flexi Fare).`,
+              )}
+            </p>
+          </div>
+        )}
+      </section>
+
       <p className="text-center text-[11px] text-ink-400">{t('Jadual: KTMB, Prasarana (Rapid KL, Rapid Penang) dan myBAS JB melalui data.gov.my. KLIA Ekspres & Transit: anggaran ikut corak perkhidmatan ERL (setiap 15–30 min), bukan jadual rasmi.', 'Timetables: KTMB, Prasarana (Rapid KL, Rapid Penang) and myBAS JB via data.gov.my. KLIA Ekspres & Transit: estimated from ERL’s service pattern (every 15–30 min), not an official timetable.')}</p>
     </div>
   );
@@ -278,22 +311,30 @@ export function LineBadge({ leg }: { leg: TransitLeg }) {
   );
 }
 
-function Step({ leg, label }: { leg: AccessLeg; label: string }) {
+function Step({ leg, label, end }: { leg: AccessLeg; label: string; end?: boolean }) {
   const [t] = useT();
+  if (end && leg.km < AT_STATION_KM)
+    return (
+      <div className="flex items-start gap-2 text-ink-600 dark:text-ink-300">
+        <Flag className="mt-0.5 size-4 shrink-0" />
+        <span>{t('Destinasi betul-betul di stesen ini', 'The destination is right at this station')}</span>
+      </div>
+    );
   const Icon = leg.type === 'walk' ? Footprints : Car;
+  const d = distText(leg.km);
   return (
     <div className="flex items-start gap-2 text-ink-600 dark:text-ink-300">
       <Icon className="mt-0.5 size-4 shrink-0" />
       <span>
-        {leg.type === 'walk' ? t(`Jalan kaki ${leg.km} km ${label} (~${leg.minutes} min)`, `Walk ${leg.km} km ${label} (~${leg.minutes} min)`) : t(`Grab/teksi ${leg.km} km ${label} (~${leg.minutes} min, ~RM${leg.costMin}–${leg.costMax})`, `Grab/taxi ${leg.km} km ${label} (~${leg.minutes} min, ~RM${leg.costMin}–${leg.costMax})`)}
+        {leg.type === 'walk' ? t(`Jalan kaki ${d} ${label} (~${leg.minutes} min)`, `Walk ${d} ${label} (~${leg.minutes} min)`) : t(`Grab/teksi ${d} ${label} (~${leg.minutes} min, ~${fare(leg.costMin, leg.costMax)})`, `Grab/taxi ${d} ${label} (~${leg.minutes} min, ~${fare(leg.costMin, leg.costMax)})`)}
       </span>
     </div>
   );
 }
 
-function Pick({ on, onClick, children }: { on: boolean; onClick: () => void; children: React.ReactNode }) {
+function Pick({ on, onClick, label, children }: { on: boolean; onClick: () => void; label: string; children: React.ReactNode }) {
   return (
-    <button type="button" onClick={onClick} aria-pressed={on} className={cn('grid size-7 place-items-center rounded-full font-bold', on ? 'bg-jade-500 text-ink-950' : 'bg-ink-100 text-ink-600 dark:bg-ink-900 dark:text-ink-300')}>
+    <button type="button" onClick={onClick} aria-pressed={on} aria-label={label} className={cn('grid size-10 place-items-center rounded-full text-sm font-bold', on ? 'bg-jade-500 text-ink-950' : 'bg-ink-100 text-ink-600 dark:bg-ink-900 dark:text-ink-300')}>
       {children}
     </button>
   );
