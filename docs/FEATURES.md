@@ -540,6 +540,12 @@ Import pertama Kuala Langat (23 Nov 2026): 494 POI live, 22 diluluskan admin, 13
 - **Admin → POI → "Maklum balas"** (`admin_poi_feedback`, `poi_feedback_resolve`; migrasi `20261205000000_poi_feedback.sql`, aditif): jawapan dikumpul ikut tempat dan jenis, dengan bilangan orang, berapa yang berdekatan dan nama dicadangkan. **Akaun pengguna tidak dipaparkan.** Betulkan dengan tab POI live (tukar nama / sembunyi), kemudian **Terima** atau **Abaikan**.
 - **Privasi:** hanya akaun dan jawapan disimpan; lokasi digunakan untuk semakan 300 m sahaja dan tidak disimpan. Halaman Privasi dikemas kini.
 
+## Deploy dan versi live
+
+- **Versi live:** setiap build menulis `/version.json` (commit dan masa build, daripada `COMMIT_REF` Netlify). Admin memaparkan "Versi app" di bawah halaman, dan pautan muat semula bila laman sudah ada versi lebih baharu.
+- **Live check** (workflow GitHub, selepas setiap push ke `main`): menunggu sehingga `/version.json` menunjukkan commit itu (atau yang lebih baharu), paling lama 20 minit; gagal jika tidak, supaya pemilik diberitahu. Perubahan yang di-merge **belum dikira live** sehingga semakan ini lulus.
+- **Jimat kredit Netlify:** build dilangkau bila tiada fail app berubah sejak build terakhir (hanya dokumen, migrasi, skrip import POI, workflow atau ujian). Deploy manual commit yang sama (contohnya selepas menukar pembolehubah Netlify) tetap dibina.
+
 ## Lain-lain
 
 - **Harga minyak mingguan:** dari data.gov.my.
