@@ -88,6 +88,7 @@ interface PoiRow {
   address: string | null;
   nearest_place: string | null;
   distance_m: number | null;
+  verification?: 'belum' | 'perlu_pengesahan' | 'disahkan_komuniti' | 'dilapor_tutup';
 }
 
 const CATEGORY_LABEL: Record<PoiCategory, string> = {
@@ -111,6 +112,7 @@ export function toPlace(r: PoiRow): Place {
     category: CATEGORY_LABEL[r.category],
     source: 'osm',
     ...(r.distance_m !== null ? { distanceMeters: r.distance_m } : {}),
+    ...(r.verification && r.verification !== 'disahkan_komuniti' ? { unverified: true } : {}),
   };
 }
 

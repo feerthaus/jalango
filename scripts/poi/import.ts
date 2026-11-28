@@ -65,7 +65,7 @@ async function call(path: string, body: unknown): Promise<any> {
 }
 
 const { run } = await call('/api/poi/runs', {
-  region: 'kuala-langat',
+  region: process.env.REGION?.trim() || 'kuala-langat',
   extract_url: source.url,
   extract_md5: md5,
   extract_timestamp: source.osm_replication_timestamp,

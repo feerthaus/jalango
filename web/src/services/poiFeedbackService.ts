@@ -48,3 +48,19 @@ export async function sendPoiFeedback(poiId: string, kind: PoiFeedbackKind, from
   if (error) throw new Error(error.hint === 'rate_limited' ? 'rate_limited' : error.message);
   return data === true;
 }
+
+export interface NearbyPoi {
+  id: string;
+  name: string;
+  category: string;
+  lat: number;
+  lng: number;
+  distance_m: number;
+}
+
+/** Up to 3 unconfirmed POIs within 500 m that I have not answered (position used for this answer only). */
+export async function fetchNearbyUnverified(at: Coordinates): Promise<NearbyPoi[]> {
+  const { data, error } = await db().rpc('nearby_unverified_pois', { p_lat: r5(at.lat), p_lng: r5(at.lng) });
+  if (error) throw new Error(error.message);
+  return (data as NearbyPoi[] | null) ?? [];
+}

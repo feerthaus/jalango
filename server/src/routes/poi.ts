@@ -30,7 +30,8 @@ export const requireIngest: RequestHandler = (req, _res, next) => {
 };
 
 export const startSchema = z.object({
-  region: z.literal('kuala-langat'),
+  // Selangor covers Kuala Langat once imported (POI-5, owner chose option B); the database refuses Kuala Langat then
+  region: z.enum(['kuala-langat', 'selangor']),
   extract_url: z.string().url().max(300).startsWith('https://download.geofabrik.de/'),
   extract_md5: z.string().regex(/^[0-9a-f]{32}$/),
   extract_timestamp: z.string().datetime({ offset: true }),

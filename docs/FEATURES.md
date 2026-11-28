@@ -547,6 +547,13 @@ Import pertama Kuala Langat (23 Nov 2026): 494 POI live, 22 diluluskan admin, 13
 - **Hilang 2 kali berturut-turut** (migrasi `20261206000000_poi_weekly.sql`, aditif): POI live yang tiada dalam satu import **tidak lagi terus disembunyikan**; ia dikira (`missing_runs`) dan hanya ditanda `missing` bila tiada dalam 2 import berturut-turut. Bila ia muncul semula, kiraan bermula semula. Peraturan tahan (> 5% disembunyikan atau > 20% berubah) kini mengira POI yang benar-benar akan disembunyikan; kiraan run ada `absent_once`.
 - **Pemantauan:** setiap run menulis ringkasan (baris, lulus automatik, semakan, ditolak, pendua, keputusan dibawa, akan disembunyikan, akan berubah) dalam *Summary* GitHub Actions. Run yang **ditahan** menjadikan workflow **gagal**, jadi GitHub menghantar notifikasi kepada pemilik; semak di Admin → POI → Larian import.
 - **Kos:** import menggunakan GitHub Actions dan beberapa panggilan API (~4 setiap run), bukan deploy Netlify.
+
+### Selangor (POI-5, pilihan B pemilik)
+
+- **Dry-run** (workflow "POI import", pilihan wilayah `selangor`): 15,183 rekod, 13,381 lulus automatik (88%), laporan ikut daerah dan 50 sampel untuk audit (`scripts/poi/region-report.mjs`).
+- **Pilihan B:** tempat Selangor masuk ke carian dengan label **"Belum disahkan"** (juga untuk Kuala Langat) sehingga pengguna berdekatan mengesahkannya. Kad tempat memaparkan lencana yang sama.
+- **"Adakah … di sini?"** (kad di peta, log masuk sahaja): bila pengguna **berhenti** (bukan navigasi, kelajuan < ~11 km/j, GPS ≤ 100 m), app bertanya tentang tempat belum disahkan dalam 500 m: **Ya, ada / Sudah tiada / Lokasi salah / Tak pasti**. Menjawab perlu dalam 300 m. 2 orang berdekatan bersetuju = disahkan atau dilaporkan tutup. Tak pasti/langkau diingat dalam peranti. Lokasi tidak disimpan.
+- **Import** (migrasi `20261207000000_poi_selangor.sql`, aditif): proses dalam satu pernyataan set (~13,000 baris; ~1.7 s dalam ujian), wilayah ikut larian (POI Kuala Langat menjadi milik Selangor), larian Kuala Langat ditolak selepas Selangor diimport, baris staging lulus automatik disimpan 14 hari (bukan 90) untuk jimat storan. API menerima `kuala-langat` dan `selangor` sahaja. Import Selangor sebenar menunggu "GO" pemilik.
 ## Lain-lain
 
 - **Harga minyak mingguan:** dari data.gov.my.

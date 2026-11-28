@@ -43,6 +43,7 @@ import { useWeatherWarnings } from '@/hooks/useWeatherWarnings';
 import { stateAt } from '@/utils/malaysiaState';
 import { WeatherWarningBanner } from '@/components/weather/WeatherWarningBanner';
 import { NearbyCheckCard } from '@/components/search/NearbyCheckCard';
+import { NearbyPoiCheckCard } from '@/components/places/NearbyPoiCheckCard';
 import { FeedbackReplyCard } from '@/components/feedback/FeedbackReplyCard';
 
 export function MapPage() {
@@ -158,6 +159,7 @@ export function MapPage() {
             <WeatherWarningBanner warnings={weather} states={[hereState]} />
             {!transitTrip && <FeedbackReplyCard />}
             {!transitTrip && <NearbyCheckCard />}
+            {!transitTrip && <NearbyPoiCheckCard />}
             {/* During a train/bus trip, only what matters on the way: the trip panel has the room */}
             {!transitTrip && <ConvoyBanner />}
             {!transitTrip && <ItineraryChip />}

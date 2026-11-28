@@ -1,4 +1,4 @@
-# POI import, Kuala Langat pilot (POI-2B, weekly in POI-4).
+# POI import: Kuala Langat pilot (POI-2B), weekly (POI-4), Selangor (POI-5).
 #
 # Manual: "send" off (default) is a dry run. It downloads OpenStreetMap, applies the
 # import rules and uploads the would-be rows as an artifact. Nothing reaches the
@@ -11,6 +11,10 @@
 # owner turns it on after 2–3 good manual runs. A run that would hide > 5 % or
 # change > 20 % of live POIs is held for an admin and this workflow fails, so
 # GitHub notifies the owner.
+#
+# Selangor (POI-5, option B): goes into search labelled "Belum disahkan" until
+# people nearby confirm it. Once Selangor is imported, the database refuses
+# Kuala Langat runs (Selangor covers it); set POI_SCHEDULE_REGION=selangor then.
 name: POI import (Kuala Langat)
 
 on:
@@ -19,7 +23,7 @@ on:
   workflow_dispatch:
     inputs:
       region:
-        description: 'Region (only Kuala Langat can be sent; others are a dry run + audit sample, POI-5)'
+        description: 'Region (Selangor covers Kuala Langat once imported)'
         type: choice
         options: [kuala-langat, selangor]
         default: kuala-langat
@@ -42,13 +46,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 40
     env:
-      REGION: ${{ inputs.region || 'kuala-langat' }}
+      # Scheduled runs: POI_SCHEDULE_REGION (repository variable), else Kuala Langat
+      REGION: ${{ inputs.region || vars.POI_SCHEDULE_REGION || 'kuala-langat' }}
     steps:
-      - name: Only Kuala Langat can be sent to the database
-        if: ${{ (inputs.region || 'kuala-langat') != 'kuala-langat' && inputs.send }}
-        run: |
-          echo "::error::$REGION is a dry run only (POI-5). Importing a new region needs its own approved change."
-          exit 1
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
@@ -100,7 +100,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: poi-import-${{ inputs.region || 'kuala-langat' }}
+          name: poi-import-${{ inputs.region || vars.POI_SCHEDULE_REGION || 'kuala-langat' }}
           path: |
             out/
           retention-days: 90
