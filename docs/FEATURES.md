@@ -535,8 +535,8 @@ Import pertama Kuala Langat (23 Nov 2026): 494 POI live, 22 diluluskan admin, 13
 
 ### Semakan komuniti pada POI (POI-3b)
 
-- **Kad tempat POI JalanGo** (hasil carian dengan id `poi:`): bahagian **"Betul ke maklumat ni?"** dengan butang **Masih buka**, **Sudah tutup**, **Lokasi salah** dan **Cadang nama**. Log masuk sahaja; had 30 jawapan sehari; satu jawapan seorang bagi setiap jenis. Lencana "Disahkan komuniti" atau "Data lama, perlu disahkan".
-- **Automatik:** "Masih buka" atau "Sudah tutup" daripada **3 orang, sekurang-kurangnya seorang dalam 300 m** (yang lain boleh penduduk kawasan, lihat "Kawasan saya"; sejak 28 Nov, dahulu 2 orang dalam 300 m) (tanpa jawapan bertentangan) mengemas kini status. Tempat yang dilaporkan tutup **tidak lagi muncul dalam carian**.
+- **Kad tempat POI JalanGo** (hasil carian dengan id `poi:`): bahagian **"Betul ke maklumat ni?"** dengan butang **Masih beroperasi**, **Sudah tutup terus**, **Lokasi salah** dan **Cadang nama**. Log masuk sahaja; had 30 jawapan sehari; satu jawapan seorang bagi setiap jenis. Lencana "Disahkan komuniti" atau "Data lama, perlu disahkan".
+- **Automatik:** "Masih beroperasi" atau "Sudah tutup terus" daripada **3 orang, sekurang-kurangnya seorang dalam 300 m** (yang lain boleh penduduk kawasan, lihat "Kawasan saya"; sejak 28 Nov, dahulu 2 orang dalam 300 m) (tanpa jawapan bertentangan) mengemas kini status. Tempat yang dilaporkan tutup **tidak lagi muncul dalam carian**.
 - **Admin → POI → "Maklum balas"** (`admin_poi_feedback`, `poi_feedback_resolve`; migrasi `20261205000000_poi_feedback.sql`, aditif): jawapan dikumpul ikut tempat dan jenis, dengan bilangan orang, berapa yang berdekatan dan nama dicadangkan. **Akaun pengguna tidak dipaparkan.** Betulkan dengan tab POI live (tukar nama / sembunyi), kemudian **Terima** atau **Abaikan**.
 - **Privasi:** hanya akaun dan jawapan disimpan; lokasi digunakan untuk semakan 300 m sahaja dan tidak disimpan. Halaman Privasi dikemas kini.
 
@@ -561,10 +561,17 @@ Import pertama Kuala Langat (23 Nov 2026): 494 POI live, 22 diluluskan admin, 13
 - **Peraturan:** keputusan perlukan **3 orang berbeza** memberi jawapan yang sama, **sekurang-kurangnya seorang di lokasi**, tanpa jawapan dikira yang bertentangan. Kad tempat memaparkan **"Disahkan oleh N orang"**.
 - **"Kawasan saya"** (Profil): sehingga 5 kawasan (Rumah, Tempat kerja, Rumah ibu bapa, Rumah mentua, Lain-lain) dari lokasi semasa atau tempat disimpan. **Disimpan dalam telefon sahaja**; kawasan dihantar dibundarkan ~1 km semasa bertanya/menjawab dan tidak disimpan. Butang **"Bantu sahkan tempat di kawasan saya"** memaparkan soalan sekitar kawasan itu (dari mana-mana).
 - **Rekod menunggu semakan** (migrasi `20261209000000_poi_queue_answers.sql`): soalan **nama** (masjid/surau tanpa nama, nama generik), **kategori** ("Adakah X sebuah klinik?") atau **orang awam boleh masuk?** (dalam institusi, admin memutuskan). Pendua tidak ditanya. 3 × nama yang sama → lulus dengan nama itu (dilindungi daripada import, "Disahkan komuniti"); 3 × kategori ya → lulus; 3 × tidak → tolak; 3 × tiada di sini → tolak. Jawapan bertentangan menunggu admin.
-- **POI live:** "Masih buka"/"Sudah tutup" ikut peraturan 3 orang yang sama (`poi_submit_feedback_v2`; fungsi lama memanggilnya).
+- **POI live:** "Masih beroperasi"/"Sudah tutup terus" ikut peraturan 3 orang yang sama (`poi_submit_feedback_v2`; fungsi lama memanggilnya).
 - **Kad di peta** (bila berhenti): tempat belum disahkan dahulu, kemudian rekod menunggu semakan dalam 500 m.
 - **Admin → POI → Semakan:** jawapan komuniti pada rekod (nama dan bilangan, ya/tidak, tiada; berapa di lokasi / penduduk kawasan), tanpa nama pengguna; nama paling kerap diisi dahulu.
 - Had 30 jawapan sehari (semua jenis). Privasi dan Terma dikemas kini (sumbangan nama diterbitkan di bawah ODbL).
+
+### "Sekitar sini" (fasa 1)
+
+- **Kad di peta** bila pengguna berhenti (bukan navigasi) dan tiada soalan pengesahan berdekatan: **"Nak tahu apa ada sekitar sini?"** dengan **Tempat makan** / **Tempat menarik**. Paling kerap sekali sehari bagi setiap kawasan ~1 km; **"Jangan tanya lagi"** mematikannya (dalam telefon).
+- **Senarai** (`/api/geo/around`, fungsi `places_around`, migrasi `20261210000000_places_around.sql`, pelayan sahaja): data JalanGo sahaja dalam 3 km: **cadangan komuniti** dahulu ("Disyorkan N orang"), kemudian tempat **"Disahkan N orang"**, kemudian yang terdekat. Tempat dilaporkan tutup tidak dipaparkan. Percuma (tiada panggilan Mapbox atau AI). **Tiada rating atau ulasan**, dan tiada yang direka.
+- **"Tanya pembantu AI"** (log masuk): pembantu kini ada alat `places_around`, dan hanya menyebut apa yang JalanGo tahu (disyorkan / disahkan N orang); tidak menggelar tempat "sedap"/"popular" dan tidak mereka rating, harga atau waktu buka.
+- **Label lebih jelas:** "Masih beroperasi" / "Sudah tutup terus" (bukan "Masih buka", yang boleh disangka "buka sekarang").
 
 ## Deploy dan versi live
 

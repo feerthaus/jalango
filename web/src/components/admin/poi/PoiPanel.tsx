@@ -547,7 +547,7 @@ function LivePoiDetail({ p, busy, act }: { p: LivePoi; busy: boolean; act: Act }
 
 const FEEDBACK_LABEL: Record<PoiFeedbackGroup['kind'], string> = {
   masih_beroperasi: 'Masih beroperasi',
-  sudah_tutup: 'Sudah tutup',
+  sudah_tutup: 'Sudah tutup terus',
   lokasi_salah: 'Lokasi salah',
   kategori_salah: 'Kategori salah',
   nama_salah: 'Nama salah',
@@ -581,7 +581,7 @@ function FeedbackView() {
   if (!rows) return err ? <p role="alert" className="text-sm text-red-600">{err}</p> : <Loader2 className="mx-auto size-6 animate-spin text-ink-400" />;
   return (
     <div className="space-y-3">
-      <p className="text-xs text-ink-500">Jawapan pengguna pada POI live. "Masih buka" / "Sudah tutup" daripada 2 orang berdekatan (300 m) diproses sendiri; yang lain menunggu di sini. Untuk betulkan nama atau sembunyikan tempat, guna tab POI live, kemudian tekan Terima. Akaun pengguna tidak dipaparkan.</p>
+      <p className="text-xs text-ink-500">Jawapan pengguna pada POI live. "Masih beroperasi" / "Sudah tutup terus" daripada 3 orang (sekurang-kurangnya seorang di lokasi) berdekatan (300 m) diproses sendiri; yang lain menunggu di sini. Untuk betulkan nama atau sembunyikan tempat, guna tab POI live, kemudian tekan Terima. Akaun pengguna tidak dipaparkan.</p>
       {err && (
         <p role="alert" className="rounded-xl bg-red-500/10 px-3 py-2 text-sm text-red-700 dark:text-red-300">
           {err}

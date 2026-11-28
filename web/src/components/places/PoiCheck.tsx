@@ -70,10 +70,10 @@ export function PoiCheck({ poiId, unverified = false, at = null }: { poiId: stri
         <>
           <div className="mt-2 grid grid-cols-2 gap-2">
             <Button variant="secondary" className="px-2 py-2 text-xs" disabled={busy || done('masih_beroperasi') || done('sudah_tutup')} aria-pressed={done('masih_beroperasi')} onClick={() => send('masih_beroperasi')}>
-              <Check className="size-4 text-jade-600" /> {t('Masih buka', 'Still open')}
+              <Check className="size-4 text-jade-600" /> {t('Masih beroperasi', 'Still in business')}
             </Button>
             <Button variant="secondary" className="px-2 py-2 text-xs" disabled={busy || done('sudah_tutup') || done('masih_beroperasi')} aria-pressed={done('sudah_tutup')} onClick={() => send('sudah_tutup')}>
-              <Store className="size-4 text-red-500" /> {t('Sudah tutup', 'Closed')}
+              <Store className="size-4 text-red-500" /> {t('Sudah tutup terus', 'Closed for good')}
             </Button>
             <Button variant="secondary" className="px-2 py-2 text-xs" disabled={busy || done('lokasi_salah')} aria-pressed={done('lokasi_salah')} onClick={() => send('lokasi_salah')}>
               <MapPinOff className="size-4" /> {t('Lokasi salah', 'Wrong place')}

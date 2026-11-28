@@ -166,16 +166,16 @@ export function MyAreasCard() {
               <NearbyQueueQuestion key={`q:${q.r.id}`} r={q.r} at={null} area={q.rough} onDone={() => done(q)} onSkip={() => done(q)} />
             ) : (
               <div key={`p:${q.p.id}`} className="rounded-2xl bg-ink-100/70 p-3 text-sm dark:bg-ink-800/60">
-                <p className="font-semibold">{t(`Adakah “${q.p.name}” masih ada?`, `Is “${q.p.name}” still there?`)}</p>
+                <p className="font-semibold">{t(`Adakah “${q.p.name}” masih beroperasi?`, `Is “${q.p.name}” still in business?`)}</p>
                 <p className="text-xs text-ink-500">
                   {formatDistance(q.p.distance_m)} {t('dari', 'from')} {t(kindLabel(q.area.kind))}
                 </p>
                 <div className="mt-2 grid grid-cols-3 gap-2">
                   <button type="button" onClick={() => void answerPoi(q, 'masih_beroperasi')} className="flex items-center justify-center gap-1 rounded-xl bg-jade-500 py-2 text-xs font-bold text-ink-950">
-                    <Check className="size-4" /> {t('Masih ada', 'Still there')}
+                    <Check className="size-4" /> {t('Masih beroperasi', 'Still in business')}
                   </button>
                   <button type="button" onClick={() => void answerPoi(q, 'sudah_tutup')} className="flex items-center justify-center gap-1 rounded-xl bg-red-600 py-2 text-xs font-bold text-white">
-                    <Store className="size-4" /> {t('Sudah tutup', 'Closed')}
+                    <Store className="size-4" /> {t('Sudah tutup terus', 'Closed for good')}
                   </button>
                   <button type="button" onClick={() => done(q)} className="flex items-center justify-center gap-1 rounded-xl bg-white py-2 text-xs font-semibold dark:bg-ink-900">
                     <HelpCircle className="size-4" /> {t('Tak pasti', 'Not sure')}
