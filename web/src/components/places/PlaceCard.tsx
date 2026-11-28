@@ -128,7 +128,7 @@ export function PlaceCard({ place, onClose }: { place: Place; onClose: () => voi
           </Button>
         )}
       </div>
-      {poiIdOf(place.id) && <PoiCheck poiId={poiIdOf(place.id)!} />}
+      {poiIdOf(place.id) && <PoiCheck poiId={poiIdOf(place.id)!} unverified={place.unverified} />}
       <Button variant="secondary" className="mt-2 w-full" onClick={() => !inItinerary && itinerary.add(place)} disabled={inItinerary} aria-pressed={inItinerary}>
         {inItinerary ? <Check className="size-4" /> : <ListPlus className="size-4" />} {inItinerary ? t('Dalam itinerari', 'In itinerary') : t('+ Itinerari', '+ Itinerary')}
       </Button>

@@ -6,7 +6,7 @@
 //
 // Without --send it is a dry run: it prints what would be sent and sends nothing.
 // With --send it needs POI_INGEST_TOKEN and uses POI_API_BASE (default the live site).
-import { readFileSync, writeFileSync } from 'node:fs';
+import { appendFileSync, readFileSync, writeFileSync } from 'node:fs';
 import { buildStaging, type OsmFeature } from '../../server/src/poi/rules.ts';
 
 const [, , featuresFile, sourceFile, flag] = process.argv;
@@ -65,7 +65,7 @@ async function call(path: string, body: unknown): Promise<any> {
 }
 
 const { run } = await call('/api/poi/runs', {
-  region: 'kuala-langat',
+  region: process.env.REGION?.trim() || 'kuala-langat',
   extract_url: source.url,
   extract_md5: md5,
   extract_timestamp: source.osm_replication_timestamp,
@@ -80,3 +80,24 @@ console.log(`Staged ${staged} of ${rows.length}`);
 const { result } = await call(`/api/poi/runs/${run}/process`, {});
 console.log(JSON.stringify({ run, result }, null, 1));
 writeFileSync('out/import-result.json', JSON.stringify({ run, staged, result, summary }, null, 2));
+
+// Report for whoever opens the run (GitHub step summary), and fail on a held run
+// so GitHub notifies the owner: a held run waits for an admin in Admin → POI.
+const summaryFile = process.env.GITHUB_STEP_SUMMARY;
+if (summaryFile) {
+  const r = result as Record<string, unknown>;
+  const lines = [
+    `### POI import ${String(r.status)}`,
+    '',
+    '| | |',
+    '|---|---|',
+    ...['rows', 'auto_approved', 'needs_review', 'rejected', 'duplicate', 'carried', 'live_before', 'would_hide', 'would_change', 'absent_once'].map((k) => `| ${k} | ${r[k] ?? '–'} |`),
+    '',
+    `Run \`${run}\`, OSM data ${source.osm_replication_timestamp}.`,
+  ];
+  appendFileSync(summaryFile, lines.join('\n') + '\n');
+}
+if ((result as { status?: string }).status === 'held') {
+  console.error('Run held: it would hide > 5 % or change > 20 % of live POIs. Review it in Admin → POI → Larian import.');
+  process.exit(2);
+}
