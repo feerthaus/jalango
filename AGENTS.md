@@ -31,7 +31,9 @@ CI (`.github/workflows/ci.yml`) runs `npm ci`, typecheck, test and build on ever
 
 ## Workflow
 
-- Work on a feature branch and open a PR to `main`. Netlify deploys `main` automatically and builds a preview for each PR.
+- Work on a feature branch and open a PR to `main`. Netlify deploys `main` automatically and builds a preview for each PR, but skips builds where nothing the site is built from changed (`scripts/deploy/netlify-ignore.sh`: docs, migrations, POI import scripts, workflows, tests).
+- **Merged is not live.** A change is live only when `https://jalango.netlify.app/version.json` (written by the build) shows its commit, or a later one. The "Live check" workflow checks this after every push to `main`; Admin shows the app's version.
+- Netlify credits are limited: group related PRs and merge them together for one deploy, unless the owner asks for a hotfix.
 - **Merge only when the owner says so.** No force-push, and never rewrite `main`.
 - Do not deploy or apply production migrations before review, unless the owner asks.
 - Keep changes focused. Put tests and the Privacy Policy update in the same PR as the feature.

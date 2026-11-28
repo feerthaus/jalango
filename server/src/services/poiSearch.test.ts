@@ -85,4 +85,9 @@ describe('POI search', () => {
     expect(await late).toEqual([]);
     expect(await settleWithin(Promise.reject(new Error('x')), 300)).toEqual([]);
   });
+  it('marks POIs nobody nearby has confirmed yet', () => {
+    expect(toPlace({ ...row, verification: 'belum' }).unverified).toBe(true);
+    expect(toPlace({ ...row, verification: 'perlu_pengesahan' }).unverified).toBe(true);
+    expect(toPlace({ ...row, verification: 'disahkan_komuniti' })).not.toHaveProperty('unverified');
+  });
 });

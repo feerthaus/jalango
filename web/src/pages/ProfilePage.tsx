@@ -13,6 +13,7 @@ import { DeleteAccount } from '@/components/moderation/DeleteAccount';
 import { fetchAdminStatus } from '@/services/adminAuth';
 import { TOLL_PAYMENTS, useTollPayment } from '@/lib/tollPayment';
 import { useEffect, useState } from 'react';
+import { profilePhoto } from '@/utils/profilePhoto';
 import { MessageSquareHeart, ShieldCheck } from 'lucide-react';
 import { LogoMark } from '@/components/brand/LogoMark';
 import { InstallSheet } from '@/components/pwa/InstallSheet';
@@ -209,12 +210,21 @@ function AccountCard({ favourites, recents }: { favourites: number; recents: num
   const { available, user, loading, signOut } = useAuth();
   const card = 'rounded-2xl bg-white p-4 shadow-sm ring-1 ring-ink-200 dark:bg-ink-900 dark:ring-ink-800';
   const name = (user?.user_metadata?.name as string | undefined) || user?.email?.split('@')[0];
+  // Photo from Google / Facebook sign-in, shown only here to the account owner; the letter if none or it fails
+  const [photoFailed, setPhotoFailed] = useState(false);
+  const photo = photoFailed ? null : profilePhoto(user?.user_metadata);
 
   return (
     <div className={card}>
       <div className="flex items-center gap-4">
-        <span className="grid size-14 shrink-0 place-items-center rounded-full bg-ink-100 text-lg font-bold text-ink-500 dark:bg-ink-800">
-          {user ? (name ?? '?').slice(0, 1).toUpperCase() : <UserRound className="size-7 text-ink-400" />}
+        <span className="grid size-14 shrink-0 place-items-center overflow-hidden rounded-full bg-ink-100 text-lg font-bold text-ink-500 dark:bg-ink-800">
+          {user && photo ? (
+            <img src={photo} alt="" className="size-full object-cover" referrerPolicy="no-referrer" onError={() => setPhotoFailed(true)} />
+          ) : user ? (
+            (name ?? '?').slice(0, 1).toUpperCase()
+          ) : (
+            <UserRound className="size-7 text-ink-400" />
+          )}
         </span>
         <div className="min-w-0 flex-1">
           <p className="truncate font-semibold">{user ? name : t('Tetamu', 'Guest')}</p>
@@ -405,3 +415,4 @@ function BusinessCard() {
     </Link>
   );
 }
+

@@ -1,0 +1,54 @@
+# After a push to main: is it live? Compares the commit the site serves
+# (/version.json, written by the build) with this push. Merged is not live until
+# this passes. When the push changes nothing the site is built from (docs,
+# migrations, workflows, tests: Netlify skips the build), no deploy is expected.
+# Runs on GitHub only: no Netlify build or credits.
+name: Live check
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: live-check
+  cancel-in-progress: true
+
+jobs:
+  live:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Wait for the site to serve this commit
+        env:
+          SITE: https://jalango.netlify.app
+        run: |
+          want="$GITHUB_SHA"
+          live() { curl -fsS --max-time 20 "$SITE/version.json?t=$(date +%s)" | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{console.log(JSON.parse(s).commit||"")}catch{console.log("")}})' || true; }
+          first=$(live)
+          echo "Live now: ${first:-unknown}. Pushed: $want"
+          if [ -n "$first" ] && [ "$(bash scripts/deploy/needs-deploy.sh "$first" "$want")" = skip ]; then
+            echo "### No deploy needed" >> "$GITHUB_STEP_SUMMARY"
+            echo "Nothing the site is built from changed since the live commit \`${first:0:7}\`." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          for i in $(seq 1 40); do
+            now=$(live)
+            # this commit, or a later one that already contains it
+            if [ -n "$now" ] && git cat-file -e "$now^{commit}" 2>/dev/null && git merge-base --is-ancestor "$want" "$now"; then
+              echo "### Live ✅" >> "$GITHUB_STEP_SUMMARY"
+              echo "The site serves \`${now:0:7}\`, which includes \`${want:0:7}\`." >> "$GITHUB_STEP_SUMMARY"
+              exit 0
+            fi
+            sleep 30
+          done
+          echo "### Not live ❌" >> "$GITHUB_STEP_SUMMARY"
+          echo "After 20 minutes the site still serves \`${now:-unknown}\`, not \`${want:0:7}\`. Check Netlify → Deploys (failed build, paused deploys or credits)." >> "$GITHUB_STEP_SUMMARY"
+          echo "::error::Not live after 20 minutes: site serves ${now:-unknown}, pushed ${want}"
+          exit 1

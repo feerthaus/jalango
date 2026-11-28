@@ -1,5 +1,10 @@
 /// <reference types="vite/client" />
 
+/** Commit this build was made from (Netlify COMMIT_REF; "local" otherwise) */
+declare const __APP_COMMIT__: string;
+/** When this build was made (ISO time) */
+declare const __APP_BUILT_AT__: string;
+
 interface ImportMetaEnv {
   readonly VITE_MAPBOX_PUBLIC_TOKEN?: string;
   readonly VITE_API_BASE_URL?: string;

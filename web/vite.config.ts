@@ -29,8 +29,25 @@ function siteFiles(site: string): Plugin {
   };
 }
 
+/**
+ * Which commit this build is. Netlify sets COMMIT_REF (and CONTEXT) while building;
+ * locally it is "local". The app knows it (__APP_COMMIT__) and /version.json says it,
+ * so "merged" and "live" can be told apart (main is not live until this matches).
+ */
+function buildVersion(): Plugin {
+  const commit = process.env.COMMIT_REF?.trim() || 'local';
+  const builtAt = new Date().toISOString();
+  return {
+    name: 'jalango-version',
+    config: () => ({ define: { __APP_COMMIT__: JSON.stringify(commit), __APP_BUILT_AT__: JSON.stringify(builtAt) } }),
+    generateBundle() {
+      this.emitFile({ type: 'asset', fileName: 'version.json', source: `${JSON.stringify({ commit, builtAt, context: process.env.CONTEXT ?? null })}\n` });
+    },
+  };
+}
+
 export default defineConfig(({ mode }) => ({
-  plugins: [react(), tailwindcss(), siteFiles(normaliseSiteUrl(loadEnv(mode, process.cwd(), 'VITE_').VITE_SITE_URL))],
+  plugins: [react(), tailwindcss(), buildVersion(), siteFiles(normaliseSiteUrl(loadEnv(mode, process.cwd(), 'VITE_').VITE_SITE_URL))],
   resolve: {
     alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },
   },

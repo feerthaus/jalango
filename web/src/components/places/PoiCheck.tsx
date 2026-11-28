@@ -11,7 +11,7 @@ import { myPoiFeedback, sendPoiFeedback, type MyPoiFeedback, type PoiFeedbackKin
  * say whether it is still open, closed, in the wrong place, or suggest its name.
  * Two nearby people agreeing on open / closed settles it; the rest goes to an admin.
  */
-export function PoiCheck({ poiId }: { poiId: string }) {
+export function PoiCheck({ poiId, unverified = false }: { poiId: string; unverified?: boolean }) {
   const [t] = useT();
   const { user } = useAuth();
   const { fix } = useLocation();
@@ -48,13 +48,15 @@ export function PoiCheck({ poiId }: { poiId: string }) {
   };
 
   const done = (k: PoiFeedbackKind) => mine?.answered.includes(k) ?? false;
-  const v = mine?.verification;
+  // Signed out: what search said (the database answers for signed-in people)
+  const v = mine?.verification ?? (unverified ? 'belum' : null);
 
   return (
     <section aria-label={t('Semak maklumat tempat', 'Check this place')} className="mt-3 rounded-2xl bg-ink-100/70 p-3 text-sm dark:bg-ink-800/60">
       <div className="flex flex-wrap items-center gap-2">
         <p className="min-w-0 flex-1 font-semibold">{t('Betul ke maklumat ni?', 'Is this right?')}</p>
         {v === 'disahkan_komuniti' && <span className="rounded-full bg-jade-500/15 px-2 py-0.5 text-[11px] font-semibold text-jade-700 dark:text-jade-300">{t('Disahkan komuniti', 'Confirmed by the community')}</span>}
+        {v === 'belum' && <span className="rounded-full bg-amber-400/15 px-2 py-0.5 text-[11px] font-semibold text-amber-800 dark:text-amber-200">{t('Belum disahkan', 'Not confirmed yet')}</span>}
         {v === 'perlu_pengesahan' && <span className="rounded-full bg-amber-400/15 px-2 py-0.5 text-[11px] font-semibold text-amber-800 dark:text-amber-200">{t('Data lama, perlu disahkan', 'Old data, needs checking')}</span>}
       </div>
       {!user ? (

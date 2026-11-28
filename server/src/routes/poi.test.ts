@@ -55,12 +55,16 @@ describe('POI import API: switched on', () => {
     expect(poiCalls()).toHaveLength(0);
   });
 
-  it('starts a run only for the pilot region and a Geofabrik extract', async () => {
+  it('starts a run only for the known regions and a Geofabrik extract', async () => {
     const ok = await post(s.base, '/api/poi/runs', { region: 'kuala-langat', extract_url: 'https://download.geofabrik.de/asia/malaysia-singapore-brunei/malaysia-singapore-brunei-latest.osm.pbf', extract_md5: '2d25056846ea3f2a52f9b57515c89043', extract_timestamp: '2026-11-22T21:20:48Z' }, TOKEN);
     expect(ok.status).toBe(201);
     expect((await ok.json()).run).toMatch(/^[0-9a-f-]{36}$/);
+    const sel = await post(s.base, '/api/poi/runs', { region: 'selangor', extract_url: 'https://download.geofabrik.de/asia/malaysia-singapore-brunei/malaysia-singapore-brunei-latest.osm.pbf', extract_md5: '2d25056846ea3f2a52f9b57515c89043', extract_timestamp: '2026-11-27T21:20:48Z' }, TOKEN);
+    expect(sel.status).toBe(201);
     const bad = await post(s.base, '/api/poi/runs', { region: 'selangor', extract_url: 'https://evil.example/x.pbf', extract_md5: 'x', extract_timestamp: 'now' }, TOKEN);
     expect(bad.status).toBe(400);
+    const other = await post(s.base, '/api/poi/runs', { region: 'johor', extract_url: 'https://download.geofabrik.de/asia/malaysia-singapore-brunei/malaysia-singapore-brunei-latest.osm.pbf', extract_md5: '2d25056846ea3f2a52f9b57515c89043', extract_timestamp: '2026-11-27T21:20:48Z' }, TOKEN);
+    expect(other.status).toBe(400);
   });
 
   it('accepts a batch of valid rows, bigger than the API default body size', async () => {

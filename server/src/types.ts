@@ -27,6 +27,8 @@ export interface Place {
   distanceMeters?: number;
   /** Put first by an admin for this search (Admin → Carian) */
   pinned?: boolean;
+  /** JalanGo POI (OpenStreetMap) not yet confirmed by people nearby: shown as "Belum disahkan" */
+  unverified?: boolean;
 }
 
 export type Congestion = 'low' | 'moderate' | 'heavy' | 'severe' | 'unknown';

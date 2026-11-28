@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const rpc = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/supabase', () => ({ supabase: { rpc } }));
 
-import { myPoiFeedback, poiIdOf, sendPoiFeedback } from './poiFeedbackService';
+import { fetchNearbyUnverified, myPoiFeedback, poiIdOf, sendPoiFeedback } from './poiFeedbackService';
 
 const ID = '0b8f7a7e-1c2d-4e5f-8a9b-0c1d2e3f4a5b';
 beforeEach(() => rpc.mockReset());
@@ -27,5 +27,10 @@ describe('POI community checks', () => {
     await expect(sendPoiFeedback(ID, 'masih_beroperasi', null)).rejects.toThrow('rate_limited');
     rpc.mockResolvedValue({ data: { answered: ['masih_beroperasi'], verification: 'disahkan_komuniti' }, error: null });
     expect(await myPoiFeedback(ID)).toEqual({ answered: ['masih_beroperasi'], verification: 'disahkan_komuniti' });
+  });
+  it('asks for unconfirmed places nearby with a rounded position', async () => {
+    rpc.mockResolvedValue({ data: [{ id: ID, name: 'Klinik Anda', category: 'kesihatan', lat: 2.96, lng: 101.75, distance_m: 120 }], error: null });
+    expect((await fetchNearbyUnverified({ lat: 2.963184567, lng: 101.756321234 }))[0].name).toBe('Klinik Anda');
+    expect(rpc).toHaveBeenCalledWith('nearby_unverified_pois', { p_lat: 2.96318, p_lng: 101.75632 });
   });
 });

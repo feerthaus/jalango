@@ -34,6 +34,8 @@ export interface Place {
   state?: string;
   /** Put first by an admin for this search (Admin → Carian) */
   pinned?: boolean;
+  /** JalanGo POI (OpenStreetMap) not yet confirmed by people nearby: shown as "Belum disahkan" */
+  unverified?: boolean;
 }
 
 export interface SavedPlace extends Place {
