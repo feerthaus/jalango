@@ -15,7 +15,7 @@ const ms: LegalSection[] = [
     title: 'Data yang kami kumpul',
     body: (
       <Ul>
-        <li><strong>Akaun:</strong> email, nama (jika diberi) dan, jika anda log masuk dengan Google atau Facebook, maklumat profil asas yang mereka kongsi (nama, email, gambar profil).</li>
+        <li><strong>Akaun:</strong> email, nama (jika diberi) dan, jika anda log masuk dengan Google atau Facebook, maklumat profil asas yang mereka kongsi (nama, email, gambar profil). Gambar profil dipaparkan kepada anda sahaja di halaman Profil, dimuatkan terus daripada Google/Facebook; JalanGo tidak menyalinnya.</li>
         <li><strong>Lokasi:</strong> kedudukan GPS peranti anda digunakan dalam app untuk memaparkan peta, mencari tempat berdekatan dan navigasi. Untuk carian dan laluan, koordinat (titik mula, destinasi dan titik laluan) dihantar ke pelayan kami dan penyedia peta. Jika anda tampal pautan Google Maps, pelayan kami membuka pautan itu (tanpa maklumat anda) untuk membaca lokasinya.</li>
         <li><strong>Carian suara (pilihan):</strong> jika anda tekan butang mikrofon, suara anda ditukar ke teks oleh pelayar telefon anda (contohnya Google di Chrome atau Apple di Safari). JalanGo hanya menerima teks itu untuk mencari tempat dan tidak merakam atau menyimpan suara anda.</li>
         <li><strong>Kandungan yang anda kongsi:</strong> laporan jalan raya (jenis, nota, lokasi, masa), undian, jalan pintas (shortcut), laluan komuniti, rekod kemalangan dan tempat yang anda syorkan.</li>
@@ -148,7 +148,7 @@ const en: LegalSection[] = [
     title: 'Data we collect',
     body: (
       <Ul>
-        <li><strong>Account:</strong> email, name (if given) and, if you sign in with Google or Facebook, the basic profile they share (name, email, profile picture).</li>
+        <li><strong>Account:</strong> email, name (if given) and, if you sign in with Google or Facebook, the basic profile they share (name, email, profile picture). The profile picture is shown only to you on the Profile page, loaded straight from Google/Facebook; JalanGo does not copy it.</li>
         <li><strong>Location:</strong> your device GPS is used in the app to show the map, find nearby places and navigate. For search and routing, coordinates (start, destination and waypoints) are sent to our server and the map provider. If you paste a Google Maps link, our server opens that link (without your details) to read its location.</li>
         <li><strong>Voice search (optional):</strong> when you tap the microphone, your voice is turned into text by your phone’s browser (e.g. Google in Chrome or Apple in Safari). JalanGo only receives that text to search for places and never records or stores your voice.</li>
         <li><strong>Content you share:</strong> road reports (type, note, location, time), votes, shortcuts, community routes, accident records and places you recommend.</li>

@@ -542,6 +542,8 @@ Import pertama Kuala Langat (23 Nov 2026): 494 POI live, 22 diluluskan admin, 13
 
 ## Lain-lain
 
+- **Gambar profil:** bila log masuk dengan Google/Facebook, halaman Profil memaparkan gambar profil akaun itu (dimuat terus daripada penyedia, tanpa referrer; tidak disalin oleh JalanGo). Jika tiada atau gagal dimuat, huruf pertama nama dipaparkan.
+
 - **Harga minyak mingguan:** dari data.gov.my.
 - **Tempat makan dan menarik sepanjang laluan.** Tab: Makan, Kafe, **Penginapan** (hotel dari kategori Mapbox + homestay ikut nama dalam ~8 km setiap titik; homestay disemak JalanGo di atas), Menarik, R&R, Minyak, EV.
   - **Nama pada pin:** 10 tempat terdekat di depan, serta kedai/homestay disemak JalanGo (tanda ✓) dan cadangan komuniti (⭐), supaya peta tidak sesak semasa memandu. Kedai makan disemak JalanGo tunjuk **Buka/Tutup** terus pada label.
