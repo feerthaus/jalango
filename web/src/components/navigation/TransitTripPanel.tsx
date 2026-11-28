@@ -1,4 +1,4 @@
-import { BellRing, Car, CheckCircle2, Flag, Footprints, MapPin, Satellite, TrainFront, X } from 'lucide-react';
+import { BellRing, Car, CheckCircle2, Flag, Footprints, Satellite, TrainFront, X } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { useLocation } from '@/contexts/LocationContext';
@@ -7,7 +7,8 @@ import { useT } from '@/lib/i18n';
 import { disarm, ring, stopRinging } from '@/lib/arrivalAlarm';
 import { endTransitTrip, updateTransitProgress, useTransitTrip } from '@/lib/transitTrip';
 import { advanceTrip, tripSteps, type TripStep } from '@/utils/transitProgress';
-import { LineBadge } from './TransitOptions';
+import { distText, waitText } from '@/utils/transitText';
+import { LineBadge, modeLabel } from './TransitOptions';
 
 const clock = (ms: number) => new Date(ms + 8 * 3600_000).toISOString().slice(11, 16);
 const TICK_MS = 5_000;
@@ -122,10 +123,10 @@ export function TransitTripPanel() {
           <Button onClick={end}>{t('Tutup', 'Close')}</Button>
         </div>
       ) : (
-        current && <NowCard step={current} stopsLeft={tick.stopsLeft} byGps={tick.byGps} now={now} />
+        current && <NowCard step={current} next={nextAfter(progress.step)} stopsLeft={tick.stopsLeft} byGps={tick.byGps} now={now} />
       )}
 
-      <ol aria-label={t('Langkah perjalanan', 'Trip steps')} className="min-h-0 flex-1 space-y-1 overflow-y-auto px-3 pb-3">
+      <ol aria-label={t('Langkah perjalanan', 'Trip steps')} className="min-h-0 flex-1 space-y-1 overflow-y-auto px-3 pb-6 [mask-image:linear-gradient(to_bottom,black_calc(100%-1.5rem),transparent)]">
         {steps.map((s, i) => (
           <li key={i} ref={i === progress.step ? currentRef : undefined}>
             <button
@@ -146,16 +147,19 @@ export function TransitTripPanel() {
           </li>
         ))}
       </ol>
-      <p className="px-3 pb-3 text-[11px] leading-snug text-ink-400">
+      <p className="border-t border-ink-100 px-3 pb-3 pt-2 text-xs leading-snug text-ink-500 dark:border-ink-700">
         {t('Biarkan JalanGo terbuka: amaran berbunyi satu stesen sebelum anda turun. Dalam terowong, kedudukan dianggar ikut jadual. Tekan mana-mana langkah untuk betulkan.', 'Keep JalanGo open: the alarm rings one stop before you get off. In tunnels, your position is estimated from the timetable. Tap any step to correct it.')}
       </p>
     </section>
   );
 }
 
-function NowCard({ step, stopsLeft, byGps, now }: { step: TripStep; stopsLeft: number | null; byGps: boolean; now: number }) {
-  const [t] = useT();
+function NowCard({ step, next, stopsLeft, byGps, now }: { step: TripStep; next?: TripStep; stopsLeft: number | null; byGps: boolean; now: number }) {
+  const [t, lang] = useT();
   const mins = (ms: number) => Math.max(0, Math.round((ms - now) / 60_000));
+  const wait = (ms: number) => waitText((ms - now) / 60_000, t);
+  // "Bas BTG1", "KLIA Ekspres": what the person is waiting for
+  const line = next?.kind === 'ride' ? `${modeLabel(next.leg.mode, lang)}${next.leg.shortName && ['lrt', 'mrt', 'monorail', 'brt', 'bus', 'erl'].includes(next.leg.mode) ? ` ${next.leg.shortName}` : ''}` : null;
   let title: string;
   let detail: string;
   if (step.kind === 'ride') {
@@ -163,12 +167,14 @@ function NowCard({ step, stopsLeft, byGps, now }: { step: TripStep; stopsLeft: n
     detail = now < step.startMs ? t(`Bertolak ${clock(step.startMs)} dari ${step.leg.from.name}`, `Leaves ${clock(step.startMs)} from ${step.leg.from.name}`) : t(`Tiba ~${clock(step.endMs)} (${mins(step.endMs)} min)`, `Arrives ~${clock(step.endMs)} (${mins(step.endMs)} min)`);
   } else if (step.kind === 'access') {
     title = step.access.type === 'walk' ? t(`Jalan kaki ke Stesen ${step.to.name}`, `Walk to ${step.to.name} station`) : t(`Grab/teksi ke Stesen ${step.to.name}`, `Grab/taxi to ${step.to.name} station`);
-    detail = t(`Tren/bas bertolak ${clock(step.endMs)} (${mins(step.endMs)} min lagi)`, `Departs ${clock(step.endMs)} (in ${mins(step.endMs)} min)`);
+    detail = line
+      ? t(`${line} bertolak ${clock(step.endMs)} (dalam ${wait(step.endMs)})`, `${line} leaves ${clock(step.endMs)} (in ${wait(step.endMs)})`)
+      : t(`Bertolak ${clock(step.endMs)} (dalam ${wait(step.endMs)})`, `Leaves ${clock(step.endMs)} (in ${wait(step.endMs)})`);
   } else if (step.kind === 'walk') {
     title = t(`Tukar laluan: jalan kaki ke ${step.walk.to.name}`, `Change lines: walk to ${step.walk.to.name}`);
-    detail = t(`Seterusnya bertolak ${clock(step.endMs)} (${mins(step.endMs)} min lagi)`, `Next one leaves ${clock(step.endMs)} (in ${mins(step.endMs)} min)`);
+    detail = t(`Seterusnya bertolak ${clock(step.endMs)} (dalam ${wait(step.endMs)})`, `Next one leaves ${clock(step.endMs)} (in ${wait(step.endMs)})`);
   } else {
-    title = step.egress.type === 'walk' ? t(`Jalan kaki ${step.egress.km} km ke destinasi`, `Walk ${step.egress.km} km to the destination`) : t(`Grab/teksi ${step.egress.km} km ke destinasi`, `Grab/taxi ${step.egress.km} km to the destination`);
+    title = step.egress.type === 'walk' ? t(`Jalan kaki ${distText(step.egress.km)} ke destinasi`, `Walk ${distText(step.egress.km)} to the destination`) : t(`Grab/teksi ${distText(step.egress.km)} ke destinasi`, `Grab/taxi ${distText(step.egress.km)} to the destination`);
     detail = t(`Tiba ~${clock(step.endMs)}`, `Arrive ~${clock(step.endMs)}`);
   }
   return (
@@ -190,7 +196,7 @@ function StepIcon({ step }: { step: TripStep }) {
   if (step.kind === 'egress') return <Flag className="mt-0.5 size-4 shrink-0" />;
   if (step.kind === 'access' && step.access.type === 'ride') return <Car className="mt-0.5 size-4 shrink-0" />;
   if (step.kind === 'access') return <Footprints className="mt-0.5 size-4 shrink-0" />;
-  return <MapPin className="mt-0.5 size-4 shrink-0" />;
+  return <Footprints className="mt-0.5 size-4 shrink-0" />;
 }
 
 function StepText({ step }: { step: TripStep }) {

@@ -79,7 +79,7 @@ export function RoutePanel() {
           <span className="flex items-center gap-1.5 rounded-xl bg-jade-500/10 px-2 py-1.5 text-xs font-semibold text-jade-700 dark:text-jade-300">
             <Footprints className="size-4" /> {t('Jalan kaki', 'Walking')}
           </span>
-        ) : (
+        ) : showTrain ? null : (
           <label className="flex cursor-pointer items-center gap-2 rounded-xl px-2 py-1.5 text-xs font-semibold hover:bg-ink-100 dark:hover:bg-ink-800">
             <input
               type="checkbox"
